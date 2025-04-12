@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Новости Петрозаводска</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <p class="date" id="current-date"></p>
+                <h1>Новости Петрозаводска</h1>
+                <div class="logo-box"></div>
+            </div>
+        </header>
+        
+        <div class="nav-container">
+            <nav>
+                <a href="#" class="nav-link" data-page="main">Главная</a>
+
+                <div class="dropdown">
+                    <button class="dropdown-btn">Подразделы</button>
+                    <div class="dropdown-content">
+                        <a href="#" data-page="source" data-type="news">Новости</a>
+                        <a href="#" data-page="source" data-type="social">Соц. сети</a>
+                        <a href="#" data-page="source" data-type="reviews">Отзывы</a>
+                        <a href="#" data-page="source" data-type="stat">Статистические отчеты</a>
+                    </div>
+                </div>
+
+                <div class="dropdown">
+                    <button class="dropdown-btn">Категории</button>
+                    <div class="dropdown-content">
+                        <a href="#" data-page="category" data-type="culture">Культура</a>
+                        <a href="#" data-page="category" data-type="sports">Спорт</a>
+                        <a href="#" data-page="category" data-type="tech">Технологии</a>
+                        <a href="#" data-page="category" data-type="holidays">Праздники</a>
+                        <a href="#" data-page="category" data-type="education">Образование</a>
+                    </div>
+                </div>
+            </nav>
+            
+            <div class="search-container">
+                <img src="lupanew.jpg" alt="Поиск" class="search-icon">
+                <input type="text" class="search-input" placeholder="Поиск...">
+            </div>
+        </div>
+
+        <main class="content" id="dynamic-content">
+            <!-- Контент будет загружаться динамически -->
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Новости Петрозаводска. Все права защищены.</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
