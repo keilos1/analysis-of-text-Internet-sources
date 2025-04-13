@@ -307,21 +307,28 @@ const demoArticles = [
 ];
 
 function performSearch(query) {
-    // Фильтрация статей по запросу
-    const results = demoArticles.filter(article => 
-        article.title.toLowerCase().includes(query.toLowerCase()) || 
-        article.description.toLowerCase().includes(query.toLowerCase())
-    );
+    fetch(`http://localhost:5000/api/search?query=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            const results = data.map(item => ({
+                id: item._id.$oid,  // из MongoDB ObjectId
+                title: item.title,
+                description: item.source || '',
+                img: "foto.jpg", // если нет картинок в БД — можно оставить заглушку
+                url: item.url
+            }));
 
-    // Сохраняем результаты для отображения
-    sessionStorage.setItem('searchResults', JSON.stringify({
-        query: query,
-        results: results
-    }));
+            sessionStorage.setItem('searchResults', JSON.stringify({
+                query: query,
+                results: results
+            }));
 
-    // Переходим на страницу результатов
-    history.pushState({ page: 'search', query: query }, '', `?page=search&query=${encodeURIComponent(query)}`);
-    loadPage({ page: 'search', query: query });
+            history.pushState({ page: 'search', query: query }, '', `?page=search&query=${encodeURIComponent(query)}`);
+            loadPage({ page: 'search', query: query });
+        })
+        .catch(err => {
+            console.error("Search error:", err);
+        });
 }
 
 // Обновлённая функция loadPage
