@@ -1,16 +1,27 @@
-# Основной backend-сервер
-from flask import Flask, jsonify, request
-from flask_cors import CORS
+# Основной backend-сервер на FastAPI
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 from datetime import datetime
+from typing import Optional, List, Dict
 import requests
 from bs4 import BeautifulSoup
 from threading import Thread
 import time
 import schedule
+from bson import ObjectId
+import json
 
-app = Flask(__name__)
-CORS(app)  # Разрешаем CORS для всех доменов
+app = FastAPI()
+
+# Настройка CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Подключение к MongoDB
 client = MongoClient('mongodb://localhost:27017/')
@@ -39,29 +50,36 @@ CATEGORIES = {
     'education': 'Образование'
 }
 
+# Класс для сериализации ObjectId
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        return json.JSONEncoder.default(self, o)
+
 # Подсистема веб-интерфейса
-@app.route('/api/content/<category>', methods=['GET'])
-def display_content(category):
+@app.get("/api/content/{category}")
+async def display_content(category: str):
     """Отображает контент по категориям"""
     try:
         if category == 'digest':
             digest = digests_collection.find_one({'date': datetime.now().strftime('%Y-%m-%d')})
             if not digest:
-                return jsonify({'error': 'Digest not found'}), 404
-            return jsonify(digest)
+                raise HTTPException(status_code=404, detail="Digest not found")
+            return JSONEncoder().encode(digest)
         
         query = {'category': category} if category in CATEGORIES else {'source_type': category}
-        news = list(news_collection.find(query).sort('date', -1).limit(20)
-        return jsonify({'data': news})
+        news = list(news_collection.find(query).sort('date', -1).limit(20))
+        return JSONEncoder().encode({'data': news})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/api/filter', methods=['GET'])
-def filter_data_by_category():
+@app.get("/api/filter")
+async def filter_data_by_category(
+    category: Optional[str] = Query(None),
+    source_type: Optional[str] = Query(None)
+):
     """Фильтрует данные по категории"""
-    category = request.args.get('category')
-    source_type = request.args.get('source_type')
-    
     query = {}
     if category:
         query['category'] = category
@@ -70,47 +88,41 @@ def filter_data_by_category():
     
     try:
         news = list(news_collection.find(query).sort('date', -1).limit(20))
-        return jsonify({'data': news})
+        return JSONEncoder().encode({'data': news})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/api/search', methods=['GET'])
-def search_data():
+@app.get("/api/search")
+async def search_data(query: str = Query(...)):
     """Полнотекстовый поиск по базе данных"""
-    query = request.args.get('query')
-    if not query:
-        return jsonify({'error': 'Query parameter is required'}), 400
-    
     try:
-        # Используем текстовый индекс MongoDB
         results = list(news_collection.find(
             {'$text': {'$search': query}},
             {'score': {'$meta': 'textScore'}}
         ).sort([('score', {'$meta': 'textScore'})]).limit(20))
         
-        return jsonify({'data': results})
+        return JSONEncoder().encode({'data': results})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Подсистема дайджеста
-@app.route('/api/digest', methods=['GET'])
-def show_digest():
+@app.get("/api/digest")
+async def show_digest():
     """Отображает сводку дня"""
     try:
         today = datetime.now().strftime('%Y-%m-%d')
         digest = digests_collection.find_one({'date': today})
         
         if not digest:
-            # Если дайджеста нет, создаем новый
             digest = create_daily_digest()
             digests_collection.insert_one(digest)
         
-        return jsonify(digest)
+        return JSONEncoder().encode(digest)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/api/digest/update', methods=['POST'])
-def update_digest():
+@app.post("/api/digest/update")
+async def update_digest():
     """Обновляет дайджест"""
     try:
         digest = create_daily_digest()
@@ -119,11 +131,11 @@ def update_digest():
             {'$set': digest},
             upsert=True
         )
-        return jsonify({'status': 'success', 'digest': digest})
+        return {"status": "success", "digest": JSONEncoder().encode(digest)}
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
-# Подсистема сбора данных
+# Подсистема сбора данных (те же функции, что и в оригинале)
 def fetch_web_data(source_type):
     """Выполняет HTTP-запросы для сбора HTML-кода веб-страниц"""
     sources = NEWS_SOURCES.get(source_type, [])
@@ -134,7 +146,6 @@ def fetch_web_data(source_type):
             response = requests.get(source['url'], timeout=10)
             soup = BeautifulSoup(response.text, 'html.parser')
             
-            # Пример парсинга (нужно адаптировать под конкретные сайты)
             if 'ptzgovorit.ru' in source['url']:
                 articles = soup.find_all('div', class_='news-item')
                 for article in articles:
@@ -149,8 +160,6 @@ def fetch_web_data(source_type):
                         'source_type': source_type,
                         'raw_content': str(article)
                     })
-            
-            # Добавьте другие источники по аналогии
             
         except Exception as e:
             print(f"Error fetching {source['url']}: {str(e)}")
@@ -197,7 +206,6 @@ def update_data():
         classified_data = classify_data(filtered_data)
         
         for item in classified_data:
-            # Обновляем или добавляем новость
             news_collection.update_one(
                 {'url': item['url']},
                 {'$set': item},
@@ -206,10 +214,9 @@ def update_data():
     
     print("Data update completed")
 
-# Подсистема обработки и анализа данных
+# Подсистема обработки и анализа данных (те же функции, что и в оригинале)
 def summarize_text(text):
     """Формирует краткую сводку для длинных публикаций"""
-    # Упрощенная реализация - берем первые 3 предложения
     sentences = text.split('.')
     return '.'.join(sentences[:3]) + '.'
 
@@ -218,7 +225,6 @@ def create_daily_digest():
     today = datetime.now().strftime('%Y-%m-%d')
     start_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     
-    # Получаем топ-5 новостей за день по категориям
     digest = {
         'date': today,
         'created_at': datetime.now().isoformat(),
@@ -236,7 +242,6 @@ def create_daily_digest():
             digest['news'][category] = news
             digest['top_news'].extend(news[:2])
     
-    # Добавляем сводку
     for item in digest['top_news']:
         if 'content' in item:
             item['summary'] = summarize_text(item['content'])
@@ -244,36 +249,36 @@ def create_daily_digest():
     return digest
 
 # Подсистема хранения данных
-@app.route('/api/data/save', methods=['POST'])
-def save_data():
+@app.post("/api/data/save")
+async def save_data(request: Request):
     """Сохраняет данные в базе данных"""
     try:
-        data = request.json
+        data = await request.json()
         if not data:
-            return jsonify({'error': 'No data provided'}), 400
+            raise HTTPException(status_code=400, detail="No data provided")
         
         result = news_collection.insert_one(data)
-        return jsonify({'status': 'success', 'id': str(result.inserted_id)})
+        return {"status": "success", "id": str(result.inserted_id)}
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/api/data/history', methods=['GET'])
-def retrieve_historical_data():
+@app.get("/api/data/history")
+async def retrieve_historical_data(
+    start: Optional[str] = Query(None),
+    end: Optional[str] = Query(None)
+):
     """Получает исторические данные за выбранный период"""
-    start_date = request.args.get('start')
-    end_date = request.args.get('end')
-    
     try:
         query = {}
-        if start_date:
-            query['date'] = {'$gte': start_date}
-        if end_date:
-            query['date'] = {'$lte': end_date}
+        if start:
+            query['date'] = {'$gte': start}
+        if end:
+            query['date'] = {'$lte': end}
         
         data = list(news_collection.find(query).sort('date', -1))
-        return jsonify({'data': data})
+        return JSONEncoder().encode({'data': data})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Планировщик для автоматического обновления данных
 def scheduled_update():
@@ -284,12 +289,15 @@ def scheduled_update():
         schedule.run_pending()
         time.sleep(60)
 
+# Запуск приложения
 if __name__ == '__main__':
+    import uvicorn
+    
     # Создаем текстовый индекс для поиска
     news_collection.create_index([('title', 'text'), ('content', 'text')])
     
     # Запускаем фоновый процесс для обновления данных
     Thread(target=scheduled_update, daemon=True).start()
     
-    # Запускаем Flask-приложение
-    app.run(debug=True, port=5000)
+    # Запускаем FastAPI-приложение
+    uvicorn.run(app, host="0.0.0.0", port=5000)
