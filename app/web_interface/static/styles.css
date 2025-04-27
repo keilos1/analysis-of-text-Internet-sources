@@ -9,7 +9,354 @@ body {
     padding: 20px;
 }
 
+/* Базовые медиа-запросы для адаптивности */
+@media (max-width: 992px) {
+    .container {
+        padding: 30px;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        margin-top: 0;
+    }
+    
+    h1 {
+        position: static;
+        margin: 20px 0;
+    }
+    
+    .logo-box {
+        margin-bottom: 15px;
+    }
+    
+    .content {
+        flex-direction: column;
+    }
+    
+    .digest, .latest-news, .news-section {
+        width: 100%;
+    }
+    
+    .digest:hover {
+        width: 100%;
+    }
+    
+    .news-article {
+        flex-direction: column;
+    }
+    
+    .article-text, .article-image {
+        width: 100%;
+    }
+    
+    .article-image {
+        margin-top: 20px;
+    }
+}
 
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+    }
+    
+    h1 {
+        font-size: 40px !important;
+    }
+    
+    .news-item {
+        flex-direction: column;
+    }
+    
+    .news-item img {
+        width: 100%;
+        height: auto;
+        margin-bottom: 15px;
+    }
+    
+    .nav-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .nav-container nav {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+    }
+    
+    .nav-container nav a,
+    .nav-container nav .dropdown {
+        padding: 10px 0;
+        width: 100%;
+    }
+    
+    .nav-container nav a::after,
+    .nav-container nav .dropdown::after {
+        display: none;
+    }
+    
+    .search-container {
+        width: 100%;
+        margin-top: 15px;
+    }
+    
+    .dropdown-content {
+        position: static;
+        opacity: 1;
+        visibility: visible;
+        box-shadow: none;
+        display: none;
+    }
+    
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+}
+
+/* Мобильная адаптация (до 576px) */
+@media (max-width: 576px) {
+    /* Общие стили */
+    body {
+        padding: 10px;
+        background-attachment: scroll; /* Убираем фиксированный фон для производительности */
+    }
+    /* Общие стили для изображений */
+    .news-item img,
+    .article-image img,
+    .search-result-item img {
+        max-width: 100% !important;
+        height: auto !important;
+        margin: 0 auto !important;
+        display: block;
+    }
+    
+    /* Контейнеры для изображений */
+    .news-item,
+    .article-image,
+    .search-result-item {
+        width: 100% !important;
+        padding: 0 5px;
+        box-sizing: border-box;
+    }
+    
+    /* Новостные блоки */
+    .news-item {
+        flex-direction: column !important;
+    }
+    
+    /* Статьи */
+    .news-article {
+        flex-direction: column !important;
+    }
+    
+    .article-text, 
+    .article-image {
+        width: 100% !important;
+        padding: 0 5px;
+    }
+    
+    /* Галереи (если есть) */
+    .gallery img {
+        max-width: 100%;
+        height: auto;
+    }
+    .container {
+        padding: 15px !important;
+        margin: 5px auto;
+    }
+    
+    /* Шапка */
+    .header-content {
+        flex-direction: column;
+        margin-top: 0 !important;
+        align-items: center;
+    }
+    
+    h1 {
+        position: static !important;
+        font-size: 32px !important;
+        margin: 15px 0 !important;
+        order: 2; /* Меняем порядок элементов */
+    }
+    
+    .logo-box {
+        width: 80px !important;
+        height: 80px !important;
+        order: 1;
+        margin-bottom: 10px;
+    }
+    
+    .date {
+        order: 3;
+        margin-top: 10px;
+        font-size: 16px;
+    }
+    
+    /* Навигация */
+    .nav-container {
+        flex-direction: column;
+        padding: 10px 5px;
+    }
+    
+    .nav-container nav {
+        flex-direction: column;
+        width: 100%;
+        gap: 5px;
+    }
+    
+    .nav-container nav a,
+    .nav-container nav .dropdown {
+        padding: 8px 0 !important;
+        width: 100%;
+        text-align: center;
+        border-bottom: 1px solid #ccc;
+    }
+    
+    .nav-container nav a::after,
+    .nav-container nav .dropdown::after {
+        display: none;
+    }
+    
+    .search-container {
+        width: 100%;
+        margin-top: 10px;
+        justify-content: center;
+    }
+    
+    .search-input {
+        width: 100% !important;
+        max-width: none !important;
+        opacity: 1 !important;
+        margin-left: 0;
+    }
+    
+    /* Контент */
+    .content {
+        flex-direction: column;
+    }
+    
+    .digest, 
+    .latest-news, 
+    .news-section {
+        width: 100% !important;
+    }
+    
+    .digest:hover {
+        width: 100% !important; /* Отключаем эффект расширения на мобильных */
+    }
+    
+    /* Новости */
+    .news-item {
+        flex-direction: column;
+    }
+    
+    .news-item img {
+        width: 100% !important;
+        height: auto;
+        margin-bottom: 10px;
+    }
+    
+    /* Статьи */
+    .news-article {
+        flex-direction: column;
+    }
+    
+    .article-text, 
+    .article-image {
+        width: 100% !important;
+    }
+    
+    .article-image {
+        margin-top: 15px;
+    }
+    
+    .headline {
+        font-size: 22px !important;
+    }
+    
+    /* Фильтры */
+    .filter-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    #district-filter {
+        max-width: none !important;
+        margin-top: 8px;
+    }
+    
+    /* Даты */
+    .date-weekday, 
+    .date-month {
+        font-size: 16px;
+    }
+    
+    .date-day {
+        font-size: 18px;
+    }
+    
+    .date-year {
+        font-size: 14px;
+    }
+    
+    /* Выпадающие меню */
+    .dropdown-content {
+        position: static !important;
+        display: none;
+        width: 100%;
+        box-shadow: none;
+    }
+    
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+    
+    /* Результаты поиска */
+    .search-title {
+        font-size: 24px !important;
+    }
+    
+    .result-meta {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+
+/* Дополнительные правки для очень маленьких экранов (до 400px) */
+@media (max-width: 400px) {
+    /* Уменьшаем отступы для изображений */
+    .news-item img,
+    .article-image {
+        padding: 0;
+        margin: 0 0 10px 0 !important;
+    }
+    
+    /* Убираем возможные фиксированные размеры */
+    .news-item img {
+        width: 100% !important;
+        height: auto !important;
+    }
+    h1 {
+        font-size: 28px !important;
+    }
+    
+    .container {
+        padding: 10px !important;
+    }
+    
+    .digest h2 {
+        font-size: 20px;
+        padding: 8px 15px;
+    }
+    
+    .latest-news h2 {
+        font-size: 22px;
+    }
+    
+    .article-text p {
+        font-size: 16px !important;
+    }
+}
 
 .container {
     max-width: 900px;
