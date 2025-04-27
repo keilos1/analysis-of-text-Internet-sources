@@ -200,8 +200,7 @@ function loadSourcePage(container, source) {
     const sourceNames = {
         "news": "Новостные сайты",
         "social": "Социальные сети",
-        "reviews": "Отзывы",
-        "stat": "Статистические отчеты"
+        "stat": "Google search"
     };
 
     const newsData = {
