@@ -1,8 +1,11 @@
 # Команда для старта сервера - uvicorn app:app --host 0.0.0.0 --port 8000
+import asyncio
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse
+
+from ..data_collection.socialScraper import SocialScraper
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -16,6 +19,20 @@ async def read_index(request: Request):
 @app.get("/foto.jpg")
 async def get_foto():
     return FileResponse("static/foto.jpg")  # Укажите правильный путь
+
+async def periodic_scraping():
+    scraper = SocialScraper()
+    while True:
+        try:
+            posts = await scraper.parse_recent_posts()
+            scraper.save_to_db(posts)
+        except Exception as e:
+            print(f"Ошибка в процессе сбора данных: {str(e)}")
+        await asyncio.sleep(1800)  # Ждём 30 минут
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(periodic_scraping())
 
 # # Основной backend-сервер на FastAPI
 # from fastapi import FastAPI, HTTPException, Query, Request

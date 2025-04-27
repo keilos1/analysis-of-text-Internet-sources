@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from typing import List, Dict
 from pymongo import MongoClient
 
-
 class SocialScraper:
     def __init__(self, db_uri: str = "mongodb://localhost:27017/newsPTZ"):
         self.client = MongoClient(db_uri)
