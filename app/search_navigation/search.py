@@ -1,12 +1,12 @@
 # search_api.py
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient, TEXT
-from data_storage.database import db  # ваш импорт
+from ..data_storage.database import db  # ваш импорт
 from bson import json_util
+import json
 
-app = Flask(__name__)
-CORS(app)  # Разрешает запросы с других доменов (например, с localhost:3000)
+app = FastAPI()
 
 class NewsSearch:
     def __init__(self, articles_collection=None):
@@ -37,16 +37,21 @@ class NewsSearch:
         })
         return list(results)
 
+
 news_search = NewsSearch()
 
-@app.route('/api/search', methods=['GET'])
-def search():
-    query = request.args.get('query', '')
+
+@app.get("/api/search")
+async def search(query: str = ""):
     if not query:
-        return jsonify([])
+        return []
 
     results = news_search.search_news(query)
-    return json_util.dumps(results)  # BSON-совместимый JSON
+    # Конвертируем BSON в JSON-совместимый формат
+    return json.loads(json_util.dumps(results))
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)
