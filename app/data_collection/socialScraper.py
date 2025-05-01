@@ -5,6 +5,7 @@ import re
 from datetime import datetime, timedelta
 from typing import List, Dict
 from pymongo import MongoClient
+import asyncio
 
 class SocialScraper:
     def __init__(self, db_uri: str = "mongodb://localhost:27017/newsPTZ"):
@@ -132,3 +133,23 @@ class SocialScraper:
     def close(self):
         self.client.close()
 
+async def auto_update_loop():
+    """Автообновление данных раз в час"""
+    scraper = SocialScraper()
+
+    while True:
+        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Запуск парсинга...")
+        try:
+            posts = await scraper.parse_recent_posts()
+            scraper.save_to_db(posts)
+        except Exception as e:
+            print(f"Ошибка в автообновлении: {str(e)}")
+        finally:
+            scraper.close()
+
+        print("Парсинг завершён. Ожидание 1 час...")
+        await asyncio.sleep(3600)
+
+# Запуск автообновления при прямом запуске файла
+if __name__ == "__main__":
+    asyncio.run(auto_update_loop())
