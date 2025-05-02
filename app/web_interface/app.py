@@ -20,19 +20,6 @@ async def read_index(request: Request):
 async def get_foto():
     return FileResponse("static/foto.jpg")  # Укажите правильный путь
 
-async def periodic_scraping():
-    scraper = SocialScraper()
-    while True:
-        try:
-            posts = await scraper.parse_recent_posts()
-            scraper.save_to_db(posts)
-        except Exception as e:
-            print(f"Ошибка в процессе сбора данных: {str(e)}")
-        await asyncio.sleep(1800)  # Ждём 30 минут
-
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(periodic_scraping())
 
 # # Основной backend-сервер на FastAPI
 # from fastapi import FastAPI, HTTPException, Query, Request
