@@ -1,31 +1,15 @@
-# data_collection/social_scraper.py
 from bs4 import BeautifulSoup
 import httpx
 import re
 from datetime import datetime, timedelta
 from typing import List, Dict
-from pymongo import MongoClient
-import asyncio
 
 class SocialScraper:
-    def __init__(self, db_uri: str = "mongodb://localhost:27017/newsPTZ"):
-        self.client = MongoClient(db_uri)
-        self.db = self.client.news_db
-        self.time_threshold = datetime.now() - timedelta(hours=24)  # Фильтр по времени
+    def __init__(self):
+        self.time_threshold = datetime.now() - timedelta(minutes=30)  # Фильтр по времени (последние 30 минут)
 
-    def get_social_sources(self) -> List[Dict]:
-        """Получаем URL соцсетей из MongoDB"""
-        return list(self.db.sources.find({
-            "$or": [
-                {"url": {"$regex": "vk.com", "$options": "i"}},
-                {"url": {"$regex": "t.me", "$options": "i"}}
-            ],
-            "category": "social_media"
-        }))
-
-    async def parse_recent_posts(self) -> List[Dict]:
-        """Парсим только посты за последние 24 часа"""
-        sources = self.get_social_sources()
+    async def collect_social_data(self, sources: List[Dict]) -> List[Dict]:
+        """Собираем данные из социальных сетей за последние 30 минут"""
         recent_posts = []
 
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -36,7 +20,7 @@ class SocialScraper:
                     elif "t.me" in source["url"]:
                         posts = await self._parse_telegram(client, source)
 
-                    # Фильтруем по времени
+                    # Фильтруем по времени (только последние 30 минут)
                     filtered_posts = [
                         post for post in posts
                         if post["published_at"] > self.time_threshold
@@ -49,7 +33,7 @@ class SocialScraper:
         return recent_posts
 
     async def _parse_vk(self, client: httpx.AsyncClient, source: Dict) -> List[Dict]:
-        """Парсинг постов VK за последние 24 часа"""
+        """Парсинг постов VK за последние 30 минут"""
         try:
             group_id = re.search(r'vk\.com/([^/]+)', source["url"]).group(1)
             response = await client.get(
@@ -63,11 +47,11 @@ class SocialScraper:
                 post_time = self._extract_vk_time(post)
                 if post_time > self.time_threshold:
                     posts.append({
-                        "source_id": str(source["_id"]),
+                        "source_id": source.get("_id", ""),
                         "title": f"Новость из VK-{group_id}",
-                        "content": post.select_one(".wall_post_text").get_text("\n", strip=True),
+                        "text": post.select_one(".wall_post_text").get_text("\n", strip=True),  # Заменили content на text
                         "url": f"https://vk.com{post.select_one('.post_link')['href']}",
-                        "published_at": post_time,
+                        "published_at": post_time.isoformat(),
                         "source_type": "vk"
                     })
             return posts
@@ -84,7 +68,7 @@ class SocialScraper:
         return datetime.now()
 
     async def _parse_telegram(self, client: httpx.AsyncClient, source: Dict) -> List[Dict]:
-        """Парсинг Telegram за последние 24 часа"""
+        """Парсинг Telegram за последние 30 минут"""
         try:
             channel_name = re.search(r't\.me/([^/]+)', source["url"]).group(1)
             response = await client.get(
@@ -98,11 +82,11 @@ class SocialScraper:
                 msg_time = self._extract_telegram_time(msg)
                 if msg_time > self.time_threshold:
                     posts.append({
-                        "source_id": str(source["_id"]),
+                        "source_id": source.get("_id", ""),
                         "title": f"Новость из Telegram-{channel_name}",
-                        "content": msg.select_one(".tgme_widget_message_text").get_text("\n", strip=True),
+                        "text": msg.select_one(".tgme_widget_message_text").get_text("\n", strip=True),  # Заменили content на text
                         "url": msg.select_one(".tgme_widget_message_date")["href"],
-                        "published_at": msg_time,
+                        "published_at": msg_time.isoformat(),
                         "source_type": "telegram"
                     })
             return posts
@@ -121,35 +105,7 @@ class SocialScraper:
             ).replace(tzinfo=None)
         return datetime.now()
 
-    def save_to_db(self, posts: List[Dict]):
-        """Сохраняем только новые посты"""
-        existing_urls = {p["url"] for p in self.db.social_posts.find({}, {"url": 1})}
-        new_posts = [p for p in posts if p["url"] not in existing_urls]
-
-        if new_posts:
-            self.db.social_posts.insert_many(new_posts)
-            print(f"Добавлено {len(new_posts)} новых постов")
-
-    def close(self):
-        self.client.close()
-
-async def auto_update_loop():
-    """Автообновление данных раз в час"""
+async def get_social_data(sources: List[Dict]) -> List[Dict]:
+    """Функция для получения данных из социальных сетей (только последние 30 минут)"""
     scraper = SocialScraper()
-
-    while True:
-        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Запуск парсинга...")
-        try:
-            posts = await scraper.parse_recent_posts()
-            scraper.save_to_db(posts)
-        except Exception as e:
-            print(f"Ошибка в автообновлении: {str(e)}")
-        finally:
-            scraper.close()
-
-        print("Парсинг завершён. Ожидание 1 час...")
-        await asyncio.sleep(3600)
-
-# Запуск автообновления при прямом запуске файла
-if __name__ == "__main__":
-    asyncio.run(auto_update_loop())
+    return await scraper.collect_social_data(sources)
