@@ -15,42 +15,23 @@ document.addEventListener("DOMContentLoaded", function() {
             const articleId = e.target.getAttribute('data-article');
             loadArticle(articleId);
         }
-        
-        // Обработка кликов по внешним ссылкам в результатах поиска
-        if (e.target.matches('.search-item-title') && e.target.href) {
-            // Открываем в новой вкладке, переход обрабатывается естественным образом
-            return;
-        }
     });
 
-    // Инициализация поиска
-    initSearch();
-});
-
-function initSearch() {
-    const searchInput = document.querySelector('.search-input');
-    const searchButton = document.querySelector('.search-button');
-    
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const query = this.value.trim();
-                if (query) {
-                    performSearch(query);
+    // Инициализация поиска после полной загрузки DOM
+    setTimeout(() => {
+        const searchInput = document.querySelector('.search-input');
+        if (searchInput) {
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const query = this.value.trim();
+                    if (query) {
+                        performSearch(query);
+                    }
                 }
-            }
-        });
-    }
-    
-    if (searchButton) {
-        searchButton.addEventListener('click', function() {
-            const query = searchInput.value.trim();
-            if (query) {
-                performSearch(query);
-            }
-        });
-    }
-}
+            });
+        }
+    }, 100);
+});
 
 function setCurrentDate() {
     const dateElement = document.getElementById("current-date");
@@ -78,13 +59,16 @@ function setupNavigation() {
             const page = this.getAttribute('data-page');
             const type = this.getAttribute('data-type');
             
+            // Изменяем URL без перезагрузки
             const url = type ? `?page=${page}&type=${type}` : `?page=${page}`;
             history.pushState({ page, type }, '', url);
             
+            // Загружаем страницу
             loadPage({ page, type });
         });
     });
     
+    // Обработка кнопки "назад"
     window.addEventListener('popstate', function(e) {
         if (e.state) {
             loadPage(e.state);
@@ -98,13 +82,11 @@ function getCurrentPage() {
     const params = new URLSearchParams(window.location.search);
     return {
         page: params.get('page') || 'main',
-        type: params.get('type') || null,
-        query: params.get('query') || null
+        type: params.get('type') || null
     };
 }
 
-function loadPage(params) {
-    const { page, type, query } = params;
+function loadPage({ page, type }) {
     const contentContainer = document.getElementById('dynamic-content');
     
     switch(page) {
@@ -119,9 +101,6 @@ function loadPage(params) {
             break;
         case 'article':
             loadArticlePage(contentContainer, type);
-            break;
-        case 'search':
-            loadSearchResultsPage(contentContainer, query);
             break;
         default:
             loadMainPage(contentContainer);
@@ -318,62 +297,65 @@ function loadArticlePage(container, articleId) {
     loadArticle(articleId);
 }
 
-async function performSearch(query) {
-    try {
-        // Показываем индикатор загрузки
-        const contentContainer = document.getElementById('dynamic-content');
-        contentContainer.innerHTML = `
-            <div class="search-loading">
-                <div class="spinner"></div>
-                <p>Ищем новости по запросу: "${query}"</p>
-            </div>
-        `;
+// Демонстрационные данные для поиска
+const demoArticles = [
+    { id: 1, title: "Культурное событие в Петрозаводске", description: "В городе прошел фестиваль народного творчества", img: "foto.jpg" },
+    { id: 2, title: "Спортивные новости", description: "Местная футбольная команда выиграла турнир", img: "foto.jpg" },
+    { id: 3, title: "Технологии в образовании", description: "Школы Петрозаводска получают новое оборудование", img: "foto.jpg" },
+    { id: 4, title: "Новый парк открыт", description: "В центре города открыли новый парк культуры и отдыха", img: "foto.jpg" }
+];
 
-        const response = await fetch(`http://localhost:8000/api/search?query=${encodeURIComponent(query)}`);
-        
-        if (!response.ok) {
-            throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        // Обработка результатов из MongoDB
-        const results = data.map(item => ({
-            id: item._id?.$oid || item._id || Math.random().toString(36).substr(2, 9),
-            title: item.title,
-            description: item.summary || item.source || '',
-            img: "foto.jpg",
-            url: item.url,
-            date: item.publication_date ? 
-                new Date(item.publication_date.$date || item.publication_date).toLocaleDateString('ru-RU') : 
-                'Дата неизвестна',
-            source: item.source || 'неизвестен'
-        }));
+function performSearch(query) {
+    fetch(`http://localhost:8000/api/search?query=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            const results = data.map(item => ({
+                id: item._id.$oid,  // из MongoDB ObjectId
+                title: item.title,
+                description: item.source || '',
+                img: "foto.jpg", // если нет картинок в БД — можно оставить заглушку
+                url: item.url
+            }));
 
-        // Сохраняем результаты
-        sessionStorage.setItem('searchResults', JSON.stringify({
-            query: query,
-            results: results
-        }));
+            sessionStorage.setItem('searchResults', JSON.stringify({
+                query: query,
+                results: results
+            }));
 
-        // Обновляем URL и загружаем страницу с результатами
-        history.pushState({ page: 'search', query: query }, '', `?page=search&query=${encodeURIComponent(query)}`);
-        loadSearchResultsPage(contentContainer, query);
-        
-    } catch (error) {
-        console.error("Search error:", error);
-        const contentContainer = document.getElementById('dynamic-content');
-        contentContainer.innerHTML = `
-            <div class="search-error">
-                <h2>Ошибка при поиске</h2>
-                <p>Произошла ошибка при выполнении поиска. Пожалуйста, попробуйте позже.</p>
-                <p class="error-details">${error.message}</p>
-                <button onclick="history.back()">Вернуться назад</button>
-            </div>
-        `;
+            history.pushState({ page: 'search', query: query }, '', `?page=search&query=${encodeURIComponent(query)}`);
+            loadPage({ page: 'search', query: query });
+        })
+        .catch(err => {
+            console.error("Search error:", err);
+        });
+}
+
+// Обновлённая функция loadPage
+function loadPage({ page, type, query }) {
+    const contentContainer = document.getElementById('dynamic-content');
+    
+    switch(page) {
+        case 'main':
+            loadMainPage(contentContainer);
+            break;
+        case 'category':
+            loadCategoryPage(contentContainer, type);
+            break;
+        case 'source':
+            loadSourcePage(contentContainer, type);
+            break;
+        case 'article':
+            loadArticlePage(contentContainer, type);
+            break;
+        case 'search':
+            loadSearchResultsPage(contentContainer, query);
+            break;
+        default:
+            loadMainPage(contentContainer);
     }
 }
 
+// Функция для отображения результатов поиска
 function loadSearchResultsPage(container, query) {
     let searchData = { query: query || '', results: [] };
     
@@ -397,14 +379,8 @@ function loadSearchResultsPage(container, query) {
         searchData.results.forEach(item => {
             html += `
                 <div class="search-item">
-                    <div class="search-item-header">
-                        <a href="${item.url}" target="_blank" class="search-item-title">${item.title}</a>
-                        <span class="search-item-date">${item.date}</span>
-                    </div>
+                    <a href="#" data-article="${item.id}" class="search-item-title">${item.title}</a>
                     <p class="search-item-desc">${item.description}</p>
-                    <div class="search-item-footer">
-                        <span class="search-item-source">${item.source}</span>
-                    </div>
                 </div>
             `;
         });
@@ -414,7 +390,6 @@ function loadSearchResultsPage(container, query) {
             <div class="no-results">
                 <p>По запросу "${searchData.query}" ничего не найдено.</p>
                 <p>Попробуйте изменить формулировку запроса.</p>
-                <button onclick="history.back()">Вернуться назад</button>
             </div>
         `;
     }
