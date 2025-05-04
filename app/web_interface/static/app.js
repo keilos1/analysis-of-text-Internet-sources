@@ -103,19 +103,19 @@ function getCurrentPage() {
     };
 }
 
-async function loadPage(params) {
+function loadPage(params) {
     const { page, type, query } = params;
     const contentContainer = document.getElementById('dynamic-content');
     
     switch(page) {
         case 'main':
-            await loadMainPage(contentContainer);
+            loadMainPage(contentContainer);
             break;
         case 'category':
-            await loadCategoryPage(contentContainer, type);
+            loadCategoryPage(contentContainer, type);
             break;
         case 'source':
-            await loadSourcePage(contentContainer, type);
+            loadSourcePage(contentContainer, type);
             break;
         case 'article':
             loadArticlePage(contentContainer, type);
@@ -124,63 +124,41 @@ async function loadPage(params) {
             loadSearchResultsPage(contentContainer, query);
             break;
         default:
-            await loadMainPage(contentContainer);
+            loadMainPage(contentContainer);
     }
 }
 
-async function fetchArticles(limit = 5, category = null) {
-    try {
-        const response = await fetch(`http://localhost:8000/api/articles?limit=${limit}${category ? `&category=${category}` : ''}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('Error fetching articles:', error);
-        return [];
-    }
-}
-
-async function loadMainPage(container) {
-    // Показываем индикатор загрузки
-    container.innerHTML = '<div class="loading">Загрузка новостей...</div>';
-    
-    const articles = await fetchArticles(5);
-    
-    let digestHTML = `
+function loadMainPage(container) {
+    container.innerHTML = `
         <section class="digest">
             <h2>Новости дня</h2>
             <ul>
-    `;
-    
-    articles.slice(0, 3).forEach(article => {
-        digestHTML += `<li><a href="#" data-article="${article._id}">${article.title}</a></li>`;
-    });
-    
-    digestHTML += `
+                <li><a href="#" data-article="1">Заголовок новости</a></li>
+                <li><a href="#" data-article="2">Заголовок новости</a></li>
+                <li><a href="#" data-article="3">Заголовок новости</a></li>
             </ul>
         </section>
         <section class="latest-news">
             <h2>Последние новости</h2>
-    `;
-    
-    articles.forEach(article => {
-        digestHTML += `
             <div class="news-item">
-                <img src="${article.image || 'foto.jpg'}" alt="">
+                <img src="foto.jpg" alt="">
                 <div class="news-text">
-                    <a href="#" data-article="${article._id}" class="news-title">${article.title}</a>
-                    <p>${article.summary || 'Описание отсутствует'}</p>
+                    <a href="#" data-article="1" class="news-title">Заголовок новости</a>
+                    <p>Это описание первой новости. Здесь можно рассказать подробнее о событии, которое произошло.</p>
                 </div>
             </div>
-        `;
-    });
-    
-    digestHTML += `</section>`;
-    container.innerHTML = digestHTML;
+            <div class="news-item">
+                <img src="foto.jpg" alt="">
+                <div class="news-text">
+                    <a href="#" data-article="2" class="news-title">Заголовок новости</a>
+                    <p>Это описание второй новости. Подробности о том, что произошло, можно добавить здесь.</p>
+                </div>
+            </div>
+        </section>
+    `;
 }
 
-async function loadCategoryPage(container, category) {
+function loadCategoryPage(container, category) {
     const categoryNames = {
         "culture": "Культура",
         "sports": "Спорт",
@@ -189,10 +167,21 @@ async function loadCategoryPage(container, category) {
         "education": "Образование"
     };
 
-    // Показываем индикатор загрузки
-    container.innerHTML = '<div class="loading">Загрузка новостей...</div>';
-    
-    const articles = await fetchArticles(10, category);
+    const newsData = {
+        "culture": [
+            { id: 1, img: "foto.jpg", title: "Культурное событие", description: "Описание культурного события." },
+            { id: 2, img: "foto.jpg", title: "Открытие выставки", description: "Подробности об открытии выставки." }
+        ],
+        "sports": [
+            { id: 3, img: "foto.jpg", title: "Спортивный турнир", description: "Информация о спортивном турнире." },
+            { id: 4, img: "foto.jpg", title: "Футбольный матч", description: "Результаты и обзор футбольного матча." }
+        ],
+        "tech": [
+            { id: 5, img: "foto.jpg", title: "Технологическое открытие", description: "Информация о технологическом открытии." }
+        ]
+    };
+
+    const currentNews = newsData[category] || [];
     const categoryName = categoryNames[category] || "Категория";
 
     let digestHTML = `
@@ -201,8 +190,8 @@ async function loadCategoryPage(container, category) {
             <ul>
     `;
 
-    articles.slice(0, 3).forEach(article => {
-        digestHTML += `<li><a href="#" data-article="${article._id}">${article.title}</a></li>`;
+    currentNews.slice(0, 3).forEach(news => {
+        digestHTML += `<li><a href="#" data-article="${news.id}">${news.title}</a></li>`;
     });
 
     digestHTML += `
@@ -212,13 +201,13 @@ async function loadCategoryPage(container, category) {
             <h2>Новости: ${categoryName}</h2>
     `;
 
-    articles.forEach(article => {
+    currentNews.forEach(news => {
         digestHTML += `
             <div class="news-item">
-                <img src="${article.image || 'foto.jpg'}" alt="">
+                <img src="${news.img}" alt="">
                 <div class="news-text">
-                    <a href="#" data-article="${article._id}" class="news-title">${article.title}</a>
-                    <p>${article.summary || 'Описание отсутствует'}</p>
+                    <a href="#" data-article="${news.id}" class="news-title">${news.title}</a>
+                    <p>${news.description}</p>
                 </div>
             </div>
         `;
@@ -228,104 +217,101 @@ async function loadCategoryPage(container, category) {
     container.innerHTML = digestHTML;
 }
 
-async function loadSourcePage(container, source) {
+function loadSourcePage(container, source) {
     const sourceNames = {
         "news": "Новостные сайты",
         "social": "Социальные сети",
         "stat": "Google search"
     };
 
-    // Показываем индикатор загрузки
-    container.innerHTML = '<div class="loading">Загрузка новостей...</div>';
-    
-    try {
-        const response = await fetch(`http://localhost:8000/api/articles?source=${source}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const articles = await response.json();
-        
-        const sourceName = sourceNames[source] || "Источник";
+    const newsData = {
+        "news": [
+            { id: 6, img: "foto.jpg", title: "Заголовок новости", description: "Описание новости.", source: "Официальный сайт" },
+            { id: 7, img: "foto.jpg", title: "Заголовок новости", description: "Описание второй новости.", source: "Газета" }
+        ],
+        "social": [
+            { id: 8, img: "foto.jpg", title: "Обсуждение в соцсетях", description: "Тема, обсуждаемая в соцсетях.", source: "ВКонтакте" },
+            { id: 9, img: "foto.jpg", title: "Новость из Telegram", description: "Что обсуждают в Telegram.", source: "Telegram" }
+        ]
+    };
 
-        let html = `
-            <section class="digest">
-                <h2>Новости дня</h2>
-                <ul>
-        `;
+    const currentNews = newsData[source] || [];
+    const sourceName = sourceNames[source] || "Источник";
 
-        articles.slice(0, 3).forEach(article => {
-            html += `<li><a href="#" data-article="${article._id}">${article.title}</a></li>`;
-        });
+    let html = `
+        <section class="digest">
+            <h2>Новости дня</h2>
+            <ul>
+    `;
 
+    currentNews.slice(0, 3).forEach(news => {
+        html += `<li><a href="#" data-article="${news.id}">${news.title}</a></li>`;
+    });
+
+    html += `
+            </ul>
+        </section>
+        <section class="latest-news">
+            <h2>Источник: ${sourceName}</h2>
+    `;
+
+    currentNews.forEach(news => {
         html += `
-                </ul>
-            </section>
-            <section class="latest-news">
-                <h2>Источник: ${sourceName}</h2>
-        `;
-
-        articles.forEach(article => {
-            html += `
-                <div class="news-item">
-                    <img src="${article.image || 'foto.jpg'}" alt="">
-                    <div class="news-text">
-                        <a href="#" data-article="${article._id}" class="news-title">${article.title}</a>
-                        <p>${article.summary || 'Описание отсутствует'}</p>
-                        <small>Источник: ${article.source || 'неизвестен'}</small>
-                    </div>
+            <div class="news-item">
+                <img src="${news.img}" alt="">
+                <div class="news-text">
+                    <a href="#" data-article="${news.id}" class="news-title">${news.title}</a>
+                    <p>${news.description}</p>
+                    <small>Источник: ${news.source}</small>
                 </div>
-            `;
-        });
-
-        html += `</section>`;
-        container.innerHTML = html;
-    } catch (error) {
-        console.error('Error loading source page:', error);
-        container.innerHTML = `
-            <div class="error">
-                <h2>Ошибка загрузки</h2>
-                <p>Произошла ошибка при загрузке новостей. Пожалуйста, попробуйте позже.</p>
             </div>
         `;
-    }
+    });
+
+    html += `</section>`;
+    container.innerHTML = html;
 }
 
-async function loadArticle(articleId) {
-    try {
-        const response = await fetch(`http://localhost:8000/api/articles/${articleId}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+function loadArticle(articleId) {
+    const articles = {
+        "1": {
+            title: "Заголовок новости",
+            content: `
+                <p>In January 2021, a facial recognition system helped detain a man who had been on the federal wanted list for 8 years.
+                   The suspect was found in a shopping mall and was immediately detained by the police.</p>
+                <p>In March 2021, a facial recognition system helped detain a married couple who had been on the federal wanted list for 17 years.
+                   They were located at a public transportation hub and taken into custody.</p>
+                <p>In April 2022, a facial recognition system helped detain a man who had been on the federal wanted list for 13 years.
+                   Law enforcement officers confirmed his identity through biometric scanning.</p>
+            `,
+            image: "foto.jpg"
+        },
+        "2": {
+            title: "Другая важная новость",
+            content: `
+                <p>Это содержимое второй новости. Здесь может быть подробное описание события.</p>
+                <p>Дополнительные детали и информация о происшествии.</p>
+            `,
+            image: "foto.jpg"
         }
-        const article = await response.json();
-        
-        const contentContainer = document.getElementById('dynamic-content');
+    };
 
-        history.pushState({ page: 'article', type: articleId }, '', `?page=article&id=${articleId}`);
+    const article = articles[articleId] || articles["1"];
+    const contentContainer = document.getElementById('dynamic-content');
 
-        contentContainer.innerHTML = `
-            <div class="news-article">
-                <div class="article-text">
-                    <h2 class="headline">${article.title}</h2>
-                    <p>${article.content || article.summary || 'Содержание отсутствует'}</p>
-                    ${article.publication_date ? 
-                        `<div class="article-date">Дата публикации: ${new Date(article.publication_date).toLocaleDateString('ru-RU')}</div>` : ''}
-                    ${article.source ? `<div class="article-source">Источник: ${article.source}</div>` : ''}
-                </div>
-                <div class="article-image">
-                    <img src="${article.image || 'foto.jpg'}" alt="Фотография новости">
-                </div>
+    history.pushState({ page: 'article', type: articleId }, '', `?page=article&id=${articleId}`);
+
+    contentContainer.innerHTML = `
+        <div class="news-article">
+            <div class="article-text">
+                <h2 class="headline">${article.title}</h2>
+                ${article.content}
             </div>
-        `;
-    } catch (error) {
-        console.error('Error loading article:', error);
-        const contentContainer = document.getElementById('dynamic-content');
-        contentContainer.innerHTML = `
-            <div class="error">
-                <h2>Ошибка загрузки статьи</h2>
-                <p>Произошла ошибка при загрузке статьи. Пожалуйста, попробуйте позже.</p>
+            <div class="article-image">
+                <img src="${article.image}" alt="Фотография новости">
             </div>
-        `;
-    }
+        </div>
+    `;
 }
 
 function loadArticlePage(container, articleId) {
@@ -356,7 +342,7 @@ async function performSearch(query) {
             id: item._id?.$oid || item._id || Math.random().toString(36).substr(2, 9),
             title: item.title,
             description: item.summary || item.source || '',
-            img: item.image || "foto.jpg",
+            img: "foto.jpg",
             url: item.url,
             date: item.publication_date ? 
                 new Date(item.publication_date.$date || item.publication_date).toLocaleDateString('ru-RU') : 
