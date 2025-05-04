@@ -4,14 +4,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse, JSONResponse
 from bson import ObjectId, json_util
 import json
-import os
-import sys
+from application.data_storage.database import connect_to_mongo
 
-# Добавляем путь к корню проекта в PYTHONPATH
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
-# Теперь можно делать абсолютный импорт
-from data_storage.database import connect_to_mongo
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
