@@ -18,9 +18,9 @@ class NewsSearch:
         existing_indexes = self.articles.index_information()
         if index_name not in existing_indexes:
             self.articles.create_index(
-                [("title", TEXT), ("summary", TEXT)],
+                [("title", TEXT), ("text", TEXT), ("summary", TEXT)],
                 name=index_name,
-                weights={"title": 3, "summary": 1},
+                weights={"title": 3, "text": 2, "summary": 1},
                 default_language="russian"
             )
 
@@ -33,6 +33,8 @@ class NewsSearch:
             "url": 1,
             "source": 1,
             "publication_date": 1,
+            "text": 1,
+            "summary": 1,
             "score": {"$meta": "textScore"}
         })
         return list(results)
