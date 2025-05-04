@@ -27,31 +27,51 @@ document.addEventListener("DOMContentLoaded", function() {
     initSearch();
 });
 
-function initSearch() {
-    const searchInput = document.querySelector('.search-input');
-    const searchButton = document.querySelector('.search-button');
-    
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const query = this.value.trim();
-                if (query) {
-                    performSearch(query);
-                }
-            }
-        });
-    }
-    
-    if (searchButton) {
-        searchButton.addEventListener('click', function() {
-            const query = searchInput.value.trim();
-            if (query) {
-                performSearch(query);
-            }
-        });
+// ========== API Functions ==========
+async function fetchArticles(limit = 5, category = null, source = null) {
+    try {
+        let url = 'http://localhost:8000/api/articles';
+        const params = new URLSearchParams();
+        
+        if (limit) params.append('limit', limit);
+        if (category) params.append('category', category);
+        if (source) params.append('source', source);
+        
+        if (params.toString()) url += `?${params.toString()}`;
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching articles:', error);
+        return [];
     }
 }
 
+async function fetchArticleById(id) {
+    try {
+        const response = await fetch(`http://localhost:8000/api/articles/${id}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching article:', error);
+        return null;
+    }
+}
+
+async function searchArticles(query) {
+    try {
+        const response = await fetch(`http://localhost:8000/api/search?query=${encodeURIComponent(query)}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return await response.json();
+    } catch (error) {
+        console.error('Error searching articles:', error);
+        return [];
+    }
+}
+
+// ========== Utility Functions ==========
 function setCurrentDate() {
     const dateElement = document.getElementById("current-date");
     if (!dateElement) return;
@@ -103,62 +123,80 @@ function getCurrentPage() {
     };
 }
 
-function loadPage(params) {
+// ========== Page Loading Functions ==========
+async function loadPage(params) {
     const { page, type, query } = params;
     const contentContainer = document.getElementById('dynamic-content');
     
     switch(page) {
         case 'main':
-            loadMainPage(contentContainer);
+            await loadMainPage(contentContainer);
             break;
         case 'category':
-            loadCategoryPage(contentContainer, type);
+            await loadCategoryPage(contentContainer, type);
             break;
         case 'source':
-            loadSourcePage(contentContainer, type);
+            await loadSourcePage(contentContainer, type);
             break;
         case 'article':
-            loadArticlePage(contentContainer, type);
+            await loadArticlePage(contentContainer, type);
             break;
         case 'search':
-            loadSearchResultsPage(contentContainer, query);
+            await loadSearchResultsPage(contentContainer, query);
             break;
         default:
-            loadMainPage(contentContainer);
+            await loadMainPage(contentContainer);
     }
 }
 
-function loadMainPage(container) {
-    container.innerHTML = `
-        <section class="digest">
-            <h2>Новости дня</h2>
-            <ul>
-                <li><a href="#" data-article="1">Заголовок новости</a></li>
-                <li><a href="#" data-article="2">Заголовок новости</a></li>
-                <li><a href="#" data-article="3">Заголовок новости</a></li>
-            </ul>
-        </section>
-        <section class="latest-news">
-            <h2>Последние новости</h2>
-            <div class="news-item">
-                <img src="foto.jpg" alt="">
-                <div class="news-text">
-                    <a href="#" data-article="1" class="news-title">Заголовок новости</a>
-                    <p>Это описание первой новости. Здесь можно рассказать подробнее о событии, которое произошло.</p>
+async function loadMainPage(container) {
+    container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
+    
+    try {
+        const articles = await fetchArticles(5);
+        
+        let digestHTML = `
+            <section class="digest">
+                <h2>Новости дня</h2>
+                <ul>
+        `;
+        
+        articles.slice(0, 3).forEach(article => {
+            digestHTML += `<li><a href="#" data-article="${article._id}">${article.title}</a></li>`;
+        });
+        
+        digestHTML += `
+                </ul>
+            </section>
+            <section class="latest-news">
+                <h2>Последние новости</h2>
+        `;
+        
+        articles.forEach(article => {
+            digestHTML += `
+                <div class="news-item">
+                    <img src="${article.image || 'foto.jpg'}" alt="${article.title}">
+                    <div class="news-text">
+                        <a href="#" data-article="${article._id}" class="news-title">${article.title}</a>
+                        <p>${article.summary || 'Описание новости отсутствует'}</p>
+                    </div>
                 </div>
+            `;
+        });
+        
+        digestHTML += `</section>`;
+        container.innerHTML = digestHTML;
+    } catch (error) {
+        container.innerHTML = `
+            <div class="error-message">
+                <p>Не удалось загрузить новости. Пожалуйста, попробуйте позже.</p>
+                <button onclick="location.reload()">Обновить страницу</button>
             </div>
-            <div class="news-item">
-                <img src="foto.jpg" alt="">
-                <div class="news-text">
-                    <a href="#" data-article="2" class="news-title">Заголовок новости</a>
-                    <p>Это описание второй новости. Подробности о том, что произошло, можно добавить здесь.</p>
-                </div>
-            </div>
-        </section>
-    `;
+        `;
+    }
 }
 
-function loadCategoryPage(container, category) {
+async function loadCategoryPage(container, category) {
     const categoryNames = {
         "culture": "Культура",
         "sports": "Спорт",
@@ -166,161 +204,180 @@ function loadCategoryPage(container, category) {
         "holidays": "Праздники",
         "education": "Образование"
     };
+    
+    container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
+    
+    try {
+        const articles = await fetchArticles(10, category);
+        const categoryName = categoryNames[category] || "Категория";
 
-    const newsData = {
-        "culture": [
-            { id: 1, img: "foto.jpg", title: "Культурное событие", description: "Описание культурного события." },
-            { id: 2, img: "foto.jpg", title: "Открытие выставки", description: "Подробности об открытии выставки." }
-        ],
-        "sports": [
-            { id: 3, img: "foto.jpg", title: "Спортивный турнир", description: "Информация о спортивном турнире." },
-            { id: 4, img: "foto.jpg", title: "Футбольный матч", description: "Результаты и обзор футбольного матча." }
-        ],
-        "tech": [
-            { id: 5, img: "foto.jpg", title: "Технологическое открытие", description: "Информация о технологическом открытии." }
-        ]
-    };
+        let digestHTML = `
+            <section class="digest">
+                <h2>Новости дня</h2>
+                <ul>
+        `;
 
-    const currentNews = newsData[category] || [];
-    const categoryName = categoryNames[category] || "Категория";
+        articles.slice(0, 3).forEach(article => {
+            digestHTML += `<li><a href="#" data-article="${article._id}">${article.title}</a></li>`;
+        });
 
-    let digestHTML = `
-        <section class="digest">
-            <h2>Новости дня</h2>
-            <ul>
-    `;
-
-    currentNews.slice(0, 3).forEach(news => {
-        digestHTML += `<li><a href="#" data-article="${news.id}">${news.title}</a></li>`;
-    });
-
-    digestHTML += `
-            </ul>
-        </section>
-        <section class="latest-news">
-            <h2>Новости: ${categoryName}</h2>
-    `;
-
-    currentNews.forEach(news => {
         digestHTML += `
-            <div class="news-item">
-                <img src="${news.img}" alt="">
-                <div class="news-text">
-                    <a href="#" data-article="${news.id}" class="news-title">${news.title}</a>
-                    <p>${news.description}</p>
+                </ul>
+            </section>
+            <section class="latest-news">
+                <h2>Новости: ${categoryName}</h2>
+        `;
+
+        articles.forEach(article => {
+            digestHTML += `
+                <div class="news-item">
+                    <img src="${article.image || 'foto.jpg'}" alt="${article.title}">
+                    <div class="news-text">
+                        <a href="#" data-article="${article._id}" class="news-title">${article.title}</a>
+                        <p>${article.summary || 'Описание новости отсутствует'}</p>
+                    </div>
                 </div>
+            `;
+        });
+
+        digestHTML += `</section>`;
+        container.innerHTML = digestHTML;
+    } catch (error) {
+        container.innerHTML = `
+            <div class="error-message">
+                <p>Не удалось загрузить новости. Пожалуйста, попробуйте позже.</p>
+                <button onclick="history.back()">Вернуться назад</button>
             </div>
         `;
-    });
-
-    digestHTML += `</section>`;
-    container.innerHTML = digestHTML;
+    }
 }
 
-function loadSourcePage(container, source) {
+async function loadSourcePage(container, source) {
     const sourceNames = {
         "news": "Новостные сайты",
         "social": "Социальные сети",
         "stat": "Google search"
     };
+    
+    container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
+    
+    try {
+        const articles = await fetchArticles(10, null, source);
+        const sourceName = sourceNames[source] || "Источник";
 
-    const newsData = {
-        "news": [
-            { id: 6, img: "foto.jpg", title: "Заголовок новости", description: "Описание новости.", source: "Официальный сайт" },
-            { id: 7, img: "foto.jpg", title: "Заголовок новости", description: "Описание второй новости.", source: "Газета" }
-        ],
-        "social": [
-            { id: 8, img: "foto.jpg", title: "Обсуждение в соцсетях", description: "Тема, обсуждаемая в соцсетях.", source: "ВКонтакте" },
-            { id: 9, img: "foto.jpg", title: "Новость из Telegram", description: "Что обсуждают в Telegram.", source: "Telegram" }
-        ]
-    };
+        let html = `
+            <section class="digest">
+                <h2>Новости дня</h2>
+                <ul>
+        `;
 
-    const currentNews = newsData[source] || [];
-    const sourceName = sourceNames[source] || "Источник";
+        articles.slice(0, 3).forEach(article => {
+            html += `<li><a href="#" data-article="${article._id}">${article.title}</a></li>`;
+        });
 
-    let html = `
-        <section class="digest">
-            <h2>Новости дня</h2>
-            <ul>
-    `;
-
-    currentNews.slice(0, 3).forEach(news => {
-        html += `<li><a href="#" data-article="${news.id}">${news.title}</a></li>`;
-    });
-
-    html += `
-            </ul>
-        </section>
-        <section class="latest-news">
-            <h2>Источник: ${sourceName}</h2>
-    `;
-
-    currentNews.forEach(news => {
         html += `
-            <div class="news-item">
-                <img src="${news.img}" alt="">
-                <div class="news-text">
-                    <a href="#" data-article="${news.id}" class="news-title">${news.title}</a>
-                    <p>${news.description}</p>
-                    <small>Источник: ${news.source}</small>
+                </ul>
+            </section>
+            <section class="latest-news">
+                <h2>Источник: ${sourceName}</h2>
+        `;
+
+        articles.forEach(article => {
+            html += `
+                <div class="news-item">
+                    <img src="${article.image || 'foto.jpg'}" alt="${article.title}">
+                    <div class="news-text">
+                        <a href="#" data-article="${article._id}" class="news-title">${article.title}</a>
+                        <p>${article.summary || 'Описание новости отсутствует'}</p>
+                        <small>Источник: ${article.source || 'неизвестен'}</small>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `</section>`;
+        container.innerHTML = html;
+    } catch (error) {
+        container.innerHTML = `
+            <div class="error-message">
+                <p>Не удалось загрузить новости. Пожалуйста, попробуйте позже.</p>
+                <button onclick="history.back()">Вернуться назад</button>
+            </div>
+        `;
+    }
+}
+
+async function loadArticle(articleId) {
+    const contentContainer = document.getElementById('dynamic-content');
+    contentContainer.innerHTML = '<div class="loading-spinner">Загрузка статьи...</div>';
+    
+    try {
+        const article = await fetchArticleById(articleId);
+        
+        if (!article) {
+            throw new Error('Статья не найдена');
+        }
+        
+        history.pushState({ page: 'article', type: articleId }, '', `?page=article&id=${articleId}`);
+
+        contentContainer.innerHTML = `
+            <div class="news-article">
+                <div class="article-text">
+                    <h2 class="headline">${article.title}</h2>
+                    <div class="article-meta">
+                        <span class="article-date">${formatDate(article.publication_date)}</span>
+                        <span class="article-source">${article.source || ''}</span>
+                    </div>
+                    <div class="article-content">${article.content || 'Содержание статьи отсутствует'}</div>
+                </div>
+                <div class="article-image">
+                    <img src="${article.image || 'foto.jpg'}" alt="Фотография новости">
                 </div>
             </div>
         `;
-    });
-
-    html += `</section>`;
-    container.innerHTML = html;
+    } catch (error) {
+        contentContainer.innerHTML = `
+            <div class="error-message">
+                <p>Не удалось загрузить статью. Пожалуйста, попробуйте позже.</p>
+                <p class="error-details">${error.message}</p>
+                <button onclick="history.back()">Вернуться назад</button>
+            </div>
+        `;
+    }
 }
 
-function loadArticle(articleId) {
-    const articles = {
-        "1": {
-            title: "Заголовок новости",
-            content: `
-                <p>In January 2021, a facial recognition system helped detain a man who had been on the federal wanted list for 8 years.
-                   The suspect was found in a shopping mall and was immediately detained by the police.</p>
-                <p>In March 2021, a facial recognition system helped detain a married couple who had been on the federal wanted list for 17 years.
-                   They were located at a public transportation hub and taken into custody.</p>
-                <p>In April 2022, a facial recognition system helped detain a man who had been on the federal wanted list for 13 years.
-                   Law enforcement officers confirmed his identity through biometric scanning.</p>
-            `,
-            image: "foto.jpg"
-        },
-        "2": {
-            title: "Другая важная новость",
-            content: `
-                <p>Это содержимое второй новости. Здесь может быть подробное описание события.</p>
-                <p>Дополнительные детали и информация о происшествии.</p>
-            `,
-            image: "foto.jpg"
-        }
-    };
-
-    const article = articles[articleId] || articles["1"];
-    const contentContainer = document.getElementById('dynamic-content');
-
-    history.pushState({ page: 'article', type: articleId }, '', `?page=article&id=${articleId}`);
-
-    contentContainer.innerHTML = `
-        <div class="news-article">
-            <div class="article-text">
-                <h2 class="headline">${article.title}</h2>
-                ${article.content}
-            </div>
-            <div class="article-image">
-                <img src="${article.image}" alt="Фотография новости">
-            </div>
-        </div>
-    `;
+async function loadArticlePage(container, articleId) {
+    await loadArticle(articleId);
 }
 
-function loadArticlePage(container, articleId) {
-    loadArticle(articleId);
+// ========== Search Functions ==========
+function initSearch() {
+    const searchInput = document.querySelector('.search-input');
+    const searchButton = document.querySelector('.search-button');
+    
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const query = this.value.trim();
+                if (query) {
+                    performSearch(query);
+                }
+            }
+        });
+    }
+    
+    if (searchButton) {
+        searchButton.addEventListener('click', function() {
+            const query = searchInput.value.trim();
+            if (query) {
+                performSearch(query);
+            }
+        });
+    }
 }
 
 async function performSearch(query) {
     try {
-        // Показываем индикатор загрузки
         const contentContainer = document.getElementById('dynamic-content');
         contentContainer.innerHTML = `
             <div class="search-loading">
@@ -329,39 +386,27 @@ async function performSearch(query) {
             </div>
         `;
 
-        const response = await fetch(`http://localhost:8000/api/search?query=${encodeURIComponent(query)}`);
+        const results = await searchArticles(query);
         
-        if (!response.ok) {
-            throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        // Обработка результатов из MongoDB
-        const results = data.map(item => ({
-            id: item._id?.$oid || item._id || Math.random().toString(36).substr(2, 9),
+        const processedResults = results.map(item => ({
+            id: item._id,
             title: item.title,
             description: item.summary || item.source || '',
-            img: "foto.jpg",
-            url: item.url,
-            date: item.publication_date ? 
-                new Date(item.publication_date.$date || item.publication_date).toLocaleDateString('ru-RU') : 
-                'Дата неизвестна',
+            image: item.image || 'foto.jpg',
+            url: item.url || '#',
+            date: formatDate(item.publication_date),
             source: item.source || 'неизвестен'
         }));
 
-        // Сохраняем результаты
         sessionStorage.setItem('searchResults', JSON.stringify({
             query: query,
-            results: results
+            results: processedResults
         }));
 
-        // Обновляем URL и загружаем страницу с результатами
         history.pushState({ page: 'search', query: query }, '', `?page=search&query=${encodeURIComponent(query)}`);
-        loadSearchResultsPage(contentContainer, query);
+        await loadSearchResultsPage(contentContainer, query);
         
     } catch (error) {
-        console.error("Search error:", error);
         const contentContainer = document.getElementById('dynamic-content');
         contentContainer.innerHTML = `
             <div class="search-error">
@@ -374,7 +419,7 @@ async function performSearch(query) {
     }
 }
 
-function loadSearchResultsPage(container, query) {
+async function loadSearchResultsPage(container, query) {
     let searchData = { query: query || '', results: [] };
     
     try {
@@ -421,4 +466,20 @@ function loadSearchResultsPage(container, query) {
 
     html += '</div>';
     container.innerHTML = html;
+}
+
+// ========== Helper Functions ==========
+function formatDate(dateString) {
+    if (!dateString) return 'Дата неизвестна';
+    
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ru-RU', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+    } catch (e) {
+        return 'Дата неизвестна';
+    }
 }
