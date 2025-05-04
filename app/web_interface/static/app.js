@@ -1,135 +1,5 @@
-document.addEventListener("DOMContentLoaded", function() {
-    // Установка текущей даты
-    setCurrentDate();
-    
-    // Обработка навигации
-    setupNavigation();
-    
-    // Загрузка начальной страницы
-    loadPage(getCurrentPage());
-    
-    // Обработка кликов по статьям
-    document.addEventListener('click', function(e) {
-        if (e.target.matches('[data-article]')) {
-            e.preventDefault();
-            const articleId = e.target.getAttribute('data-article');
-            loadArticle(articleId);
-        }
-        
-        // Обработка кликов по внешним ссылкам в результатах поиска
-        if (e.target.matches('.search-item-title') && e.target.href) {
-            // Открываем в новой вкладке, переход обрабатывается естественным образом
-            return;
-        }
-    });
-
-    // Инициализация поиска
-    initSearch();
-});
-
-function initSearch() {
-    const searchInput = document.querySelector('.search-input');
-    const searchButton = document.querySelector('.search-button');
-    
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const query = this.value.trim();
-                if (query) {
-                    performSearch(query);
-                }
-            }
-        });
-    }
-    
-    if (searchButton) {
-        searchButton.addEventListener('click', function() {
-            const query = searchInput.value.trim();
-            if (query) {
-                performSearch(query);
-            }
-        });
-    }
-}
-
-function setCurrentDate() {
-    const dateElement = document.getElementById("current-date");
-    if (!dateElement) return;
-
-    const today = new Date();
-    const weekdayShort = today.toLocaleDateString("ru-RU", { weekday: 'short' });
-    const weekdayFormatted = weekdayShort.charAt(0).toUpperCase() + weekdayShort.slice(1).toLowerCase();
-    const day = today.getDate();
-    const month = today.toLocaleDateString("ru-RU", { month: 'long' });
-    const year = today.getFullYear();
-
-    dateElement.innerHTML = `
-        <div class="date-weekday">${weekdayFormatted}</div>
-        <div class="date-day">${day}</div>
-        <div class="date-month">${month}</div>
-        <div class="date-year">${year}</div>
-    `;
-}
-
-function setupNavigation() {
-    document.querySelectorAll('[data-page]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const page = this.getAttribute('data-page');
-            const type = this.getAttribute('data-type');
-            
-            const url = type ? `?page=${page}&type=${type}` : `?page=${page}`;
-            history.pushState({ page, type }, '', url);
-            
-            loadPage({ page, type });
-        });
-    });
-    
-    window.addEventListener('popstate', function(e) {
-        if (e.state) {
-            loadPage(e.state);
-        } else {
-            loadPage(getCurrentPage());
-        }
-    });
-}
-
-function getCurrentPage() {
-    const params = new URLSearchParams(window.location.search);
-    return {
-        page: params.get('page') || 'main',
-        type: params.get('type') || null,
-        query: params.get('query') || null
-    };
-}
-
-function loadPage(params) {
-    const { page, type, query } = params;
-    const contentContainer = document.getElementById('dynamic-content');
-    
-    switch(page) {
-        case 'main':
-            loadMainPage(contentContainer);
-            break;
-        case 'category':
-            loadCategoryPage(contentContainer, type);
-            break;
-        case 'source':
-            loadSourcePage(contentContainer, type);
-            break;
-        case 'article':
-            loadArticlePage(contentContainer, type);
-            break;
-        case 'search':
-            loadSearchResultsPage(contentContainer, query);
-            break;
-        default:
-            loadMainPage(contentContainer);
-    }
-}
-
-function loadMainPage(container) {
-    container.innerHTML = `
+> Мария:
+container.innerHTML = `
         <section class="digest">
             <h2>Новости дня</h2>
             <ul>
@@ -191,7 +61,7 @@ function loadCategoryPage(container, category) {
     `;
 
     currentNews.slice(0, 3).forEach(news => {
-        digestHTML += `<li><a href="#" data-article="${news.id}">${news.title}</a></li>`;
+        digestHTML += <li><a href="#" data-article="${news.id}">${news.title}</a></li>;
     });
 
     digestHTML += `
@@ -213,7 +83,7 @@ function loadCategoryPage(container, category) {
         `;
     });
 
-    digestHTML += `</section>`;
+    digestHTML += </section>;
     container.innerHTML = digestHTML;
 }
 
@@ -235,7 +105,10 @@ function loadSourcePage(container, source) {
         ]
     };
 
-    const currentNews = newsData[source] || [];
+    const currentNews =
+
+> Мария:
+newsData[source] || [];
     const sourceName = sourceNames[source] || "Источник";
 
     let html = `
@@ -245,7 +118,7 @@ function loadSourcePage(container, source) {
     `;
 
     currentNews.slice(0, 3).forEach(news => {
-        html += `<li><a href="#" data-article="${news.id}">${news.title}</a></li>`;
+        html += <li><a href="#" data-article="${news.id}">${news.title}</a></li>;
     });
 
     html += `
@@ -268,7 +141,7 @@ function loadSourcePage(container, source) {
         `;
     });
 
-    html += `</section>`;
+    html += </section>;
     container.innerHTML = html;
 }
 
@@ -339,13 +212,16 @@ async function performSearch(query) {
         
         // Обработка результатов из MongoDB
         const results = data.map(item => ({
-            id: item._id?.$oid || item._id || Math.random().toString(36).substr(2, 9),
+            id: item._id?.$oid⠺⠺⠞⠞⠺⠞⠵⠟⠟⠟⠞⠵Math.random().toString(36).substr(2, 9),
             title: item.title,
-            description: item.summary || item.source || '',
+            description: item.summary⠵⠺⠵⠞⠺⠟⠟⠵⠟⠵⠺⠟⠺⠵⠺'',
             img: "foto.jpg",
             url: item.url,
             date: item.publication_date ? 
-                new Date(item.publication_date.$date || item.publication_date).toLocaleDateString('ru-RU') : 
+                new Date(item.publication_date.$date ||
+
+> Мария:
+item.publication_date).toLocaleDateString('ru-RU') : 
                 'Дата неизвестна',
             source: item.source || 'неизвестен'
         }));
