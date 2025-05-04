@@ -1,5 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+import hashlib
+from datetime import datetime
+
 
 class WebScraper:
     def fetch_page(self, url):
@@ -13,48 +17,68 @@ class WebScraper:
             print(f"Ошибка при загрузке страницы: {e}")
             return None
 
-    def parse_articles(self, html, container_tag, title_tag, link_tag, content_tag):
-        """Парсим статьи со страницы"""
+    def parse_articles(self, html, source_id, base_url, container_tag, title_tag, link_tag, content_tag,
+                       full_text_selector=None):
+        """Парсим статьи со страницы и получаем полный текст"""
         soup = BeautifulSoup(html, "html.parser")
-
         articles = []
         article_containers = soup.find_all(container_tag)
 
         for container in article_containers:
-            title_tag_content = container.find(title_tag)
-            link_tag_content = container.find(link_tag)
-            content_tag_content = container.find(content_tag)
+            try:
+                title_tag_content = container.find(title_tag)
+                link_tag_content = container.find(link_tag)
+                content_tag_content = container.find(content_tag)
 
-            # Извлекаем данные статьи
-            if title_tag_content and link_tag_content and content_tag_content:
+                if not (title_tag_content and link_tag_content):
+                    continue
+
                 title = title_tag_content.get_text(strip=True)
-                link = link_tag_content.get('href', '')
-                summary = content_tag_content.get_text(strip=True)  # Заменили на summary
+                relative_link = link_tag_content.get('href', '')
+                link = urljoin(base_url, relative_link)
+                summary = content_tag_content.get_text(strip=True) if content_tag_content else ""
 
-                # Извлекаем дату (сохраняем как есть)
-                publication_date = self.extract_date(soup)
+                # Получаем полный текст статьи если указан селектор
+                full_text = self._get_full_text(link, full_text_selector) if full_text_selector else summary
 
                 articles.append({
+                    "article_id": hashlib.md5(link.encode()).hexdigest(),
+                    "source_id": source_id,
                     "title": title,
-                    "link": link,
-                    "summary": summary,  # Используем summary вместо content
-                    "publication_date": publication_date
+                    "url": link,
+                    "publication_date": self.extract_date(container) or datetime.now().isoformat(),
+                    "summary": summary,
+                    "text": full_text,
+                    "scraped_at": datetime.now().isoformat()
                 })
+
+            except Exception as e:
+                print(f"Ошибка при парсинге статьи: {e}")
+                continue
 
         return articles
 
-    def extract_date(self, soup):
-        """Пытаемся извлечь дату из страницы"""
-        # Пример поиска мета-тега с датой
-        date_meta_tag = soup.find("meta", {"name": "date"})  # Возможно другой атрибут, зависит от страницы
-        if date_meta_tag:
-            date_str = date_meta_tag.get('content')
-            return date_str  # Возвращаем дату как есть, без преобразования
+    def extract_date(self, container):
+        """Извлекаем дату публикации"""
+        # Проверяем мета-теги
+        for prop in ["date", "article:published_time"]:
+            meta = container.find("meta", {"property": prop}) or container.find("meta", {"name": prop})
+            if meta and meta.get('content'):
+                return meta.get('content')
 
-        # Если дата не найдена в мета-тегах, пробуем искать дату в других местах страницы
-        # Например, в теге <time>
-        date_from_content = soup.find("time")
-        if date_from_content:
-            return date_from_content.get('datetime', None)
+        # Проверяем тег <time>
+        time_tag = container.find("time")
+        if time_tag and time_tag.has_attr('datetime'):
+            return time_tag['datetime']
 
         return None
+
+    def _get_full_text(self, article_url, selector):
+        """Внутренний метод для получения полного текста статьи"""
+        html = self.fetch_page(article_url)
+        if not html:
+            return ""
+
+        soup = BeautifulSoup(html, 'html.parser')
+        content = soup.select_one(selector)
+        return content.get_text(strip=True, separator='\n') if content else ""
