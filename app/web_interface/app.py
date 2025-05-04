@@ -158,3 +158,8 @@ async def legacy_index(request: Request):
     return FileResponse("static/index.html")
 
 
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
