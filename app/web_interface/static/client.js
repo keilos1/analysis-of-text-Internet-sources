@@ -1,45 +1,17 @@
-// Глобальное состояние приложения
-const appState = {
-    currentPage: 'main',
-    currentType: null,
-    articles: [],
-    categories: [],
-    sources: []
-};
-
-// Инициализация приложения
 document.addEventListener("DOMContentLoaded", function() {
+    // Инициализация приложения
     initApp();
 });
 
+// Основные функции приложения
 async function initApp() {
     setCurrentDate();
     setupNavigation();
-    await loadInitialData();
-    loadPage(getCurrentPage());
-    setupEventListeners();
+    setupSearch();
+    await loadMainContent();
 }
 
-// Загрузка начальных данных
-async function loadInitialData() {
-    try {
-        const [articlesRes, categoriesRes, sourcesRes] = await Promise.all([
-            fetch('/api/latest-news'),
-            fetch('/api/categories'),
-            fetch('/api/sources')
-        ]);
-        
-        appState.articles = await articlesRes.json();
-        appState.categories = await categoriesRes.json();
-        appState.sources = await sourcesRes.json();
-        
-    } catch (error) {
-        console.error('Ошибка загрузки данных:', error);
-        showError('Не удалось загрузить данные. Пожалуйста, обновите страницу.');
-    }
-}
-
-// Установка текущей даты
+// Установка текущей даты (исправленная версия)
 function setCurrentDate() {
     const dateElement = document.getElementById("current-date");
     if (!dateElement) return;
@@ -49,7 +21,8 @@ function setCurrentDate() {
         weekday: 'short', 
         day: 'numeric', 
         month: 'long', 
-        year: 'numeric' 
+        year: 'numeric',
+        timeZone: 'Europe/Moscow'
     };
     
     dateElement.textContent = today.toLocaleDateString('ru-RU', options);
@@ -62,78 +35,65 @@ function setupNavigation() {
             e.preventDefault();
             const page = this.getAttribute('data-page');
             const type = this.getAttribute('data-type');
-            navigateTo(page, type);
+            loadContent(page, type);
         });
     });
-    
-    window.addEventListener('popstate', function(e) {
-        loadPage(e.state || getCurrentPage());
-    });
 }
 
-// Навигация между страницами
-function navigateTo(page, type = null) {
-    appState.currentPage = page;
-    appState.currentType = type;
-    
-    history.pushState({ page, type }, '', 
-        type ? `?page=${page}&type=${type}` : `?page=${page}`);
-    
-    loadPage({ page, type });
-}
+// Настройка поиска
+function setupSearch() {
+    const searchInput = document.querySelector('.search-input');
+    const searchIcon = document.querySelector('.search-icon');
 
-// Получение текущей страницы из URL
-function getCurrentPage() {
-    const params = new URLSearchParams(window.location.search);
-    return {
-        page: params.get('page') || 'main',
-        type: params.get('type') || null
-    };
-}
-
-// Загрузка страницы
-async function loadPage({ page, type }) {
-    const contentContainer = document.getElementById('dynamic-content');
-    if (!contentContainer) return;
-    
-    showLoading();
-    
-    try {
-        switch(page) {
-            case 'main':
-                await loadMainPage(contentContainer);
-                break;
-            case 'category':
-                await loadCategoryPage(contentContainer, type);
-                break;
-            case 'source':
-                await loadSourcePage(contentContainer, type);
-                break;
-            case 'article':
-                await loadArticlePage(contentContainer, type);
-                break;
-            default:
-                await loadMainPage(contentContainer);
+    const performSearch = () => {
+        const query = searchInput.value.trim();
+        if (query) {
+            loadSearchResults(query);
         }
+    };
+
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') performSearch();
+    });
+
+    searchIcon.addEventListener('click', performSearch);
+}
+
+// Загрузка основного контента
+async function loadMainContent() {
+    try {
+        const [topArticles, latestNews] = await Promise.all([
+            fetch('/api/top-articles').then(res => res.json()),
+            fetch('/api/latest-news').then(res => res.json())
+        ]);
+
+        renderMainPage(topArticles, latestNews);
     } catch (error) {
-        console.error(`Ошибка загрузки страницы ${page}:`, error);
-        showError(`Не удалось загрузить страницу: ${page}`);
-    } finally {
-        hideLoading();
+        console.error('Ошибка загрузки данных:', error);
+        showError('Не удалось загрузить новости');
     }
 }
 
-// Пример реализации loadMainPage (остальные аналогично)
-async function loadMainPage(container) {
-    const topArticles = await fetch('/api/top-articles').then(res => res.json());
-    const latestNews = await fetch('/api/latest-news').then(res => res.json());
+// Рендер главной страницы
+function renderMainPage(topArticles, latestNews) {
+    const contentContainer = document.getElementById('dynamic-content');
     
-    container.innerHTML = `
+    // Форматирование даты для новостей
+    const formatDate = (dateString) => {
+        const options = { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
+        return new Date(dateString).toLocaleDateString('ru-RU', options);
+    };
+
+    contentContainer.innerHTML = `
         <section class="digest">
             <h2>Новости дня</h2>
             <ul>
                 ${topArticles.map(article => `
-                    <li><a href="#" data-article="${article._id}">${article.title}</a></li>
+                    <li>
+                        <a href="#" data-page="article" data-type="${article._id}">
+                            ${article.title} (${formatDate(article.publication_date)})
+                        </a>
+                    </li>
                 `).join('')}
             </ul>
         </section>
@@ -143,8 +103,11 @@ async function loadMainPage(container) {
                 <div class="news-item">
                     <img src="${article.image || 'placeholder.jpg'}" alt="${article.title}">
                     <div class="news-text">
-                        <a href="#" data-article="${article._id}" class="news-title">${article.title}</a>
+                        <a href="#" data-page="article" data-type="${article._id}" class="news-title">
+                            ${article.title}
+                        </a>
                         <p>${article.summary || 'Нет описания'}</p>
+                        <small>${formatDate(article.publication_date)} • ${article.source}</small>
                     </div>
                 </div>
             `).join('')}
@@ -152,69 +115,91 @@ async function loadMainPage(container) {
     `;
 }
 
-// Вспомогательные функции
-function showLoading() {
-    const loader = document.getElementById('loader') || createLoader();
-    loader.style.display = 'block';
+// Загрузка контента по страницам
+async function loadContent(page, type) {
+    const contentContainer = document.getElementById('dynamic-content');
+    contentContainer.innerHTML = '<div class="loading">Загрузка...</div>';
+
+    try {
+        let html = '';
+        
+        switch(page) {
+            case 'main':
+                await loadMainContent();
+                return;
+            case 'article':
+                html = await loadArticleContent(type);
+                break;
+            case 'category':
+            case 'source':
+                html = await loadCategoryOrSource(page, type);
+                break;
+            default:
+                await loadMainContent();
+                return;
+        }
+        
+        contentContainer.innerHTML = html;
+    } catch (error) {
+        console.error(`Ошибка загрузки ${page}:`, error);
+        showError('Ошибка загрузки страницы');
+    }
 }
 
-function hideLoading() {
-    const loader = document.getElementById('loader');
-    if (loader) loader.style.display = 'none';
+// Загрузка результатов поиска
+async function loadSearchResults(query) {
+    const contentContainer = document.getElementById('dynamic-content');
+    contentContainer.innerHTML = '<div class="loading">Поиск...</div>';
+
+    try {
+        const results = await fetch(`/api/search?query=${encodeURIComponent(query)}`)
+            .then(res => res.json());
+
+        renderSearchResults(query, results);
+    } catch (error) {
+        console.error('Ошибка поиска:', error);
+        showError('Ошибка при выполнении поиска');
+    }
 }
 
-function createLoader() {
-    const loader = document.createElement('div');
-    loader.id = 'loader';
-    loader.innerHTML = '<div class="spinner"></div>';
-    document.body.appendChild(loader);
-    return loader;
+// Рендер результатов поиска
+function renderSearchResults(query, results) {
+    const contentContainer = document.getElementById('dynamic-content');
+    
+    const formatDate = (dateString) => {
+        return new Date(dateString).toLocaleDateString('ru-RU');
+    };
+
+    contentContainer.innerHTML = `
+        <div class="search-results">
+            <h2>Результаты поиска: "${query}"</h2>
+            ${results.length > 0 ? `
+                <div class="results-list">
+                    ${results.map(article => `
+                        <div class="result-item">
+                            <h3><a href="#" data-page="article" data-type="${article._id}">${article.title}</a></h3>
+                            <p>${article.summary || 'Нет описания'}</p>
+                            <div class="meta">
+                                <span>${article.source}</span>
+                                <span>${formatDate(article.publication_date)}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : `
+                <div class="no-results">
+                    По вашему запросу ничего не найдено
+                </div>
+            `}
+        </div>
+    `;
 }
 
+// Показать ошибку
 function showError(message) {
     const errorEl = document.createElement('div');
     errorEl.className = 'error-message';
     errorEl.textContent = message;
     document.body.appendChild(errorEl);
     setTimeout(() => errorEl.remove(), 5000);
-}
-
-// Настройка обработчиков событий
-function setupEventListeners() {
-    // Обработка кликов по статьям
-    document.addEventListener('click', function(e) {
-        if (e.target.matches('[data-article]')) {
-            e.preventDefault();
-            const articleId = e.target.getAttribute('data-article');
-            navigateTo('article', articleId);
-        }
-    });
-
-    // Поиск
-    const searchInput = document.querySelector('.search-input');
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const query = this.value.trim();
-                if (query) {
-                    performSearch(query);
-                }
-            }
-        });
-    }
-}
-
-// Функция поиска
-async function performSearch(query) {
-    try {
-        const response = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
-        const results = await response.json();
-        
-        sessionStorage.setItem('searchResults', JSON.stringify({ query, results }));
-        navigateTo('search');
-        
-    } catch (error) {
-        console.error('Ошибка поиска:', error);
-        showError('Ошибка при выполнении поиска');
-    }
 }
