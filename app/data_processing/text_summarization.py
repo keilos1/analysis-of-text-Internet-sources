@@ -1,16 +1,20 @@
 import re
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
-from typing import List, Dict
+from typing import List, Dict, Union
 
 # Загружаем модель spaCy для русского языка
 nlp = spacy.load("ru_core_news_sm")
 
-def summarize_texts_tfidf(data: List[Dict]) -> List[Dict]:
+def summarize_texts_tfidf(data: Union[List[Dict], Dict]) -> Union[List[Dict], Dict]:
     """
     Добавляет суммаризированный текст (2 самых важных предложения) к каждому посту.
     Использует TF-IDF для определения важности предложений.
     """
+    # Обрабатываем случай, когда на вход подан одиночный словарь
+    if isinstance(data, dict):
+        return summarize_texts_tfidf([data])[0]
+    
     for item in data:
         text = item.get("text", "")
         sentences = [sent.text for sent in nlp(text).sents]  # Разбиваем на предложения с помощью spaCy
