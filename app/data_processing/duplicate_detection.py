@@ -30,15 +30,18 @@ class Database:
                     duplicates_group.append(all_articles[j])
                     processed.add(j)
             if duplicates_group:
-                duplicates_group.insert(0, all_articles[i])  # Включаем оригинал
+                duplicates_group.insert(0, all_articles[i])  
                 duplicates.append(duplicates_group)
 
         return duplicates
 
-    def remove_duplicates(self, duplicates: List[List[Dict]]):
-        for duplicate_group in duplicates:
-            for duplicate in duplicate_group[1:]:
-                self.articles.delete_one({"article_id": duplicate["article_id"]})
+    def save_articles(self, articles):
+        existing_duplicates = self.find_duplicates()
+        
+        for article in articles:
+            summary = article.get("summary", "").strip()
+            if not any(article.get("summary") == dup[0].get("summary") for dup in existing_duplicates):
+                self.db.articles.insert_one(article)
 
 def connect_to_mongo(
     ssh_host: str,
