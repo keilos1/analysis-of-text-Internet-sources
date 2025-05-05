@@ -8,7 +8,7 @@ from application.data_storage.database import connect_to_mongo
 
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="application/web_interface/static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # Настройки подключения (должны совпадать с теми, что в database.py)
@@ -136,7 +136,7 @@ async def search_news(query: str):
     try:
         articles = list(db.articles.find({
             "$or": [
-                {"title": {"$regex": query, "$options": "i"}},
+                {"title": {"$regex": query, "$ofptions": "i"}},
                 {"text": {"$regex": query, "$options": "i"}},
                 {"summary": {"$regex": query, "$options": "i"}}
             ]
