@@ -131,7 +131,7 @@ async function loadMainPage(container) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-        const response = await fetch('http://localhost:8000/api/latest-news');
+        const response = await fetch('http://78.36.44.126:8000/api/latest-news');
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
@@ -192,7 +192,7 @@ async function loadCategoryPage(container, category) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-        const response = await fetch(`http://localhost:8000/api/category/${category}`);
+        const response = await fetch(`http://78.36.44.126:8000/api/category/${category}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
@@ -262,7 +262,7 @@ async function loadSourcePage(container, source) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-        const response = await fetch(`http://localhost:8000/api/source/${source}`);
+        const response = await fetch(`http://78.36.44.126:8000/api/source/${source}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
@@ -332,7 +332,7 @@ async function loadArticle(articleId) {
         const contentContainer = document.getElementById('dynamic-content');
         contentContainer.innerHTML = '<div class="loading-spinner">Загрузка статьи...</div>';
 
-        const response = await fetch(`http://localhost:8000/api/article/${articleId}`);
+        const response = await fetch(`http://78.36.44.126:8000/api/article/${articleId}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
@@ -393,7 +393,7 @@ async function performSearch(query) {
             </div>
         `;
 
-        const response = await fetch(`http://localhost:8000/api/search?query=${encodeURIComponent(query)}`);
+        const response = await fetch(`http://78.36.44.126:8000/api/search?query=${encodeURIComponent(query)}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
