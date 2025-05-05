@@ -4,11 +4,18 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse, JSONResponse
 from bson import ObjectId, json_util
 import json
+import sys
+from pathlib import Path
+
+# Добавляем корень проекта в PYTHONPATH
+project_root = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(project_root))
+
 from application.data_storage.database import connect_to_mongo
 
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="application/web_interface/static"), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # Настройки подключения (должны совпадать с теми, что в database.py)
