@@ -5,11 +5,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from bson import ObjectId, json_util
 import json
 import sys
-
-sys.path.append('../')
-
-from application.data_storage.database import connect_to_mongo
-
+sys.path.append("../")
+from data_storage.database import connect_to_mongo
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -140,7 +137,7 @@ async def search_news(query: str):
     try:
         articles = list(db.articles.find({
             "$or": [
-                {"title": {"$regex": query, "$ofptions": "i"}},
+                {"title": {"$regex": query, "$options": "i"}},
                 {"text": {"$regex": query, "$options": "i"}},
                 {"summary": {"$regex": query, "$options": "i"}}
             ]
