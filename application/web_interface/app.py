@@ -6,7 +6,7 @@ from bson import ObjectId, json_util
 import json
 import sys
 
-sys.path.append('~/analysis-of-text-Internet-sources')
+sys.path.append('../')
 
 from application.data_storage.database import connect_to_mongo
 
