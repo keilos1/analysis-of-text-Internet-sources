@@ -18,7 +18,9 @@ class Database:
             "url": url,
             "publication_date": publication_date,
             "summary": summary,
-            "text": text
+            "text": text,
+            "category": category,
+            "district": district
         }
         self.articles.update_one(
             {"article_id": article_id},
