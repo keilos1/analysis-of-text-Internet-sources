@@ -34,7 +34,9 @@ def save_unique_articles(self, new_articles, threshold=0.95):
                 url=article["url"],
                 publication_date=article.get("publication_date", ""),
                 summary=article["summary"],
-                text=article.get("text", "")
+                text=article.get("text", ""),
+                category=article.get("category", ""),
+                district=article.get("district", "")
             )
             saved_count += 1
         return saved_count
@@ -65,7 +67,9 @@ def save_unique_articles(self, new_articles, threshold=0.95):
                 url=article["url"],
                 publication_date=article.get("publication_date", ""),
                 summary=article["summary"],
-                text=article.get("text", "")
+                text=article.get("text", ""),
+                category=article.get("category", ""),
+                district=article.get("district", "")
             )
             saved_count += 1
     
