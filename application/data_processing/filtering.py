@@ -90,3 +90,7 @@ class NewsProcessor:
             print("Новостей о Петрозаводске нет")
 
         return processed_news
+
+if __name__ == "__main__":
+    processor = NewsProcessor()
+    processor.process_news()
