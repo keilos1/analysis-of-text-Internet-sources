@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 from data_collection.api_connector import APIConnector
-from data.collection.scraper import WebScraper
+from data_collection.scraper import WebScraper
 
 
 class DataUpdater:
