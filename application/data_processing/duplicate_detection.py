@@ -108,6 +108,17 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
 def main():
     saved_count = save_unique_articles([])
     print(f"Успешно сохранено {saved_count} новых статей")
+        if not articles:
+        print("Нет уникальных статей для сохранения")
+        return
+    
+    print("\nУникальные статьи, сохраненные в базу:")
+    print("-" * 80)
+    for i, article in enumerate(articles, 1):
+        print(f"{i}. Заголовок: {article['title']}")
+        print(f"   URL: {article['url']}")
+        print(f"   Макс. схожесть с существующими: {article['similarity']}")
+        print("-" * 80)
 
 if __name__ == "__main__":
     main()
