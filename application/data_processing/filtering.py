@@ -28,7 +28,7 @@ CATEGORY_KEYWORDS = {
     NewsCategory.TECHNOLOGY: ["технолог", "инновац", "IT"],
     NewsCategory.HOLIDAYS: ["праздник", "день города", "фестивал"],
     NewsCategory.EDUCATION: ["образован", "школ", "университет"]
-}
+]
 
 class NewsProcessor:
     def __init__(self):
@@ -46,6 +46,7 @@ class NewsProcessor:
 
         for news_item in raw_news:
             text = news_item.get("text", "")
+            title = news_item.get("title", "")
             text_lower = text.lower()
 
             # Проверка на принадлежность к Петрозаводску
@@ -59,16 +60,23 @@ class NewsProcessor:
                     detected_categories.append(category.value)
 
             # Определение района
-            location = {"city": "Петрозаводск"}
-            for district in PETROZAVODSK_DISTRICTS:
-                if re.search(rf'\b{re.escape(district)}\b', text, re.IGNORECASE):
-                    location["district"] = district
+            district = None
+            for d in PETROZAVODSK_DISTRICTS:
+                if re.search(rf'\b{re.escape(d)}\b', text, re.IGNORECASE):
+                    district = d
                     break
+
+            # Выводим информацию в консоль
+            print("Title:", title)
+            print("Text:", text)
+            print("Categories:", detected_categories or ["Другое"])
+            print("District:", district or "Не указан")
+            print("-" * 50)  # Разделитель между новостями
 
             # Добавляем обработанную новость
             processed_news.append({
                 **news_item,
-                "location": location,
+                "location": {"city": "Петрозаводск", "district": district},
                 "categories": detected_categories or ["Другое"]
             })
 
