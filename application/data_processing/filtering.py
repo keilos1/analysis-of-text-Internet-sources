@@ -3,14 +3,8 @@ import re
 from typing import List, Dict, Optional
 from enum import Enum
 import sys
-from pathlib import Path
-
-# Получаем абсолютный путь к корню проекта
-project_root = Path(__file__).parent.parent.parent  # Поднимитесь на нужный уровень
-sys.path.append(str(project_root))
-
-# Теперь можно использовать абсолютные импорты
-from application.data_collection.scheduler import DataUpdater
+sys.path.append("../")
+from data_collection.scheduler import DataUpdater
 
 class NewsCategory(Enum):
     CULTURE = "Культура"
