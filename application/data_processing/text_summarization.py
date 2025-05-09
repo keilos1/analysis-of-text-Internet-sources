@@ -46,3 +46,43 @@ def summarize_texts_tfidf(data: Union[List[Dict], Dict]) -> Union[List[Dict], Di
         result.append(processed_item)
 
     return result
+
+
+def print_news_with_summary(news_data: List[Dict]) -> None:
+    """
+    Выводит новости в консоль с суммаризацией и основной информацией
+    """
+    if not news_data:
+        print("Новостей для отображения нет")
+        return
+
+    for i, news_item in enumerate(news_data, 1):
+        print(f"\nНовость #{i}")
+        print("-" * 50)
+        print(f"Заголовок: {news_item.get('title', 'Без заголовка')}")
+        print(f"Район: {news_item.get('location', {}).get('district', 'Не указан')}")
+        print(f"Категории: {', '.join(news_item.get('categories', ['Другое']))}")
+        print(f"\nПолный текст:\n{news_item.get('text', 'Текст отсутствует')}")
+        print(f"\nСуммаризация (ключевые предложения):\n{news_item.get('summary', 'Не удалось сгенерировать')}")
+        print("-" * 50)
+
+
+def main():
+    """
+    Основная функция для запуска обработки и вывода новостей
+    """
+    try:
+        # Получаем данные с суммаризацией
+        summarized_news = summarize_texts_tfidf([])
+        
+        # Выводим результат в консоль
+        print_news_with_summary(summarized_news)
+        
+        # Дополнительная информация
+        print(f"\nВсего обработано новостей: {len(summarized_news)}")
+    except Exception as e:
+        print(f"Произошла ошибка при обработке новостей: {str(e)}")
+
+
+if __name__ == "__main__":
+    main()
