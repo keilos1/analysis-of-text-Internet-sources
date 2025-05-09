@@ -457,6 +457,7 @@ h1 {
 .digest {
     width: 30%; /* Изначальная ширина */
     min-height: 150px; /* Минимальная высота */
+    max-height: 150px; /* Минимальная высота */
     max-width: 500px; /* Ограничение по ширине */
     background-color: #ddd; /* Фон по умолчанию */
     padding: 15px;
@@ -508,7 +509,6 @@ h1 {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
     background: rgba(0, 0, 0, 0.6); /* Полупрозрачное затемнение */
     opacity: 0;
     transition: opacity 0.5s ease-in-out;
