@@ -41,7 +41,7 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
     
     try:
         # 1. Суммаризация новых статей
-        summarized_new = summarize_texts_tfidf()
+        summarized_new = summarize_texts_tfidf(new_articles)
         
         # 2. Загрузка существующих статей из базы
         existing_articles = list(db.articles.find(
@@ -65,7 +65,6 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
                     category=article.get("category", ""),
                     district=article.get("district", "")
                 )
-                print(f"Уникальная статья (база пуста): {article['title']}")
                 saved_count += 1
             return saved_count
         
@@ -81,7 +80,6 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
         for i, article in enumerate(summarized_new):
             # Проверка на дубликат по URL
             if db.articles.find_one({"url": article["url"]}):
-                print(f"Пропущена дубликат по URL: {article['title']}")
                 continue
             
             # Проверка на схожесть по содержанию
@@ -100,21 +98,34 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
                     category=article.get("category", ""),
                     district=article.get("district", "")
                 )
-                print(f"Уникальная статья сохранена: {article['title']} (схожесть: {max_similarity:.2f})")
                 saved_count += 1
-            else:
-                print(f"Пропущена похожая статья: {article['title']} (схожесть: {max_similarity:.2f})")
         
         return saved_count
     finally:
         # Обязательно закрываем соединение
         tunnel.close()
 
+
 def main():
-    saved_count = save_unique_articles([])
-    print(f"Успешно сохранено {saved_count} новых статей")
-        if not articles:
-        print("Нет уникальных статей для сохранения")
+    """
+    Основной метод для обработки и сохранения статей.
+    Получает статьи из summarize_texts_tfidf и сохраняет уникальные.
+    """
+    try:
+        # Получаем новые статьи после суммаризации
+        new_articles = summarize_texts_tfidf()
+        
+        if not new_articles:
+            print("Нет новых статей для обработки.")
+            return
+        
+        # Сохраняем уникальные статьи
+        saved_count = save_unique_articles(new_articles)
+        print(f"Сохранено {saved_count} новых уникальных статей.")
+        
+    except Exception as e:
+        print(f"Произошла ошибка: {str(e)}")
+
 
 if __name__ == "__main__":
     main()
