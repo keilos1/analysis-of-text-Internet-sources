@@ -62,7 +62,7 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
                     publication_date=article.get("publication_date", ""),
                     summary=article["summary"],
                     text=article.get("text", ""),
-                    category=article.get("category", ""),
+                    category=article.get("categories", ""),
                     district=article.get("district", "")
                 )
                 saved_count += 1
@@ -95,7 +95,7 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
                     publication_date=article.get("publication_date", ""),
                     summary=article["summary"],
                     text=article.get("text", ""),
-                    category=article.get("category", ""),
+                    category=article.get("categories", ""),
                     district=article.get("district", "")
                 )
                 saved_count += 1
