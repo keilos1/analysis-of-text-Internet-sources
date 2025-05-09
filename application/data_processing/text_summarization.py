@@ -4,7 +4,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Dict, Union
 from filtering import NewsProcessor
 
-
 # Загружаем модель spaCy для русского языка
 nlp = spacy.load("ru_core_news_sm")
 
@@ -27,7 +26,7 @@ def summarize_texts_tfidf(data: Union[List[Dict], Dict]) -> Union[List[Dict], Di
         
         # Очищаем текст от HTML-тегов
         clean_text = clean_html(raw_text)
-        processed_item["text"] = clean_text  # Сохраняем очищенный текст
+        processed_item["text"] = clean_text
         
         sentences = [sent.text for sent in nlp(clean_text).sents]
 
@@ -61,3 +60,30 @@ def print_news_with_summary(news_data: List[Dict]) -> None:
         print(f"\nПолный текст:\n{news_item.get('text', 'Текст отсутствует')}")
         print(f"\nСуммаризация (ключевые предложения):\n{news_item.get('summary', 'Не удалось сгенерировать')}")
         print("-" * 50)
+
+def main():
+    """Основная функция для обработки и вывода новостей"""
+    print("="*50)
+    print("СИСТЕМА ОБРАБОТКИ И СУММАРИЗАЦИИ НОВОСТЕЙ")
+    print("="*50)
+    
+    try:
+        # Получаем и обрабатываем новости
+        summarized_news = summarize_texts_tfidf([])
+        
+        # Выводим результат
+        print_news_with_summary(summarized_news)
+        
+        # Статистика
+        print(f"\nОбработка завершена. Всего новостей: {len(summarized_news)}")
+        if summarized_news:
+            avg_length = sum(len(n['summary'].split()) for n in summarized_news)/len(summarized_news)
+            print(f"Средняя длина суммаризации: {avg_length:.1f} слов")
+        
+    except Exception as e:
+        print(f"\nОшибка при обработке новостей: {str(e)}")
+    finally:
+        print("\nРабота программы завершена")
+
+if __name__ == "__main__":
+    main()
