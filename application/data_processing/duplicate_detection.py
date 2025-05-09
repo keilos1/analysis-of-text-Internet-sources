@@ -3,7 +3,7 @@ from pymongo import MongoClient
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from typing import List, Dict
-from text_summarization import summarize_texts_tfidf
+from application.text_summarization import summarize_texts_tfidf
 
 
 def save_unique_articles(self, new_articles, threshold=0.95):
