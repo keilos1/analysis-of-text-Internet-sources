@@ -65,6 +65,13 @@ class NewsProcessor:
                     location["district"] = district
                     break
 
+            # Вывод в консоль
+            print("Title:", news_item.get("title", ""))
+            print("Text:", text)
+            print("Categories:", detected_categories or ["Другое"])
+            print("District:", location.get("district", "Не указан"))
+            print("-" * 50)
+
             # Добавляем обработанную новость
             processed_news.append({
                 **news_item,
