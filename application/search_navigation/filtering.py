@@ -2,7 +2,7 @@ import re
 from typing import List, Dict, Optional
 from enum import Enum
 
-from ..data_collection.sheduler import DataUpdater
+from application.data_collection.sheduler import DataUpdater
 
 class NewsCategory(Enum):
     CULTURE = "Культура"
