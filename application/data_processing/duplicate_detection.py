@@ -6,7 +6,6 @@ from typing import List, Dict
 import sys
 sys.path.append("../")
 from data_storage.database import connect_to_mongo
-from data_storage.database import save_article
 from data_processing.text_summarization import summarize_texts_tfidf
 
 # Константы подключения
