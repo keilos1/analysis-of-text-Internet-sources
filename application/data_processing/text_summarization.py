@@ -2,7 +2,7 @@ import re
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Dict, Union
-from ..search_navigation.filtering import NewsProcessor
+from application.search_navigation.filtering import NewsProcessor
 
 
 # Загружаем модель spaCy для русского языка
