@@ -105,27 +105,36 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
         # Обязательно закрываем соединение
         tunnel.close()
 
-
 def main():
     """
-    Основной метод для обработки и сохранения статей.
-    Получает статьи из summarize_texts_tfidf и сохраняет уникальные.
+    Основной метод для обработки и сохранения новостей.
+    Получает статьи из функции summarize_texts_tfidf и сохраняет уникальные.
     """
+    print("="*50)
+    print("СИСТЕМА ОБРАБОТКИ И СОХРАНЕНИЯ НОВОСТЕЙ")
+    print("="*50)
+    
     try:
-        # Получаем новые статьи после суммаризации
-        new_articles = summarize_texts_tfidf()
+        # Получаем обработанные новости (пустой список передается, так как 
+        # summarize_texts_tfidf получает новости из news_processor.process_news())
+        new_articles = summarize_texts_tfidf([])
         
         if not new_articles:
-            print("Нет новых статей для обработки.")
+            print("Нет новых статей для обработки")
             return
+            
+        print(f"Получено {len(new_articles)} новых статей для обработки")
         
         # Сохраняем уникальные статьи
         saved_count = save_unique_articles(new_articles)
-        print(f"Сохранено {saved_count} новых уникальных статей.")
+        
+        # Выводим результат
+        print(f"\nСохранено {saved_count} уникальных статей из {len(new_articles)} обработанных")
         
     except Exception as e:
-        print(f"Произошла ошибка: {str(e)}")
-
+        print(f"\nОшибка при обработке новостей: {str(e)}")
+    finally:
+        print("\nРабота программы завершена")
 
 if __name__ == "__main__":
     main()
