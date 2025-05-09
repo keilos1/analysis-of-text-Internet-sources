@@ -1,44 +1,36 @@
 import re
-import spacy
-from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Dict, Union
-from filtering import NewsProcessor
 
-
-# Загружаем модель spaCy для русского языка
-nlp = spacy.load("ru_core_news_sm")
-
+def clean_html(text: str) -> str:
+    """Удаляет HTML-теги из текста с помощью регулярного выражения"""
+    return re.sub(r'<[^>]+>', '', text)
 
 def summarize_texts_tfidf(data: Union[List[Dict], Dict]) -> Union[List[Dict], Dict]:
     """
     Добавляет суммаризированный текст (2 самых важных предложения) к каждому посту.
-    Использует TF-IDF для определения важности предложений.
-    Перед обработкой вызывает функцию фильтрации (process_news) для получения обработанных данных.
-    Всегда работает со списком словарей, полученных после фильтрации.
+    С предварительной очисткой от HTML-тегов.
     """
-    # Создаем экземпляр NewsProcessor для вызова функции фильтрации
     news_processor = NewsProcessor()
-
-    # Вызываем функцию фильтрации для получения обработанных данных
     filtered_data = news_processor.process_news()
 
-    # Обрабатываем все отфильтрованные элементы
     result = []
     for filtered_item in filtered_data:
-        # Создаем копию элемента, чтобы не изменять исходные данные
         processed_item = filtered_item.copy()
-        text = processed_item.get("text", "")
-        sentences = [sent.text for sent in nlp(text).sents]
+        raw_text = processed_item.get("text", "")
+        
+        # Очищаем текст от HTML-тегов
+        clean_text = clean_html(raw_text)
+        processed_item["text"] = clean_text  # Сохраняем очищенный текст
+        
+        sentences = [sent.text for sent in nlp(clean_text).sents]
 
         if len(sentences) <= 2:
-            processed_item["summary"] = text.strip()
+            processed_item["summary"] = clean_text.strip()
         else:
-            # Рассчитываем TF-IDF для каждого предложения
             vectorizer = TfidfVectorizer()
             tfidf_matrix = vectorizer.fit_transform(sentences)
             sentence_scores = tfidf_matrix.sum(axis=1).A1
 
-            # Выбираем 2 предложения с наибольшими оценками
             top_indices = sentence_scores.argsort()[-2:][::-1]
             summary = ' '.join([sentences[i] for i in sorted(top_indices)])
             processed_item["summary"] = summary.strip()
@@ -47,11 +39,8 @@ def summarize_texts_tfidf(data: Union[List[Dict], Dict]) -> Union[List[Dict], Di
 
     return result
 
-
 def print_news_with_summary(news_data: List[Dict]) -> None:
-    """
-    Выводит новости в консоль с суммаризацией и основной информацией
-    """
+    """Выводит новости с очищенным текстом и суммаризацией"""
     if not news_data:
         print("Новостей для отображения нет")
         return
@@ -65,24 +54,3 @@ def print_news_with_summary(news_data: List[Dict]) -> None:
         print(f"\nПолный текст:\n{news_item.get('text', 'Текст отсутствует')}")
         print(f"\nСуммаризация (ключевые предложения):\n{news_item.get('summary', 'Не удалось сгенерировать')}")
         print("-" * 50)
-
-
-def main():
-    """
-    Основная функция для запуска обработки и вывода новостей
-    """
-    try:
-        # Получаем данные с суммаризацией
-        summarized_news = summarize_texts_tfidf([])
-        
-        # Выводим результат в консоль
-        print_news_with_summary(summarized_news)
-        
-        # Дополнительная информация
-        print(f"\nВсего обработано новостей: {len(summarized_news)}")
-    except Exception as e:
-        print(f"Произошла ошибка при обработке новостей: {str(e)}")
-
-
-if __name__ == "__main__":
-    main()
