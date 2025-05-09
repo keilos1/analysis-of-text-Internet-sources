@@ -19,7 +19,7 @@ class Database:
             "publication_date": publication_date,
             "summary": summary,
             "text": text,
-            "category": category,
+            "categories": categories,
             "district": district
         }
         self.articles.update_one(
