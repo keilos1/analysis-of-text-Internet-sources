@@ -41,7 +41,7 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
     
     try:
         # 1. Суммаризация новых статей
-        summarized_new = summarize_texts_tfidf(new_articles)
+        summarized_new = summarize_texts_tfidf()
         
         # 2. Загрузка существующих статей из базы
         existing_articles = list(db.articles.find(
@@ -106,7 +106,7 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
         tunnel.close()
 
 def main():
-    saved_count = save_unique_articles(new_articles)
+    saved_count = save_unique_articles([])
     print(f"Успешно сохранено {saved_count} новых статей")
 
 if __name__ == "__main__":
