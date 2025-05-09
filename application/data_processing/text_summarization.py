@@ -1,84 +1,135 @@
-import re
-import spacy
+from sshtunnel import SSHTunnelForwarder
+from pymongo import MongoClient
 from sklearn.feature_extraction.text import TfidfVectorizer
-from typing import List, Dict, Union
-from data_processing.filtering import NewsProcessor
+from sklearn.metrics.pairwise import cosine_similarity
+from typing import List, Dict
+import sys
+sys.path.append("../")
+from data_storage.database import connect_to_mongo
+from data_processing.text_summarization import summarize_texts_tfidf
 
-# Загружаем модель spaCy для русского языка
-nlp = spacy.load("ru_core_news_sm")
+# Константы подключения
+SSH_HOST = '78.36.44.126'
+SSH_PORT = 57381
+SSH_USER = 'server'
+SSH_PASSWORD = 'tppo'
+DB_NAME = 'newsPTZ'
 
-def clean_html(text: str) -> str:
-    """Удаляет HTML-теги из текста с помощью регулярного выражения"""
-    return re.sub(r'<[^>]+>', '', text)
-
-def summarize_texts_tfidf(data: Union[List[Dict], Dict]) -> Union[List[Dict], Dict]:
+def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> int:
     """
-    Добавляет суммаризированный текст (2 самых важных предложения) к каждому посту.
-    С предварительной очисткой от HTML-тегов.
+    Сохраняет только уникальные статьи в базу данных.
+    Возвращает количество сохраненных статей.
+    
+    Args:
+        new_articles: Список новых статей для сохранения
+        threshold: Порог схожести для определения уникальности (0-1)
+        
+    Returns:
+        Количество сохраненных уникальных статей
     """
-    news_processor = NewsProcessor()
-    filtered_data = news_processor.process_news()
-
-    result = []
-    for filtered_item in filtered_data:
-        processed_item = filtered_item.copy()
-        raw_text = processed_item.get("text", "")
+    if not new_articles:
+        return 0
+    
+    # Подключаемся к базе данных
+    db, tunnel = connect_to_mongo(
+        ssh_host=SSH_HOST,
+        ssh_port=SSH_PORT,
+        ssh_user=SSH_USER,
+        ssh_password=SSH_PASSWORD,
+        db_name=DB_NAME
+    )
+    
+    try:
+        # 1. Суммаризация новых статей
+        summarized_new = summarize_texts_tfidf(new_articles)
         
-        # Очищаем текст от HTML-тегов
-        clean_text = clean_html(raw_text)
-        processed_item["text"] = clean_text
+        # 2. Загрузка существующих статей из базы
+        existing_articles = list(db.articles.find(
+            {}, 
+            {"title": 1, "summary": 1, "url": 1, "article_id": 1, "_id": 0}
+        ))
         
-        sentences = [sent.text for sent in nlp(clean_text).sents]
-
-        if len(sentences) <= 2:
-            processed_item["summary"] = clean_text.strip()
-        else:
-            vectorizer = TfidfVectorizer()
-            tfidf_matrix = vectorizer.fit_transform(sentences)
-            sentence_scores = tfidf_matrix.sum(axis=1).A1
-
-            top_indices = sentence_scores.argsort()[-2:][::-1]
-            summary = ' '.join([sentences[i] for i in sorted(top_indices)])
-            processed_item["summary"] = summary.strip()
-
-        result.append(processed_item)
-
-    return result
-
-def print_news_with_summary(news_data: List[Dict]) -> None:
-    """Выводит новости с очищенным текстом и суммаризацией"""
-    if not news_data:
-        print("Новостей для отображения нет")
-        return
-
-    for i, news_item in enumerate(news_data, 1):
-        print(f"\nНовость #{i}")
-        print("-" * 50)
-        print(f"Заголовок: {news_item.get('title', 'Без заголовка')}")
-        print(f"Район: {news_item.get('location', {}).get('district', 'Не указан')}")
-        print(f"Категории: {', '.join(news_item.get('categories', ['Другое']))}")
-        print(f"\nПолный текст:\n{news_item.get('text', 'Текст отсутствует')}")
-        print(f"\nСуммаризация (ключевые предложения):\n{news_item.get('summary', 'Не удалось сгенерировать')}")
-        print("-" * 50)
+        saved_count = 0
+        
+        # 3. Если база пуста - сохраняем все статьи
+        if not existing_articles:
+            for article in summarized_new:
+                db.save_article(
+                    article_id=article["article_id"],
+                    source_id=article.get("source_id", ""),
+                    title=article["title"],
+                    url=article["url"],
+                    publication_date=article.get("publication_date", ""),
+                    summary=article["summary"],
+                    text=article.get("text", ""),
+                    category=article.get("category", ""),
+                    district=article.get("district", "")
+                )
+                saved_count += 1
+            return saved_count
+        
+        # 4. Подготовка данных для сравнения схожести
+        existing_texts = [f"{art['title']} {art['summary']}" for art in existing_articles]
+        new_texts = [f"{art['title']} {art['summary']}" for art in summarized_new]
+        
+        vectorizer = TfidfVectorizer()
+        existing_matrix = vectorizer.fit_transform(existing_texts)
+        new_matrix = vectorizer.transform(new_texts)
+        
+        # 5. Фильтрация и сохранение уникальных статей
+        for i, article in enumerate(summarized_new):
+            # Проверка на дубликат по URL
+            if db.articles.find_one({"url": article["url"]}):
+                continue
+            
+            # Проверка на схожесть по содержанию
+            similarities = cosine_similarity(new_matrix[i], existing_matrix)[0]
+            max_similarity = max(similarities) if similarities.size > 0 else 0
+            
+            if max_similarity < threshold:
+                db.save_article(
+                    article_id=article["article_id"],
+                    source_id=article.get("source_id", ""),
+                    title=article["title"],
+                    url=article["url"],
+                    publication_date=article.get("publication_date", ""),
+                    summary=article["summary"],
+                    text=article.get("text", ""),
+                    category=article.get("category", ""),
+                    district=article.get("district", "")
+                )
+                saved_count += 1
+        
+        return saved_count
+    finally:
+        # Обязательно закрываем соединение
+        tunnel.close()
 
 def main():
-    """Основная функция для обработки и вывода новостей"""
+    """
+    Основной метод для обработки и сохранения новостей.
+    Получает статьи из функции summarize_texts_tfidf и сохраняет уникальные.
+    """
     print("="*50)
-    print("СИСТЕМА ОБРАБОТКИ И СУММАРИЗАЦИИ НОВОСТЕЙ")
+    print("СИСТЕМА ОБРАБОТКИ И СОХРАНЕНИЯ НОВОСТЕЙ")
     print("="*50)
     
     try:
-        # Получаем и обрабатываем новости
-        summarized_news = summarize_texts_tfidf([])
+        # Получаем обработанные новости (пустой список передается, так как 
+        # summarize_texts_tfidf получает новости из news_processor.process_news())
+        new_articles = summarize_texts_tfidf([])
+        
+        if not new_articles:
+            print("Нет новых статей для обработки")
+            return
+            
+        print(f"Получено {len(new_articles)} новых статей для обработки")
+        
+        # Сохраняем уникальные статьи
+        saved_count = save_unique_articles(new_articles)
         
         # Выводим результат
-        print_news_with_summary(summarized_news)
-        
-        # Статистика
-        print(f"\nОбработка завершена. Всего новостей: {len(summarized_news)}")
-        if summarized_news:
-            avg_length = sum(len(n['summary'].split()) for n in summarized_news)/len(summarized_news)
-            print(f"Средняя длина суммаризации: {avg_length:.1f} слов")
+        print(f"\nСохранено {saved_count} уникальных статей из {len(new_articles)} обработанных")
         
     except Exception as e:
         print(f"\nОшибка при обработке новостей: {str(e)}")
