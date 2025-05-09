@@ -1,5 +1,12 @@
 import re
+import spacy
+from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Dict, Union
+from filtering import NewsProcessor
+
+
+# Загружаем модель spaCy для русского языка
+nlp = spacy.load("ru_core_news_sm")
 
 def clean_html(text: str) -> str:
     """Удаляет HTML-теги из текста с помощью регулярного выражения"""
