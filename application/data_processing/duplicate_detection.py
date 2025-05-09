@@ -65,6 +65,7 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
                     category=article.get("category", ""),
                     district=article.get("district", "")
                 )
+                print(f"Уникальная статья (база пуста): {article['title']}")
                 saved_count += 1
             return saved_count
         
@@ -80,6 +81,7 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
         for i, article in enumerate(summarized_new):
             # Проверка на дубликат по URL
             if db.articles.find_one({"url": article["url"]}):
+                print(f"Пропущена дубликат по URL: {article['title']}")
                 continue
             
             # Проверка на схожесть по содержанию
@@ -98,7 +100,10 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
                     category=article.get("category", ""),
                     district=article.get("district", "")
                 )
+                print(f"Уникальная статья сохранена: {article['title']} (схожесть: {max_similarity:.2f})")
                 saved_count += 1
+            else:
+                print(f"Пропущена похожая статья: {article['title']} (схожесть: {max_similarity:.2f})")
         
         return saved_count
     finally:
@@ -110,15 +115,6 @@ def main():
     print(f"Успешно сохранено {saved_count} новых статей")
         if not articles:
         print("Нет уникальных статей для сохранения")
-        return
-    
-    print("\nУникальные статьи, сохраненные в базу:")
-    print("-" * 80)
-    for i, article in enumerate(articles, 1):
-        print(f"{i}. Заголовок: {article['title']}")
-        print(f"   URL: {article['url']}")
-        print(f"   Макс. схожесть с существующими: {article['similarity']}")
-        print("-" * 80)
 
 if __name__ == "__main__":
     main()
