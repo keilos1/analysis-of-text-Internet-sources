@@ -1012,3 +1012,37 @@ footer {
         font-size: 15px;
     }
 }
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    background: #f8f8f8;
+    color: #333;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.page-btn:hover {
+    background: #e8e8e8;
+}
+
+.current-page {
+    padding: 8px 12px;
+    background: #b02323;
+    color: white;
+    border-radius: 4px;
+}
+
+.page-dots {
+    padding: 8px 4px;
+}
