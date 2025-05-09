@@ -127,6 +127,11 @@ async function loadPage(params) {
     }
 }
 
+// Глобальные переменные для пагинации
+let currentNewsPage = 1;
+const newsPerPage = 5;
+let allNewsData = [];
+
 async function loadMainPage(container) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
@@ -137,44 +142,10 @@ async function loadMainPage(container) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
         }
 
-        const news = await response.json();
+        allNewsData = await response.json();
+        currentNewsPage = 1; // Сбрасываем на первую страницу
 
-        let digestHTML = `
-            <section class="digest">
-                <h2>Новости дня</h2>
-                <ul>
-        `;
-
-        news.slice(0, 3).forEach(item => {
-            digestHTML += `<li><a href="#" data-article="${item._id.$oid}">${item.title}</a></li>`;
-        });
-
-        digestHTML += `
-                </ul>
-            </section>
-            <section class="latest-news">
-                <h2>Последние новости</h2>
-        `;
-
-        news.forEach(item => {
-            const date = item.publication_date ?
-                new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
-                'Дата неизвестна';
-
-            digestHTML += `
-                <div class="news-item">
-                    <img src="foto.jpg" alt="${item.title}">
-                    <div class="news-text">
-                        <a href="#" data-article="${item._id.$oid}" class="news-title">${item.title}</a>
-                        <p>${item.summary || 'Нет описания'}</p>
-                        <small>Дата публикации: ${date}</small>
-                    </div>
-                </div>
-            `;
-        });
-
-        digestHTML += `</section>`;
-        container.innerHTML = digestHTML;
+        renderMainPageContent(container);
 
     } catch (error) {
         console.error("Ошибка при загрузке новостей:", error);
@@ -187,6 +158,128 @@ async function loadMainPage(container) {
         `;
     }
 }
+
+function renderMainPageContent(container) {
+    // Создаем HTML для блока "Новости дня"
+    const digestHTML = `
+        <section class="digest">
+            <h2>Новости дня</h2>
+            <ul>
+                ${allNewsData.slice(0, 3).map(item =>
+                    `<li><a href="#" data-article="${item._id.$oid}">${item.title}</a></li>`
+                ).join('')}
+            </ul>
+        </section>
+        <section class="latest-news">
+            <h2>Последние новости</h2>
+            <div id="news-list-container"></div>
+            <div id="news-pagination"></div>
+        </section>
+    `;
+
+    container.innerHTML = digestHTML;
+
+    // Рендерим список новостей и пагинацию
+    renderNewsList();
+    renderPagination();
+}
+
+function renderNewsList() {
+    const startIndex = (currentNewsPage - 1) * newsPerPage;
+    const paginatedNews = allNewsData.slice(startIndex, startIndex + newsPerPage);
+    const newsContainer = document.getElementById('news-list-container');
+
+    if (!newsContainer) return;
+
+    newsContainer.innerHTML = paginatedNews.map(item => {
+        const date = item.publication_date ?
+            new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
+            'Дата неизвестна';
+
+        return `
+            <div class="news-item">
+                <img src="foto.jpg" alt="${item.title}">
+                <div class="news-text">
+                    <a href="#" data-article="${item._id.$oid}" class="news-title">${item.title}</a>
+                    <p>${item.summary || 'Нет описания'}</p>
+                    <small>Дата публикации: ${date}</small>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderPagination() {
+    const totalPages = Math.ceil(allNewsData.length / newsPerPage);
+    const paginationContainer = document.getElementById('news-pagination');
+
+    if (!paginationContainer || totalPages <= 1) {
+        if (paginationContainer) paginationContainer.innerHTML = '';
+        return;
+    }
+
+    let paginationHTML = '<div class="pagination">';
+
+    // Кнопка "Назад"
+    if (currentNewsPage > 1) {
+        paginationHTML += `
+            <button class="page-btn" onclick="changeNewsPage(${currentNewsPage - 1})">
+                ← Назад
+            </button>
+        `;
+    }
+
+    // Номера страниц
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentNewsPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    if (startPage > 1) {
+        paginationHTML += `<button class="page-btn" onclick="changeNewsPage(1)">1</button>`;
+        if (startPage > 2) {
+            paginationHTML += `<span class="page-dots">...</span>`;
+        }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === currentNewsPage) {
+            paginationHTML += `<span class="current-page">${i}</span>`;
+        } else {
+            paginationHTML += `<button class="page-btn" onclick="changeNewsPage(${i})">${i}</button>`;
+        }
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            paginationHTML += `<span class="page-dots">...</span>`;
+        }
+        paginationHTML += `<button class="page-btn" onclick="changeNewsPage(${totalPages})">${totalPages}</button>`;
+    }
+
+    // Кнопка "Вперед"
+    if (currentNewsPage < totalPages) {
+        paginationHTML += `
+            <button class="page-btn" onclick="changeNewsPage(${currentNewsPage + 1})">
+                Вперед →
+            </button>
+        `;
+    }
+
+    paginationHTML += '</div>';
+    paginationContainer.innerHTML = paginationHTML;
+}
+
+// Функция для смены страницы (должна быть в глобальной области видимости)
+window.changeNewsPage = function(newPage) {
+    currentNewsPage = newPage;
+    renderNewsList();
+    renderPagination();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
 
 async function loadCategoryPage(container, category) {
     try {

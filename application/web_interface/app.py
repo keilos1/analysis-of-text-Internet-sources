@@ -52,7 +52,7 @@ async def get_foto():
 async def get_latest_news():
     db, tunnel = get_db_connection()
     try:
-        articles = list(db.articles.find().sort("publication_date", -1).limit(10))
+        articles = list(db.articles.find().sort("publication_date", -1))
         return parse_json(articles)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка получения новостей: {str(e)}")
