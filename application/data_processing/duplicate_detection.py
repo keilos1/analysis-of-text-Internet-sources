@@ -104,3 +104,10 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
     finally:
         # Обязательно закрываем соединение
         tunnel.close()
+
+def main():
+    saved_count = save_unique_articles()
+    print(f"Успешно сохранено {saved_count} новых статей")
+
+if __name__ == "__main__":
+    main()
