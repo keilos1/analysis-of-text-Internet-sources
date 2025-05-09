@@ -3,7 +3,10 @@ from pymongo import MongoClient
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from typing import List, Dict
-from text_summarization import summarize_texts_tfidf
+import sys
+sys.path.append("../")
+from data_storage.database import connect_to_mongo, save_article
+from data_processing.text_summarization import summarize_texts_tfidf
 
 # Константы подключения
 SSH_HOST = '78.36.44.126'
