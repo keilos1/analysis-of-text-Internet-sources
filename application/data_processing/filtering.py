@@ -4,7 +4,7 @@ from typing import List, Dict, Optional
 from enum import Enum
 import sys
 sys.path.append("../")
-from data_collection.scheduler import DataUpdater
+from data_collection.sheduler import DataUpdater
 
 class NewsCategory(Enum):
     CULTURE = "Культура"
