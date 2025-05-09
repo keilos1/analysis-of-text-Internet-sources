@@ -54,17 +54,17 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
         # 3. Если база пуста - сохраняем все статьи
         if not existing_articles:
             for article in summarized_new:
-                db.save_article(
-                    article_id=article["article_id"],
-                    source_id=article.get("source_id", ""),
-                    title=article["title"],
-                    url=article["url"],
-                    publication_date=article.get("publication_date", ""),
-                    summary=article["summary"],
-                    text=article.get("text", ""),
-                    category=article.get("categories", ""),
-                    district=article.get("district", "")
-                )
+                db.articles.insert_one({
+                    "article_id": article["article_id"],
+                    "source_id": article.get("source_id", ""),
+                    "title": article["title"],
+                    "url": article["url"],
+                    "publication_date": article.get("publication_date", ""),
+                    "summary": article["summary"],
+                    "text": article.get("text", ""),
+                    "categories": article.get("categories", ["Другое"]),
+                    "district": article.get("district", "Не указан")
+                })
                 saved_count += 1
             return saved_count
         
@@ -87,17 +87,17 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
             max_similarity = max(similarities) if similarities.size > 0 else 0
             
             if max_similarity < threshold:
-                db.save_article(
-                    article_id=article["article_id"],
-                    source_id=article.get("source_id", ""),
-                    title=article["title"],
-                    url=article["url"],
-                    publication_date=article.get("publication_date", ""),
-                    summary=article["summary"],
-                    text=article.get("text", ""),
-                    category=article.get("categories", ""),
-                    district=article.get("district", "")
-                )
+                db.articles.insert_one({
+                    "article_id": article["article_id"],
+                    "source_id": article.get("source_id", ""),
+                    "title": article["title"],
+                    "url": article["url"],
+                    "publication_date": article.get("publication_date", ""),
+                    "summary": article["summary"],
+                    "text": article.get("text", ""),
+                    "categories": article.get("categories", ["Другое"]),
+                    "district": article.get("district", "Не указан")
+                })
                 saved_count += 1
         
         return saved_count
