@@ -13,7 +13,6 @@ class NewsCategory(Enum):
     HOLIDAYS = "Праздники"
     EDUCATION = "Образование"
 
-
 # Только районы Петрозаводска
 PETROZAVODSK_DISTRICTS = [
     "Голиковка", "Древлянка", "Зарека",
@@ -26,13 +25,13 @@ CATEGORY_KEYWORDS = {
     NewsCategory.CULTURE: ["культур", "музей", "театр"],
     NewsCategory.SPORT: ["спорт", "футбол", "хоккей"],
     NewsCategory.TECHNOLOGY: ["технолог", "инновац", "IT"],
-    NewsCategory.HOLIDAYS: ["праздник", "день города", "фестивал"],
+    NewsCategory.HOLIDAYS: ["праздник", "день города", "фестиваль"],
     NewsCategory.EDUCATION: ["образован", "школ", "университет"]
 }
 
 class NewsProcessor:
     def __init__(self):
-        self.data_updater = DataUpdater()  # Создаем экземпляр DataUpdater
+        self.data_updater = DataUpdater()
 
     def process_news(self) -> List[Dict]:
         """
@@ -40,9 +39,15 @@ class NewsProcessor:
         - Оставляет только новости о Петрозаводске
         - Добавляет информацию о локации и категориях
         """
-        # Получаем сырые новости из источников
-        raw_news = self.data_updater.fetch_news()  # Вызываем метод экземпляра
+        raw_news = self.data_updater.fetch_news()
         processed_news = []
+
+        # Проверка на отсутствие новостей
+        if not raw_news:
+            print("Новостей нет")
+            return processed_news
+
+        petrozavodsk_news_count = 0
 
         for news_item in raw_news:
             text = news_item.get("text", "")
@@ -51,6 +56,8 @@ class NewsProcessor:
             # Проверка на принадлежность к Петрозаводску
             if not re.search(r'\bПетрозаводск\b', text, re.IGNORECASE):
                 continue
+
+            petrozavodsk_news_count += 1
 
             # Определение категорий
             detected_categories = []
@@ -72,11 +79,14 @@ class NewsProcessor:
             print("District:", location.get("district", "Не указан"))
             print("-" * 50)
 
-            # Добавляем обработанную новость
             processed_news.append({
                 **news_item,
                 "location": location,
                 "categories": detected_categories or ["Другое"]
             })
+
+        # Проверка, что после фильтрации остались новости
+        if petrozavodsk_news_count == 0:
+            print("Новостей о Петрозаводске нет")
 
         return processed_news
