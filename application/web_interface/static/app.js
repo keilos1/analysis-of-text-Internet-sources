@@ -576,3 +576,379 @@ async function loadSearchResultsPage(container, query) {
     html += '</div>';
     container.innerHTML = html;
 }
+
+// Добавляем глобальные переменные для фильтрации
+let currentFilters = {
+    category: null,
+    location: null
+};
+
+// Модифицируем функцию loadMainPage для поддержки фильтрации
+async function loadMainPage(container, filters = {}) {
+    try {
+        container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
+
+        // Формируем URL с учетом фильтров
+        let url = 'http://78.36.44.126:8000/api/latest-news';
+        const queryParams = [];
+
+        if (filters.category) {
+            queryParams.push(`category=${encodeURIComponent(filters.category)}`);
+        }
+        if (filters.location) {
+            queryParams.push(`location=${encodeURIComponent(filters.location)}`);
+        }
+
+        if (queryParams.length > 0) {
+            url += `?${queryParams.join('&')}`;
+        }
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
+        }
+
+        allNewsData = await response.json();
+        currentNewsPage = 1;
+
+        renderMainPageContent(container, filters);
+
+    } catch (error) {
+        console.error("Ошибка при загрузке новостей:", error);
+        container.innerHTML = `
+            <div class="error-message">
+                <h2>Ошибка при загрузке новостей</h2>
+                <p>${error.message}</p>
+                <button onclick="location.reload()">Попробовать снова</button>
+            </div>
+        `;
+    }
+}
+
+// Обновляем renderMainPageContent для отображения фильтров
+function renderMainPageContent(container, filters) {
+    const digestHTML = `
+        <section class="digest">
+            <h2>Новости дня</h2>
+            <div class="filters">
+                <select id="category-filter" class="filter-select">
+                    <option value="">Все категории</option>
+                    <option value="culture">Культура</option>
+                    <option value="sports">Спорт</option>
+                    <option value="tech">Технологии</option>
+                    <option value="holidays">Праздники</option>
+                    <option value="education">Образование</option>
+                </select>
+                
+                <select id="location-filter" class="filter-select">
+                    <option value="">Все локации</option>
+                    <option value="Петрозаводск">Петрозаводск</option>
+                    <option value="Беломорск">Беломорск</option>
+                    <option value="Сортавала">Сортавала</option>
+                    <!-- Добавьте другие локации -->
+                </select>
+                
+                <button id="apply-filters" class="filter-button">Применить</button>
+                ${filters.category || filters.location ? 
+                    `<button id="reset-filters" class="filter-button">Сбросить</button>` : ''}
+            </div>
+            <ul>
+                ${allNewsData.slice(0, 3).map(item =>
+                    `<li><a href="#" data-article="${item._id.$oid}">${item.title}</a></li>`
+                ).join('')}
+            </ul>
+        </section>
+        <section class="latest-news">
+            <h2>${getFilterTitle(filters)}</h2>
+            <div id="news-list-container"></div>
+            <div id="news-pagination"></div>
+        </section>
+    `;
+
+    container.innerHTML = digestHTML;
+
+    // Устанавливаем текущие значения фильтров
+    if (filters.category) {
+        document.getElementById('category-filter').value = filters.category;
+    }
+    if (filters.location) {
+        document.getElementById('location-filter').value = filters.location;
+    }
+
+    // Навешиваем обработчики на фильтры
+    setupFilterHandlers();
+
+    renderNewsList();
+    renderPagination();
+}
+
+// Вспомогательная функция для заголовка раздела
+function getFilterTitle(filters) {
+    if (filters.category && filters.location) {
+        return `Новости: ${getCategoryName(filters.category)} (${filters.location})`;
+    }
+    if (filters.category) {
+        return `Новости: ${getCategoryName(filters.category)}`;
+    }
+    if (filters.location) {
+        return `Новости в ${filters.location}`;
+    }
+    return 'Последние новости';
+}
+
+function getCategoryName(category) {
+    const names = {
+        "culture": "Культура",
+        "sports": "Спорт",
+        "tech": "Технологии",
+        "holidays": "Праздники",
+        "education": "Образование"
+    };
+    return names[category] || category;
+}
+
+// Настройка обработчиков фильтров
+function setupFilterHandlers() {
+    const applyBtn = document.getElementById('apply-filters');
+    const resetBtn = document.getElementById('reset-filters');
+
+    if (applyBtn) {
+        applyBtn.addEventListener('click', () => {
+            const category = document.getElementById('category-filter').value;
+            const location = document.getElementById('location-filter').value;
+
+            const filters = {};
+            if (category) filters.category = category;
+            if (location) filters.location = location;
+
+            currentFilters = filters;
+            loadMainPage(document.getElementById('dynamic-content'), filters);
+        });
+    }
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            currentFilters = {};
+            loadMainPage(document.getElementById('dynamic-content'), {});
+        });
+    }
+}
+
+// Модифицируем функцию loadPage для передачи фильтров
+async function loadPage(params) {
+    const { page, type, query } = params;
+    const contentContainer = document.getElementById('dynamic-content');
+
+    switch(page) {
+        case 'main':
+            await loadMainPage(contentContainer, currentFilters);
+            break;
+        case 'category':
+            await loadCategoryPage(contentContainer, type);
+            break;
+        case 'source':
+            await loadSourcePage(contentContainer, type);
+            break;
+        case 'article':
+            await loadArticlePage(contentContainer, type);
+            break;
+        case 'search':
+            await loadSearchResultsPage(contentContainer, query);
+            break;
+        default:
+            await loadMainPage(contentContainer, currentFilters);
+    }
+}
+
+// Обновляем функцию initSearch для поддержки фильтрации в поиске
+function initSearch() {
+    const searchInput = document.querySelector('.search-input');
+    const searchButton = document.querySelector('.search-button');
+
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const query = this.value.trim();
+                if (query) {
+                    performSearch(query, currentFilters);
+                }
+            }
+        });
+    }
+
+    if (searchButton) {
+        searchButton.addEventListener('click', function() {
+            const query = searchInput.value.trim();
+            if (query) {
+                performSearch(query, currentFilters);
+            }
+        });
+    }
+}
+
+// Модифицируем performSearch для поддержки фильтров
+async function performSearch(query, filters = {}) {
+    try {
+        const contentContainer = document.getElementById('dynamic-content');
+        contentContainer.innerHTML = `
+            <div class="search-loading">
+                <div class="spinner"></div>
+                <p>Ищем новости по запросу: "${query}"</p>
+            </div>
+        `;
+
+        // Формируем URL с учетом фильтров
+        let url = `http://78.36.44.126:8000/api/search?query=${encodeURIComponent(query)}`;
+
+        if (filters.category) {
+            url += `&category=${encodeURIComponent(filters.category)}`;
+        }
+        if (filters.location) {
+            url += `&location=${encodeURIComponent(filters.location)}`;
+        }
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const results = data.map(item => ({
+            id: item._id?.$oid || item._id || Math.random().toString(36).substr(2, 9),
+            title: item.title,
+            description: item.summary || item.source || '',
+            img: "foto.jpg",
+            url: item.url,
+            date: item.publication_date ?
+                new Date(item.publication_date.$date || item.publication_date).toLocaleDateString('ru-RU') :
+                'Дата неизвестна',
+            source: item.source || 'неизвестен',
+            category: item.category || 'unknown'
+        }));
+
+        sessionStorage.setItem('searchResults', JSON.stringify({
+            query: query,
+            results: results,
+            filters: filters
+        }));
+
+        history.pushState({ page: 'search', query: query, filters: filters }, '',
+            `?page=search&query=${encodeURIComponent(query)}`);
+        await loadSearchResultsPage(contentContainer, query);
+
+    } catch (error) {
+        console.error("Search error:", error);
+        const contentContainer = document.getElementById('dynamic-content');
+        contentContainer.innerHTML = `
+            <div class="search-error">
+                <h2>Ошибка при поиске</h2>
+                <p>Произошла ошибка при выполнении поиска. Пожалуйста, попробуйте позже.</p>
+                <p class="error-details">${error.message}</p>
+                <button onclick="history.back()">Вернуться назад</button>
+            </div>
+        `;
+    }
+}
+
+// Обновляем loadSearchResultsPage для отображения фильтров
+async function loadSearchResultsPage(container, query) {
+    let searchData = { query: query || '', results: [], filters: {} };
+
+    try {
+        const savedData = sessionStorage.getItem('searchResults');
+        if (savedData) {
+            searchData = JSON.parse(savedData);
+        }
+    } catch (e) {
+        console.error('Error parsing search results:', e);
+    }
+
+    let html = `
+        <div class="search-results-container">
+            <h2 class="search-title">Результаты поиска: "${searchData.query}"</h2>
+            ${searchData.filters.category || searchData.filters.location ? 
+                `<div class="active-filters">
+                    Фильтры: 
+                    ${searchData.filters.category ? `<span class="filter-tag">${getCategoryName(searchData.filters.category)}</span>` : ''}
+                    ${searchData.filters.location ? `<span class="filter-tag">${searchData.filters.location}</span>` : ''}
+                    <button class="clear-filters" onclick="clearSearchFilters()">×</button>
+                </div>` : ''}
+            <div class="results-count">Найдено статей: ${searchData.results.length}</div>
+    `;
+
+    if (searchData.results.length > 0) {
+        html += '<div class="results-list">';
+        searchData.results.forEach(item => {
+            html += `
+                <div class="search-item">
+                    <div class="search-item-header">
+                        <a href="${item.url}" target="_blank" class="search-item-title">${item.title}</a>
+                        <span class="search-item-date">${item.date}</span>
+                    </div>
+                    <p class="search-item-desc">${item.description}</p>
+                    <div class="search-item-footer">
+                        ${item.category !== 'unknown' ? `<span class="search-item-category">${getCategoryName(item.category)}</span>` : ''}
+                        <span class="search-item-source">${item.source}</span>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    } else {
+        html += `
+            <div class="no-results">
+                <p>По запросу "${searchData.query}" ничего не найдено.</p>
+                ${searchData.filters.category || searchData.filters.location ? 
+                    '<p>Попробуйте изменить параметры фильтров.</p>' : 
+                    '<p>Попробуйте изменить формулировку запроса.</p>'}
+                <button onclick="history.back()">Вернуться назад</button>
+            </div>
+        `;
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Добавляем глобальную функцию для сброса фильтров поиска
+window.clearSearchFilters = function() {
+    const searchData = JSON.parse(sessionStorage.getItem('searchResults') || {});
+    performSearch(searchData.query);
+};
+
+// Обновляем обработчик DOMContentLoaded
+document.addEventListener("DOMContentLoaded", function() {
+    setCurrentDate();
+    setupNavigation();
+
+    // Получаем текущие параметры страницы
+    const params = getCurrentPage();
+
+    // Если есть параметры фильтров в URL, применяем их
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('category')) {
+        currentFilters.category = urlParams.get('category');
+    }
+    if (urlParams.has('location')) {
+        currentFilters.location = urlParams.get('location');
+    }
+
+    loadPage(params);
+
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-article]')) {
+            e.preventDefault();
+            const articleId = e.target.getAttribute('data-article');
+            loadArticle(articleId);
+        }
+
+        if (e.target.matches('.search-item-title') && e.target.href) {
+            return;
+        }
+    });
+
+    initSearch();
+});
