@@ -1046,3 +1046,66 @@ footer {
 .page-dots {
     padding: 8px 4px;
 }
+
+.filters {
+    margin: 15px 0;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-select {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background-color: white;
+}
+
+.filter-button {
+    padding: 8px 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.filter-button:hover {
+    background-color: #45a049;
+}
+
+.active-filters {
+    margin: 10px 0;
+    padding: 8px 12px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-tag {
+    padding: 4px 8px;
+    background-color: #e0e0e0;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.clear-filters {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 1.1em;
+    padding: 0 5px;
+}
+
+.search-item-category {
+    padding: 2px 6px;
+    background-color: #e3f2fd;
+    border-radius: 3px;
+    color: #1976d2;
+    font-size: 0.8em;
+    margin-right: 8px;
+}
