@@ -1,4 +1,5 @@
 # Default ignored files
+application/config
 /shelf/
 /workspace.xml
 /analysis-of-text-Internet-sources.iml
@@ -6,4 +7,3 @@
 /modules.xml
 /inspectionProfiles/profiles_settings.xml
 /vcs.xml
-application/config
