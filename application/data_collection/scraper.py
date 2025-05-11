@@ -94,12 +94,23 @@ class WebScraper:
 
         return None
 
-    def _get_full_text(self, article_url, selector):
-        """Внутренний метод для получения полного текста статьи"""
-        html = self.fetch_page(article_url)
-        if not html:
-            return ""
+def _get_full_text(self, article_url, selector):
+    """Внутренний метод для получения полного текста статьи"""
+    html = self.fetch_page(article_url)
+    if not html:
+        return ""
 
-        soup = BeautifulSoup(html, 'html.parser')
-        content = soup.select_one(selector)
-        return content.get_text(strip=True, separator='\n') if content else ""
+    soup = BeautifulSoup(html, 'html.parser')
+    content = soup.select_one(selector)
+    
+    if not content:
+        return ""
+        
+    # Получаем HTML-содержимое
+    html_content = str(content)
+    
+    # Очищаем от футера
+    cleaned_html = self._remove_footer(html_content)
+    
+    # Возвращаем как чистый текст
+    return BeautifulSoup(cleaned_html, 'html.parser').get_text(strip=True, separator='\n')
