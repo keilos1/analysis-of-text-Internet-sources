@@ -6,7 +6,7 @@ from bson import ObjectId, json_util
 import json
 
 # Добавляем пути до того как импортируем наши модули
-#sys.path.append("../")
+sys.path.append("../")
 
 # Теперь импортируем наши модули
 from data_collection.api_connector import APIConnector
