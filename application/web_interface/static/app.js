@@ -110,7 +110,7 @@ async function loadPage(params) {
         case 'main':
             await loadMainPage(contentContainer);
             break;
-        case 'category':
+        case 'articles':
             await loadCategoryPage(contentContainer, type);
             break;
         case 'source':
@@ -281,11 +281,11 @@ window.changeNewsPage = function(newPage) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-async function loadCategoryPage(container, category) {
+async function loadCategoryPage(container, articles) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-        const response = await fetch(`http://78.36.44.126:8000/api/category/${category}`);
+        const response = await fetch(`http://78.36.44.126:8000/api/articles/${articles}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
@@ -300,7 +300,7 @@ async function loadCategoryPage(container, category) {
             "education": "Образование"
         };
 
-        const categoryName = categoryNames[category] || "Категория";
+        const categoryName = categoryNames[articles] || "Категория";
 
         let html = `
             <section class="digest">
@@ -579,7 +579,7 @@ async function loadSearchResultsPage(container, query) {
 
 // Глобальные переменные
 let currentFilters = {
-  category: null,
+  articles: null,
   location: null
 };
 
@@ -595,7 +595,7 @@ function initFilters() {
   document.querySelectorAll('[data-filter]').forEach(item => {
     item.addEventListener('click', function(e) {
       e.preventDefault();
-      currentFilters.category = this.getAttribute('data-filter');
+      currentFilters.articles = this.getAttribute('data-filter');
       currentFilters.location = null;
       document.getElementById('location-filter').value = '';
       loadNews();
@@ -615,7 +615,7 @@ async function loadNews() {
     showLoader();
 
     const params = new URLSearchParams();
-    if (currentFilters.category) params.append('category', currentFilters.category);
+    if (currentFilters.articles) params.append('articles', currentFilters.articles);
     if (currentFilters.location) params.append('location', currentFilters.location);
 
     const response = await fetch(`/api/filtered-news?${params.toString()}`);
@@ -649,7 +649,7 @@ function renderNews(news) {
           <h3>${item.title}</h3>
           <p>${item.summary || 'Нет описания'}</p>
           <div class="news-meta">
-            <span class="category ${item.category}">${getCategoryName(item.category)}</span>
+            <span class="articles ${item.articles}">${getCategoryName(item.articles)}</span>
             <span class="location">${item.location || 'Карелия'}</span>
           </div>
         </div>
@@ -663,15 +663,15 @@ function renderNews(news) {
 
 // Вспомогательные функции
 function getNewsTitle() {
-  if (currentFilters.category && currentFilters.location) {
-    return `${getCategoryName(currentFilters.category)} в ${currentFilters.location}`;
+  if (currentFilters.articles && currentFilters.location) {
+    return `${getCategoryName(currentFilters.articles)} в ${currentFilters.location}`;
   }
-  if (currentFilters.category) return getCategoryName(currentFilters.category);
+  if (currentFilters.articles) return getCategoryName(currentFilters.articles);
   if (currentFilters.location) return `Новости в ${currentFilters.location}`;
   return 'Все новости';
 }
 
-function getCategoryName(category) {
+function getCategoryName(articles) {
   const names = {
     'culture': 'Культура',
     'sports': 'Спорт',
@@ -679,7 +679,7 @@ function getCategoryName(category) {
     'holidays': 'Праздники',
     'education': 'Образование'
   };
-  return names[category] || category;
+  return names[articles] || articles;
 }
 
 function showLoader() {
