@@ -32,11 +32,11 @@ def google_search(queries, api_key, num=5):
             news_results = []
             for item in data.get('news_results', []):
                 news_item = {
-                    'title': item.get('title'),
-                    'link': item.get('link'),
+                    'source_id': item.get('ObjectId'),
+                    'url': item.get('url'),
                     'source': item.get('source', {}).get('name'),
-                    'date': item.get('date'),
-                    'query': query,
+                    'category': item.get('category'),
+                    'district': item.get('area'),
                     'saved_at': datetime.now()
                 }
                 news_results.append(news_item)
