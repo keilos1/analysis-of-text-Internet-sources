@@ -2,6 +2,9 @@ import re
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Dict, Union
+import sys
+sys.path.append("../")
+
 from data_processing.filtering import NewsProcessor
 
 # Загружаем модель spaCy для русского языка
