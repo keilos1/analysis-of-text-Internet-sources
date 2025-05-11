@@ -453,58 +453,20 @@ h1 {
     width: 100%;
 }
 
-/* Новый контейнер для обертки контента */
-.content-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    width: 100%;
-}
-
-
+/* Левая колонка - Дайджест */
 /* Левая колонка - Дайджест */
 .digest {
-    width: 300px; /* Фиксированная ширина */
-    min-height: auto; /* Убираем фиксированную высоту */
-    background-color: #ddd;
+    width: 30%; /* Изначальная ширина */
+    height: 100px; /* Минимальная высота */
+    max-width: 500px; /* Ограничение по ширине */
+    background-color: #ddd; /* Фон по умолчанию */
     padding: 15px;
     border-radius: 10px;
     transition: all 0.5s ease-in-out;
     overflow: hidden;
     position: relative;
-    flex-shrink: 0; /* Запрещаем сжатие */
-    display: flex;
-    flex-direction: column;
 }
 
-/* Контейнер для списка новостей в дайджесте */
-.digest-content {
-    flex-grow: 1; /* Занимает все доступное пространство */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between; /* Равномерно распределяет пространство */
-}
-
-/* Список */
-.digest ul {
-    list-style: none;
-    padding: 0;
-    margin: 15px 0;
-    flex-grow: 1; /* Занимает доступное пространство */
-}
-
-.digest li {
-    margin-bottom: 15px;
-    padding: 10px;
-    background: rgba(255,255,255,0.7);
-    border-radius: 5px;
-    transition: all 0.3s ease;
-}
-
-.digest li:hover {
-    background: rgba(255,255,255,0.9);
-    transform: translateX(5px);
-}
 /* Заголовок */
 .digest h2 {
     font-size: 20px;
@@ -517,7 +479,15 @@ h1 {
     margin: 0;
 }
 
+/* Список */
+.digest ul {
+    list-style: none;
+    padding: 0;
+}
 
+.digest li {
+    margin-bottom: 10px;
+}
 
 /* Ссылки */
 .digest a {
@@ -573,11 +543,10 @@ h1 {
 
 /* Правая колонка - Последние новости */
 .latest-news {
-    flex: 1; /* Занимает оставшееся пространство */
-    min-width: 300px; /* Минимальная ширина */
+    width: 50%;
     padding: 15px;
-}
 
+}
 .latest-news h2 {
     font-size: 25px;
     margin-bottom: 10px;

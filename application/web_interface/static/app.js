@@ -162,16 +162,13 @@ async function loadMainPage(container) {
 function renderMainPageContent(container) {
     // Создаем HTML для блока "Новости дня"
     const digestHTML = `
-    <div class="content-wrapper">
         <section class="digest">
             <h2>Новости дня</h2>
-            <div class="digest-content">
-                <ul>
-                    ${allNewsData.slice(0, 3).map(item =>
-                        `<li><a href="#" data-article="${item._id.$oid}">${item.title}</a></li>`
-                    ).join('')}
-                </ul>
-            </div>
+            <ul>
+                ${allNewsData.slice(0, 3).map(item =>
+                    `<li><a href="#" data-article="${item._id.$oid}">${item.title}</a></li>`
+                ).join('')}
+            </ul>
         </section>
         <section class="latest-news">
             <h2>Последние новости</h2>
@@ -580,125 +577,106 @@ async function loadSearchResultsPage(container, query) {
     container.innerHTML = html;
 }
 
-// Глобальные переменные
-let currentFilters = {
-  categories: null,
-  location: null
-};
+async function loadCategoryPage(container, category) {
+    try {
+        container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-// Инициализация при загрузке
-document.addEventListener("DOMContentLoaded", function() {
-  initFilters();
-  loadNews();
-});
+        const response = await fetch(`http://78.36.44.126:8000/api/category/${categories}`);
 
-// Инициализация фильтров
-function initFilters() {
-  // Обработка выбора категории
-  document.querySelectorAll('[data-filter]').forEach(item => {
-    item.addEventListener('click', function(e) {
-      e.preventDefault();
-      currentFilters.categories = this.getAttribute('data-filter');
-      currentFilters.location = null;
-      document.getElementById('location-filter').value = '';
-      loadNews();
-    });
-  });
+        if (!response.ok) {
+            throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
+        }
 
-  // Обработка выбора локации
-  document.getElementById('location-filter').addEventListener('change', function() {
-    currentFilters.location = this.value;
-    loadNews();
-  });
-}
+        const news = await response.json();
+        const categoryData = {
+            "culture": {
+                name: "Культура",
+                icon: "palette",
+                description: "Новости из мира искусства, кино, музыки и литературы"
+            },
+            "sports": {
+                name: "Спорт",
+                icon: "sports_soccer",
+                description: "Спортивные события, матчи и турниры"
+            },
+            "tech": {
+                name: "Технологии",
+                icon: "computer",
+                description: "IT-новости, гаджеты и научные разработки"
+            },
+            "holidays": {
+                name: "Праздники",
+                icon: "celebration",
+                description: "Праздничные события и традиции"
+            },
+            "education": {
+                name: "Образование",
+                icon: "school",
+                description: "Новости образования и науки"
+            }
+        };
 
-// Загрузка новостей с фильтрами
-async function loadNews() {
-  try {
-    showLoader();
+        const currentCategory = categoryData[categories] || {
+            name: "Категория",
+            icon: "categories",
+            description: "Новости по выбранной категории"
+        };
 
-    const params = new URLSearchParams();
-    if (currentFilters.categories) params.append('categories', currentFilters.categories);
-    if (currentFilters.location) params.append('location', currentFilters.location);
+        let html = `
+            <div class="current-category">
+                <div class="current-category-icon">
+                    <span class="category-icon">${currentCategory.icon}</span>
+                </div>
+                <div>
+                    <div class="current-category-title">${currentCategory.name}</div>
+                    <div class="current-category-description">${currentCategory.description}</div>
+                </div>
+            </div>
+            
+            <section class="digest">
+                <h2>Новости дня</h2>
+                <ul>
+        `;
 
-    const response = await fetch(`/api/filtered-news?${params.toString()}`);
-    if (!response.ok) throw new Error('Ошибка загрузки');
+        news.slice(0, 3).forEach(item => {
+            html += `<li><a href="#" data-article="${item._id.$oid}">${item.title}</a></li>`;
+        });
 
-    const news = await response.json();
-    renderNews(news);
+        html += `
+                </ul>
+            </section>
+            <section class="latest-news">
+                <h2>Новости категории: ${currentCategory.name}</h2>
+        `;
 
-  } catch (error) {
-    showError(error);
-  }
-}
+        news.forEach(item => {
+            const date = item.publication_date ?
+                new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
+                'Дата неизвестна';
 
-// Отображение новостей
-function renderNews(news) {
-  const container = document.getElementById('dynamic-content');
+            html += `
+                <div class="news-item">
+                    <img src="foto.jpg" alt="${item.title}">
+                    <div class="news-text">
+                        <a href="#" data-article="${item._id.$oid}" class="news-title">${item.title}</a>
+                        <p>${item.summary || 'Нет описания'}</p>
+                        <small>Дата публикации: ${date}</small>
+                    </div>
+                </div>
+            `;
+        });
 
-  let html = `
-    <div class="news-header">
-      <h2>${getNewsTitle()}</h2>
-      <div class="news-count">Найдено: ${news.length}</div>
-    </div>
-    <div class="news-grid">
-  `;
+        html += `</section>`;
+        container.innerHTML = html;
 
-  news.forEach(item => {
-    html += `
-      <div class="news-card">
-        <img src="${item.image || '/static/default-news.jpg'}" alt="${item.title}">
-        <div class="news-body">
-          <h3>${item.title}</h3>
-          <p>${item.summary || 'Нет описания'}</p>
-          <div class="news-meta">
-            <span class="categories ${item.categories}">${getCategoryName(item.categories)}</span>
-            <span class="location">${item.location || 'Карелия'}</span>
-          </div>
-        </div>
-      </div>
-    `;
-  });
-
-  html += `</div>`;
-  container.innerHTML = html;
-}
-
-// Вспомогательные функции
-function getNewsTitle() {
-  if (currentFilters.categories && currentFilters.location) {
-    return `${getCategoryName(currentFilters.categories)} в ${currentFilters.location}`;
-  }
-  if (currentFilters.categories) return getCategoryName(currentFilters.categories);
-  if (currentFilters.location) return `Новости в ${currentFilters.location}`;
-  return 'Все новости';
-}
-
-function getCategoryName(categories) {
-  const names = {
-    'culture': 'Культура',
-    'sports': 'Спорт',
-    'tech': 'Технологии',
-    'holidays': 'Праздники',
-    'education': 'Образование'
-  };
-  return names[categories] || categories;
-}
-
-function showLoader() {
-  document.getElementById('dynamic-content').innerHTML = `
-    <div class="loader">
-      <div class="spinner"></div>
-      <p>Загрузка новостей...</p>
-    </div>
-  `;
-}
-
-function showError(error) {
-  document.getElementById('dynamic-content').innerHTML = `
-    <div class="error">
-      <p>Ошибка: ${error.message}</p>
-      <button onclick="loadNews()">Попробовать снова</button>
-    </div>
-  `;
+    } catch (error) {
+        console.error("Ошибка при загрузке категории:", error);
+        container.innerHTML = `
+            <div class="error-message">
+                <h2>Ошибка при загрузке категории</h2>
+                <p>${error.message}</p>
+                <button onclick="history.back()">Вернуться назад</button>
+            </div>
+        `;
+    }
 }
