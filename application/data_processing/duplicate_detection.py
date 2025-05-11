@@ -1,5 +1,23 @@
+from typing import List, Dict  # Добавьте этот импорт в начало файла
+from sshtunnel import SSHTunnelForwarder
+from pymongo import MongoClient
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import sys
+import asyncio
+
+sys.path.append("../")
+
+from data_storage.database import connect_to_mongo
+from data_processing.text_summarization import summarize_texts_tfidf
+from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME
+
+
 async def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> int:
-    """Сохраняет только уникальные статьи в базу данных."""
+    """
+    Сохраняет только уникальные статьи в базу данных.
+    Возвращает количество сохраненных статей.
+    """
     if not new_articles:
         return 0
     
@@ -15,7 +33,7 @@ async def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95
         
         summarized_new = await summarize_texts_tfidf(new_articles)
         
-        # Добавляем проверку наличия необходимых полей
+        # Проверка наличия обязательных полей
         valid_articles = []
         for article in summarized_new:
             if not all(key in article for key in ['title', 'url', 'summary']):
@@ -123,3 +141,9 @@ async def async_main():
         print(f"\nОшибка при обработке новостей: {str(e)}")
     finally:
         print("\nРабота программы завершена")
+
+def main():
+    asyncio.run(async_main())
+
+if __name__ == "__main__":
+    main()
