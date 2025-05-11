@@ -453,20 +453,26 @@ h1 {
     width: 100%;
 }
 
-/* Левая колонка - Дайджест */
+/* Новый контейнер для обертки контента */
+.content-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    width: 100%;
+}
+
 /* Левая колонка - Дайджест */
 .digest {
-    width: 30%; /* Изначальная ширина */
-    height: 100px; /* Минимальная высота */
-    max-width: 500px; /* Ограничение по ширине */
-    background-color: #ddd; /* Фон по умолчанию */
+    width: 300px; /* Фиксированная ширина */
+    min-height: 300px; /* Минимальная высота */
+    background-color: #ddd;
     padding: 15px;
     border-radius: 10px;
     transition: all 0.5s ease-in-out;
     overflow: hidden;
     position: relative;
+    flex-shrink: 0; /* Запрещаем сжатие */
 }
-
 /* Заголовок */
 .digest h2 {
     font-size: 20px;
@@ -543,10 +549,11 @@ h1 {
 
 /* Правая колонка - Последние новости */
 .latest-news {
-    width: 50%;
+    flex: 1; /* Занимает оставшееся пространство */
+    min-width: 300px; /* Минимальная ширина */
     padding: 15px;
-
 }
+
 .latest-news h2 {
     font-size: 25px;
     margin-bottom: 10px;
