@@ -29,10 +29,13 @@ class SocialScraper:
             db_name=DB_NAME
         )
 
-    async def collect_social_data(self, sources: List[Dict]) -> Dict[str, List[Dict[str, Any]]]:
+    async def collect_social_data(self) -> Dict[str, List[Dict[str, Any]]:
         """Собираем последние 10 постов из социальных сетей и возвращаем в виде словаря"""
         posts_dict = {}
-
+        
+        # Получаем источники из базы данных
+        sources = self.db.sources.find({"is_active": True})  # Предполагаем, что есть поле is_active
+        
         async with httpx.AsyncClient(timeout=30.0) as client:
             for source in sources:
                 source_id = source.get("source_id", "")
@@ -135,15 +138,15 @@ class SocialScraper:
         if hasattr(self, 'tunnel'):
             self.tunnel.stop()
 
-async def get_social_data(sources: List[Dict]) -> Dict[str, List[Dict[str, Any]]]:
+async def get_social_data() -> Dict[str, List[Dict[str, Any]]]:
     """Получаем последние 10 постов из социальных сетей"""
     scraper = SocialScraper()
     try:
-        return await scraper.collect_social_data(sources)
+        return await scraper.collect_social_data()
     finally:
         scraper.close_connection()
 
-def print_posts(posts_data: Dict[str, List[Dict[str, Any]]]):
+def print_posts(posts_data: Dict[str, List[Dict[str, Any]]):
     """Выводим посты в консоль в удобном формате"""
     for source_id, posts in posts_data.items():
         print(f"\n=== Источник {source_id} ===")
@@ -157,14 +160,8 @@ def print_posts(posts_data: Dict[str, List[Dict[str, Any]]]):
 
 async def main():
     """Основная функция для выполнения скрипта"""
-    # Пример списка источников (можно заменить на получение из базы данных)
-    sources = [
-        {"source_id": "vk_ptz", "url": "https://vk.com/petrozavodsk"},
-        {"source_id": "tg_ptz", "url": "https://t.me/petrozavodsk_now"}
-    ]
-    
-    # Получаем данные
-    posts_data = await get_social_data(sources)
+    # Получаем данные из базы данных
+    posts_data = await get_social_data()
     
     # Выводим результаты
     print_posts(posts_data)
