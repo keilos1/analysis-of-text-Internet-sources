@@ -146,7 +146,7 @@ async def get_social_data() -> Dict[str, List[Dict[str, Any]]]:
     finally:
         scraper.close_connection()
 
-def print_posts(posts_data: Dict[str, List[Dict[str, Any]]):
+def print_posts(posts_data: Dict[str, List[Dict[str, Any]]]):
     """Выводим посты в консоль в удобном формате"""
     for source_id, posts in posts_data.items():
         print(f"\n=== Источник {source_id} ===")
