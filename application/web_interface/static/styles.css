@@ -555,7 +555,7 @@ h1 {
 
 /* Меняем цвет ссылок на белый при наведении */
 .digest:hover a {
-    color: white;
+    color: black;
     position: relative;
     z-index: 2; /* Поднимаем текст выше затемняющего слоя */
 }
