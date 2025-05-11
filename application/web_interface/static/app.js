@@ -1,30 +1,42 @@
-document.addEventListener("DOMContentLoaded", function() {
-    // Установка текущей даты
+let API_BASE_URL = 'http://localhost:8000'; // Значение по умолчанию
+
+// Инициализация приложения
+document.addEventListener("DOMContentLoaded", async function() {
+    // Загружаем конфигурацию
+    try {
+        const response = await fetch('/api/config');
+        if (response.ok) {
+            const config = await response.json();
+            API_BASE_URL = `http://${config.SITE_HOST}:8000`;
+            console.log('API base URL set to:', API_BASE_URL);
+        }
+    } catch (error) {
+        console.error('Error loading config:', error);
+    }
+
+    // Инициализация приложения
+    initApp();
+});
+
+function initApp() {
     setCurrentDate();
-    
-    // Обработка навигации
     setupNavigation();
-    
-    // Загрузка начальной страницы
     loadPage(getCurrentPage());
-    
-    // Обработка кликов по статьям
+
     document.addEventListener('click', function(e) {
         if (e.target.matches('[data-article]')) {
             e.preventDefault();
             const articleId = e.target.getAttribute('data-article');
             loadArticle(articleId);
         }
-        
-        // Обработка кликов по внешним ссылкам в результатах поиска
+
         if (e.target.matches('.search-item-title') && e.target.href) {
             return;
         }
     });
 
-    // Инициализация поиска
     initSearch();
-});
+}
 
 function initSearch() {
     const searchInput = document.querySelector('.search-input');
@@ -136,7 +148,7 @@ async function loadMainPage(container) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-        const response = await fetch('http://78.36.44.126:8000/api/latest-news');
+        const response = await fetch(`${API_BASE_URL}/api/latest-news`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
@@ -285,7 +297,7 @@ async function loadCategoryPage(container, category) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-        const response = await fetch(`http://78.36.44.126:8000/api/category/${category}`);
+        const response = await fetch(`${API_BASE_URL}/api/category/${category}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
@@ -355,7 +367,7 @@ async function loadSourcePage(container, source) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-        const response = await fetch(`http://78.36.44.126:8000/api/source/${source}`);
+        const response = await fetch(`${API_BASE_URL}/api/source/${source}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
@@ -425,7 +437,7 @@ async function loadArticle(articleId) {
         const contentContainer = document.getElementById('dynamic-content');
         contentContainer.innerHTML = '<div class="loading-spinner">Загрузка статьи...</div>';
 
-        const response = await fetch(`http://78.36.44.126:8000/api/article/${articleId}`);
+        const response = await fetch(`${API_BASE_URL}/api/article/${articleId}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
@@ -486,7 +498,7 @@ async function performSearch(query) {
             </div>
         `;
 
-        const response = await fetch(`http://78.36.44.126:8000/api/search?query=${encodeURIComponent(query)}`);
+        const response = await fetch(`${API_BASE_URL}/api/search?query=${encodeURIComponent(query)}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
@@ -581,7 +593,7 @@ async function loadCategoryPage(container, category) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-        const response = await fetch(`http://78.36.44.126:8000/api/category/${categories}`);
+        const response = await fetch(`${API_BASE_URL}/api/category/${categories}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);

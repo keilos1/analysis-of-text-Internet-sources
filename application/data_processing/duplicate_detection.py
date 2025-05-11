@@ -4,16 +4,13 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from typing import List, Dict
 import sys
+
 sys.path.append("../")
+
 from data_storage.database import connect_to_mongo
 from data_processing.text_summarization import summarize_texts_tfidf
+from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME
 
-# Константы подключения
-SSH_HOST = '78.36.44.126'
-SSH_PORT = 57381
-SSH_USER = 'server'
-SSH_PASSWORD = 'tppo'
-DB_NAME = 'newsPTZ'
 
 def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> int:
     """
@@ -32,8 +29,8 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
     
     # Подключаемся к базе данных
     db, tunnel = connect_to_mongo(
-        ssh_host=SSH_HOST,
-        ssh_port=SSH_PORT,
+        ssh_host=HOST,
+        ssh_port=PORT,
         ssh_user=SSH_USER,
         ssh_password=SSH_PASSWORD,
         db_name=DB_NAME

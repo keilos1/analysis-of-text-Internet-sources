@@ -7,17 +7,12 @@ import json
 import sys
 sys.path.append("../")
 from data_storage.database import connect_to_mongo
+from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME, SITE_HOST
+
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
-
-# Настройки подключения (должны совпадать с теми, что в database.py)
-SSH_HOST = '78.36.44.126'
-SSH_PORT = 57381
-SSH_USER = 'server'
-SSH_PASSWORD = 'tppo'
-DB_NAME = 'newsPTZ'
 
 
 def parse_json(data):
@@ -27,8 +22,8 @@ def parse_json(data):
 def get_db_connection():
     """Создает и возвращает подключение к базе данных"""
     return connect_to_mongo(
-        ssh_host=SSH_HOST,
-        ssh_port=SSH_PORT,
+        ssh_host=HOST,
+        ssh_port=PORT,
         ssh_user=SSH_USER,
         ssh_password=SSH_PASSWORD,
         db_name=DB_NAME
@@ -160,8 +155,14 @@ async def search_news(query: str):
     finally:
         tunnel.close()
 
+@app.get("/api/config")
+async def get_config():
+    return {
+        "SITE_HOST": SITE_HOST,
+    }
+
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
