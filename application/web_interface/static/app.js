@@ -161,14 +161,17 @@ async function loadMainPage(container) {
 
 function renderMainPageContent(container) {
     // Создаем HTML для блока "Новости дня"
-    const digestHTML = `
-        <section class="digest">
-            <h2>Новости дня</h2>
-            <ul>
-                ${allNewsData.slice(0, 3).map(item =>
-                    `<li><a href="#" data-article="${item._id.$oid}">${item.title}</a></li>`
-                ).join('')}
-            </ul>
+        const digestHTML = `
+            <div class="content-wrapper">
+                <section class="digest">
+                    <h2>Новости дня</h2>
+                    <div class="digest-content">
+                        <ul>
+                            ${allNewsData.slice(0, 3).map(item =>
+                                `<li><a href="#" data-article="${item._id.$oid}">${item.title}</a></li>`
+                            ).join('')}
+                        </ul>
+                    </div>
         </section>
         <section class="latest-news">
             <h2>Последние новости</h2>
