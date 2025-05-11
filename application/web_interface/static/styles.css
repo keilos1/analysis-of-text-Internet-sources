@@ -461,10 +461,11 @@ h1 {
     width: 100%;
 }
 
+
 /* Левая колонка - Дайджест */
 .digest {
     width: 300px; /* Фиксированная ширина */
-    min-height: 500px; /* Минимальная высота */
+    min-height: auto; /* Убираем фиксированную высоту */
     background-color: #ddd;
     padding: 15px;
     border-radius: 10px;
@@ -472,6 +473,37 @@ h1 {
     overflow: hidden;
     position: relative;
     flex-shrink: 0; /* Запрещаем сжатие */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Контейнер для списка новостей в дайджесте */
+.digest-content {
+    flex-grow: 1; /* Занимает все доступное пространство */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Равномерно распределяет пространство */
+}
+
+/* Список */
+.digest ul {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+    flex-grow: 1; /* Занимает доступное пространство */
+}
+
+.digest li {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.digest li:hover {
+    background: rgba(255,255,255,0.9);
+    transform: translateX(5px);
 }
 /* Заголовок */
 .digest h2 {
@@ -485,15 +517,7 @@ h1 {
     margin: 0;
 }
 
-/* Список */
-.digest ul {
-    list-style: none;
-    padding: 0;
-}
 
-.digest li {
-    margin-bottom: 10px;
-}
 
 /* Ссылки */
 .digest a {
