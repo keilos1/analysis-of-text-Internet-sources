@@ -3,6 +3,7 @@ import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Dict, Union
 import sys
+import asyncio
 sys.path.append("../")
 
 from data_processing.filtering import NewsProcessor
@@ -14,13 +15,13 @@ def clean_html(text: str) -> str:
     """Удаляет HTML-теги из текста с помощью регулярного выражения"""
     return re.sub(r'<[^>]+>', '', text)
 
-def summarize_texts_tfidf(data: Union[List[Dict], Dict]) -> Union[List[Dict], Dict]:
+async def summarize_texts_tfidf(data: Union[List[Dict], Dict]) -> Union[List[Dict], Dict]:
     """
     Добавляет суммаризированный текст (2 самых важных предложения) к каждому посту.
     С предварительной очисткой от HTML-тегов.
     """
     news_processor = NewsProcessor()
-    filtered_data = news_processor.process_news()
+    filtered_data = await news_processor.process_news()  # Добавлен await
 
     result = []
     for filtered_item in filtered_data:
@@ -64,15 +65,15 @@ def print_news_with_summary(news_data: List[Dict]) -> None:
         print(f"\nСуммаризация (ключевые предложения):\n{news_item.get('summary', 'Не удалось сгенерировать')}")
         print("-" * 50)
 
-def main():
-    """Основная функция для обработки и вывода новостей"""
+async def async_main():
+    """Асинхронная основная функция для обработки и вывода новостей"""
     print("="*50)
     print("СИСТЕМА ОБРАБОТКИ И СУММАРИЗАЦИИ НОВОСТЕЙ")
     print("="*50)
     
     try:
         # Получаем и обрабатываем новости
-        summarized_news = summarize_texts_tfidf([])
+        summarized_news = await summarize_texts_tfidf([])
         
         # Выводим результат
         print_news_with_summary(summarized_news)
@@ -87,6 +88,10 @@ def main():
         print(f"\nОшибка при обработке новостей: {str(e)}")
     finally:
         print("\nРабота программы завершена")
+
+def main():
+    """Точка входа для синхронного вызова"""
+    asyncio.run(async_main())
 
 if __name__ == "__main__":
     main()
