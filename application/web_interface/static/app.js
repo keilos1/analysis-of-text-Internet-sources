@@ -577,176 +577,125 @@ async function loadSearchResultsPage(container, query) {
     container.innerHTML = html;
 }
 
-// Глобальные переменные для фильтрации
+// Глобальные переменные
 let currentFilters = {
-    category: null,
-    location: null
+  category: null,
+  location: null
 };
 
-// Модифицированная функция загрузки новостей с фильтрами
-async function loadFilteredNews(filters = {}) {
-    try {
-        const container = document.getElementById('dynamic-content');
-        container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
+// Инициализация при загрузке
+document.addEventListener("DOMContentLoaded", function() {
+  initFilters();
+  loadNews();
+});
 
-        // Формируем URL с параметрами фильтрации
-        const url = new URL('http://78.36.44.126:8000/api/news');
-        if (filters.category) url.searchParams.append('category', filters.category);
-        if (filters.location) url.searchParams.append('location', filters.location);
+// Инициализация фильтров
+function initFilters() {
+  // Обработка выбора категории
+  document.querySelectorAll('[data-filter]').forEach(item => {
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      currentFilters.category = this.getAttribute('data-filter');
+      currentFilters.location = null;
+      document.getElementById('location-filter').value = '';
+      loadNews();
+    });
+  });
 
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Ошибка HTTP: ${response.status}`);
-
-        const newsData = await response.json();
-        renderNews(newsData, filters);
-
-    } catch (error) {
-        console.error('Ошибка загрузки новостей:', error);
-        document.getElementById('dynamic-content').innerHTML = `
-            <div class="error-message">
-                Ошибка загрузки: ${error.message}
-                <button onclick="loadFilteredNews(currentFilters)">Повторить</button>
-            </div>
-        `;
-    }
+  // Обработка выбора локации
+  document.getElementById('location-filter').addEventListener('change', function() {
+    currentFilters.location = this.value;
+    loadNews();
+  });
 }
 
-// Функция отображения новостей
-function renderNews(newsData, filters = {}) {
-    const container = document.getElementById('dynamic-content');
+// Загрузка новостей с фильтрами
+async function loadNews() {
+  try {
+    showLoader();
 
-    // Создаем HTML-структуру
-    let html = `
-        <div class="news-filters">
-            <select id="categoryFilter" class="news-filter">
-                <option value="">Все категории</option>
-                <option value="culture">Культура</option>
-                <option value="sports">Спорт</option>
-                <option value="tech">Технологии</option>
-                <option value="holidays">Праздники</option>
-                <option value="education">Образование</option>
-            </select>
-            
-            <select id="locationFilter" class="news-filter">
-                <option value="">Все локации</option>
-                <option value="Петрозаводск">Петрозаводск</option>
-                <option value="Беломорск">Беломорск</option>
-                <option value="Сортавала">Сортавала</option>
-                <!-- Добавьте другие локации -->
-            </select>
-            
-            <button id="applyFilters" class="filter-btn">Применить</button>
-            ${filters.category || filters.location ? 
-                '<button id="resetFilters" class="filter-btn">Сбросить</button>' : ''}
+    const params = new URLSearchParams();
+    if (currentFilters.category) params.append('category', currentFilters.category);
+    if (currentFilters.location) params.append('location', currentFilters.location);
+
+    const response = await fetch(`/api/filtered-news?${params.toString()}`);
+    if (!response.ok) throw new Error('Ошибка загрузки');
+
+    const news = await response.json();
+    renderNews(news);
+
+  } catch (error) {
+    showError(error);
+  }
+}
+
+// Отображение новостей
+function renderNews(news) {
+  const container = document.getElementById('dynamic-content');
+
+  let html = `
+    <div class="news-header">
+      <h2>${getNewsTitle()}</h2>
+      <div class="news-count">Найдено: ${news.length}</div>
+    </div>
+    <div class="news-grid">
+  `;
+
+  news.forEach(item => {
+    html += `
+      <div class="news-card">
+        <img src="${item.image || '/static/default-news.jpg'}" alt="${item.title}">
+        <div class="news-body">
+          <h3>${item.title}</h3>
+          <p>${item.summary || 'Нет описания'}</p>
+          <div class="news-meta">
+            <span class="category ${item.category}">${getCategoryName(item.category)}</span>
+            <span class="location">${item.location || 'Карелия'}</span>
+          </div>
         </div>
-        
-        <div class="news-header">
-            <h2>${getNewsHeader(filters)}</h2>
-            <div class="news-count">Найдено: ${newsData.length} новостей</div>
-        </div>
-        
-        <div class="news-list">
+      </div>
     `;
+  });
 
-    // Добавляем новости
-    newsData.forEach(item => {
-        const date = item.publication_date ?
-            new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
-            'Дата неизвестна';
-
-        html += `
-            <div class="news-item">
-                <div class="news-image">
-                    <img src="${item.image || 'default-news.jpg'}" alt="${item.title}">
-                </div>
-                <div class="news-content">
-                    <h3><a href="#" data-article="${item._id.$oid}">${item.title}</a></h3>
-                    <p class="news-excerpt">${item.summary || 'Нет описания'}</p>
-                    <div class="news-meta">
-                        <span class="news-date">${date}</span>
-                        <span class="news-category">${getCategoryName(item.category)}</span>
-                        <span class="news-location">${item.location || 'Карелия'}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-
-    html += `</div>`;
-    container.innerHTML = html;
-
-    // Устанавливаем текущие значения фильтров
-    if (filters.category) {
-        document.getElementById('categoryFilter').value = filters.category;
-    }
-    if (filters.location) {
-        document.getElementById('locationFilter').value = filters.location;
-    }
-
-    // Навешиваем обработчики
-    setupFilters();
-    setupNewsItemClick();
+  html += `</div>`;
+  container.innerHTML = html;
 }
 
 // Вспомогательные функции
-function getNewsHeader(filters) {
-    if (filters.category && filters.location) {
-        return `Новости ${getCategoryName(filters.category)} в ${filters.location}`;
-    }
-    if (filters.category) return `Новости: ${getCategoryName(filters.category)}`;
-    if (filters.location) return `Новости в ${filters.location}`;
-    return 'Все новости';
+function getNewsTitle() {
+  if (currentFilters.category && currentFilters.location) {
+    return `${getCategoryName(currentFilters.category)} в ${currentFilters.location}`;
+  }
+  if (currentFilters.category) return getCategoryName(currentFilters.category);
+  if (currentFilters.location) return `Новости в ${currentFilters.location}`;
+  return 'Все новости';
 }
 
 function getCategoryName(category) {
-    const names = {
-        "culture": "Культура",
-        "sports": "Спорт",
-        "tech": "Технологии",
-        "holidays": "Праздники",
-        "education": "Образование"
-    };
-    return names[category] || category;
+  const names = {
+    'culture': 'Культура',
+    'sports': 'Спорт',
+    'tech': 'Технологии',
+    'holidays': 'Праздники',
+    'education': 'Образование'
+  };
+  return names[category] || category;
 }
 
-// Настройка фильтров
-function setupFilters() {
-    document.getElementById('applyFilters').addEventListener('click', () => {
-        currentFilters = {
-            category: document.getElementById('categoryFilter').value || null,
-            location: document.getElementById('locationFilter').value || null
-        };
-        loadFilteredNews(currentFilters);
-    });
-
-    const resetBtn = document.getElementById('resetFilters');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', () => {
-            currentFilters = {};
-            loadFilteredNews();
-        });
-    }
+function showLoader() {
+  document.getElementById('dynamic-content').innerHTML = `
+    <div class="loader">
+      <div class="spinner"></div>
+      <p>Загрузка новостей...</p>
+    </div>
+  `;
 }
 
-// Обработка кликов по новостям
-function setupNewsItemClick() {
-    document.querySelectorAll('[data-article]').forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            const articleId = e.target.getAttribute('data-article');
-            loadArticle(articleId);
-        });
-    });
+function showError(error) {
+  document.getElementById('dynamic-content').innerHTML = `
+    <div class="error">
+      <p>Ошибка: ${error.message}</p>
+      <button onclick="loadNews()">Попробовать снова</button>
+    </div>
+  `;
 }
-
-// Инициализация при загрузке страницы
-document.addEventListener("DOMContentLoaded", function() {
-    // Проверяем параметры URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const initialFilters = {
-        category: urlParams.get('category') || null,
-        location: urlParams.get('location') || null
-    };
-
-    loadFilteredNews(initialFilters);
-});
