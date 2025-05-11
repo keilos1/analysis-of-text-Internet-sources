@@ -1,3 +1,4 @@
+import re
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
@@ -18,7 +19,7 @@ class WebScraper:
             return None
 
     def parse_articles(self, html, source_id, base_url, container_tag, title_tag, link_tag, content_tag,
-                       full_text_selector=None):
+                     full_text_selector=None):
         """Парсим статьи со страницы и получаем полный текст"""
         soup = BeautifulSoup(html, "html.parser")
         articles = []
@@ -41,9 +42,9 @@ class WebScraper:
                 # Получаем полный текст статьи если указан селектор
                 full_text = self._get_full_text(link, full_text_selector) if full_text_selector else summary
                 
-                # Удаляем копирайт "Петрозаводск говорит" в конце текста
+                # Удаляем копирайт "Петрозаводск говорит" из текста
                 if full_text:
-                    full_text = self._remove_copyright(full_text)
+                    full_text = self._remove_petrozavodsk_copyright(full_text)
 
                 articles.append({
                     "article_id": hashlib.md5(link.encode()).hexdigest(),
@@ -86,17 +87,17 @@ class WebScraper:
         soup = BeautifulSoup(html, 'html.parser')
         content = soup.select_one(selector)
         return content.get_text(strip=True, separator='\n') if content else ""
-    
-    def _remove_copyright(self, text):
-        """Удаляет копирайт Петрозаводск говорит из конца текста"""
-        copyright_patterns = [
-            "© «Петрозаводск говорит»",
-            "© <em>«Петрозаводск говорит»</em>"
+
+    def _remove_petrozavodsk_copyright(self, text):
+        """Удаляет все варианты копирайта 'Петрозаводск говорит' из текста"""
+        patterns = [
+            r'©\s*[«"]?Петрозаводск говорит[»"]?',
+            r'©\s*<em>[«"]?Петрозаводск говорит[»"]?</em>',
+            r'&copy;\s*[«"]?Петрозаводск говорит[»"]?',
+            r'[«"]?Петрозаводск говорит[»"]?\s*$'
         ]
-        
-        for pattern in copyright_patterns:
-            if text.endswith(pattern):
-                text = text[:-len(pattern)].strip()
-                break
-                
+
+        for pattern in patterns:
+            text = re.sub(pattern, '', text, flags=re.IGNORECASE).strip()
+
         return text
