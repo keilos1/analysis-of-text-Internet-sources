@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import hashlib
 from datetime import datetime
+import re
 
 
 class WebScraper:
@@ -40,6 +41,9 @@ class WebScraper:
 
                 # Получаем полный текст статьи если указан селектор
                 full_text = self._get_full_text(link, full_text_selector) if full_text_selector else summary
+                
+                # Удаляем фразу "© «Петрозаводск говорит»" из конца текста
+                cleaned_text = self._remove_footer(full_text)
 
                 articles.append({
                     "article_id": hashlib.md5(link.encode()).hexdigest(),
@@ -48,7 +52,7 @@ class WebScraper:
                     "url": link,
                     "publication_date": self.extract_date(container) or datetime.now().isoformat(),
                     "summary": summary,
-                    "text": full_text,
+                    "text": cleaned_text,  # Используем очищенный текст
                     "scraped_at": datetime.now().isoformat()
                 })
 
@@ -57,6 +61,23 @@ class WebScraper:
                 continue
 
         return articles
+
+    def _remove_footer(self, text):
+        """Удаляет фразу '© «Петрозаводск говорит»' из конца текста"""
+        if not text:
+            return text
+            
+        # Удаляем фразу с возможными вариантами оформления
+        patterns = [
+            r'\s*©\s*«Петрозаводск говорит»\s*$',
+            r'\s*©\s*Петрозаводск говорит\s*$',
+            r'\s*«Петрозаводск говорит»\s*$'
+        ]
+        
+        for pattern in patterns:
+            text = re.sub(pattern, '', text, flags=re.IGNORECASE)
+            
+        return text.strip()
 
     def extract_date(self, container):
         """Извлекаем дату публикации"""
