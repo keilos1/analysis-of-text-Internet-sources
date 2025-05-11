@@ -630,45 +630,68 @@ async function loadNews() {
 }
 
 // Отображение новостей
+// ===== МОДИФИЦИРОВАННАЯ ФУНКЦИЯ renderNews =====
 function renderNews(news) {
-  const container = document.getElementById('dynamic-content');
+    const container = document.getElementById('dynamic-content');
 
-  let html = `
-    <div class="news-header">
-      <h2>${getNewsTitle()}</h2>
-      <div class="news-count">Найдено: ${news.length}</div>
-    </div>
-    <div class="news-grid">
-  `;
-
-  news.forEach(item => {
-    html += `
-      <div class="news-card">
-        <img src="${item.image || '/static/default-news.jpg'}" alt="${item.title}">
-        <div class="news-body">
-          <h3>${item.title}</h3>
-          <p>${item.summary || 'Нет описания'}</p>
-          <div class="news-meta">
-            <span class="categories ${item.categories}">${getCategoryName(item.categories)}</span>
-            <span class="location">${item.location || 'Карелия'}</span>
-          </div>
+    let html = `
+        <div class="news-header">
+            <h2>${getNewsTitle()}</h2>
+            <div class="news-count">Найдено: ${news.length}</div>
         </div>
-      </div>
+        <div class="news-grid">
     `;
-  });
 
-  html += `</div>`;
-  container.innerHTML = html;
+    news.forEach(item => {
+        // Получаем категории из статьи (может быть массивом или строкой)
+        const articleCategories = Array.isArray(item.categories) ?
+            item.categories :
+            (item.categories ? [item.categories] : []);
+
+        html += `
+            <div class="news-card" data-categories="${articleCategories.join(',')}">
+                <img src="${item.image || '/static/default-news.jpg'}" alt="${item.title}">
+                <div class="news-body">
+                    <h3>${item.title}</h3>
+                    <p>${item.summary || 'Нет описания'}</p>
+                    <div class="news-meta">
+                        <div class="categories">
+                            ${renderCategoryBadges(articleCategories)}
+                        </div>
+                        <span class="location">${item.location || 'Карелия'}</span>
+                        <span class="date">${item.publication_date ? 
+                            new Date(item.publication_date.$date).toLocaleDateString('ru-RU') : 
+                            'Дата неизвестна'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
+
+    // ===== ДОБАВЛЕН ОБРАБОТЧИК КЛИКОВ ПО КАТЕГОРИЯМ =====
+    document.querySelectorAll('.category-badge').forEach(badge => {
+        badge.addEventListener('click', function() {
+            const category = this.textContent.trim().toLowerCase();
+            currentFilters.categories = Object.keys(getCategoryNames([category]))[0];
+            currentFilters.location = null;
+            document.getElementById('location-filter').value = '';
+            loadNews();
+        });
+    });
 }
-
 // Вспомогательные функции
 function getNewsTitle() {
-  if (currentFilters.categories && currentFilters.location) {
-    return `${getCategoryName(currentFilters.categories)} в ${currentFilters.location}`;
-  }
-  if (currentFilters.categories) return getCategoryName(currentFilters.categories);
-  if (currentFilters.location) return `Новости в ${currentFilters.location}`;
-  return 'Все новости';
+    if (currentFilters.categories && currentFilters.location) {
+        return `${getCategoryNames([currentFilters.categories])[0]} в ${currentFilters.location}`;
+    }
+    if (currentFilters.categories) {
+        return `Новости: ${getCategoryNames([currentFilters.categories])[0]}`;
+    }
+    if (currentFilters.location) return `Новости в ${currentFilters.location}`;
+    return 'Все новости';
 }
 
 function getCategoryName(categories) {
@@ -698,4 +721,28 @@ function showError(error) {
       <button onclick="loadNews()">Попробовать снова</button>
     </div>
   `;
+}
+
+function getCategoryNames(categories) {
+    if (!categories) return [];
+
+    const categoryMap = {
+        "culture": "Культура",
+        "sports": "Спорт",
+        "tech": "Технологии",
+        "holidays": "Праздники",
+        "education": "Образование"
+    };
+
+    return categories.map(cat => categoryMap[cat] || cat);
+}
+
+function renderCategoryBadges(categories) {
+    if (!categories || categories.length === 0) return '';
+
+    const categoryNames = getCategoryNames(categories);
+
+    return categoryNames.map(name =>
+        `<span class="category-badge">${name}</span>`
+    ).join(' ');
 }
