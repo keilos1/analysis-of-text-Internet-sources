@@ -33,13 +33,13 @@ class NewsProcessor:
     def __init__(self):
         self.data_updater = DataUpdater()
 
-    def process_news(self) -> List[Dict]:
+    async def process_news(self) -> List[Dict]:
         """
         Получает новости через fetch_news и обрабатывает их:
         - Оставляет только новости о Петрозаводске
         - Добавляет информацию о локации и категориях
         """
-        raw_news = self.data_updater.fetch_news()
+        raw_news = await self.data_updater.fetch_news()
         processed_news = []
 
         # Проверка на отсутствие новостей
@@ -92,5 +92,8 @@ class NewsProcessor:
         return processed_news
 
 if __name__ == "__main__":
-    processor = NewsProcessor()
-    processor.process_news()
+    async def main():
+        processor = NewsProcessor()
+        await processor.process_news()
+    
+    asyncio.run(main())
