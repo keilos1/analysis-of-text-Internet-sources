@@ -29,7 +29,7 @@ class SocialScraper:
             db_name=DB_NAME
         )
 
-    async def collect_social_data(self) -> Dict[str, List[Dict[str, Any]]:
+    async def collect_social_data(self) -> Dict[str, List[Dict[str, Any]]]:
         """Собираем последние 10 постов из социальных сетей и возвращаем в виде словаря"""
         posts_dict = {}
         
