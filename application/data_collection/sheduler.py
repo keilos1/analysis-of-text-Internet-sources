@@ -11,7 +11,7 @@ sys.path.append("../")
 # Теперь импортируем наши модули
 from data_collection.api_connector import APIConnector
 from data_collection.scraper import WebScraper
-from data_collection.socialScraper import SocialScraper, get_social_data
+#from data_collection.socialScraper import SocialScraper, get_social_data
 from data_storage.database import connect_to_mongo
 from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME
 
