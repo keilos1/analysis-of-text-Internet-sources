@@ -138,7 +138,6 @@ class DataUpdater:
             for articles in social_articles:
                 if articles:
                     articles_data.extend(articles)
-                    self._save_articles(articles)
                     self._update_source_check_time(articles[0]["source_id"])
 
         # Обрабатываем обычные источники
@@ -173,9 +172,6 @@ class DataUpdater:
                     print(f"Найдено {len(articles)} статей")
                     for article in articles:
                         articles_data.append(article)
-
-                    # Сохраняем статьи в БД
-                    self._save_articles(articles)
                 else:
                     print("Статьи не найдены")
 
