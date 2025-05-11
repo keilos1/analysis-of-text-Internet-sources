@@ -4,6 +4,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from typing import List, Dict
 import sys
+import asyncio
 
 sys.path.append("../")
 
@@ -12,7 +13,7 @@ from data_processing.text_summarization import summarize_texts_tfidf
 from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME
 
 
-def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> int:
+async def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> int:
     """
     Сохраняет только уникальные статьи в базу данных.
     Возвращает количество сохраненных статей.
@@ -37,8 +38,8 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
     )
     
     try:
-        # 1. Суммаризация новых статей
-        summarized_new = summarize_texts_tfidf(new_articles)
+        # 1. Суммаризация новых статей (добавляем await)
+        summarized_new = await summarize_texts_tfidf(new_articles)
         
         # 2. Загрузка существующих статей из базы
         existing_articles = list(db.articles.find(
@@ -102,9 +103,9 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
         # Обязательно закрываем соединение
         tunnel.close()
 
-def main():
+async def async_main():
     """
-    Основной метод для обработки и сохранения новостей.
+    Асинхронный основной метод для обработки и сохранения новостей.
     Получает статьи из функции summarize_texts_tfidf и сохраняет уникальные.
     """
     print("="*50)
@@ -112,9 +113,8 @@ def main():
     print("="*50)
     
     try:
-        # Получаем обработанные новости (пустой список передается, так как 
-        # summarize_texts_tfidf получает новости из news_processor.process_news())
-        new_articles = summarize_texts_tfidf([])
+        # Получаем обработанные новости (добавляем await)
+        new_articles = await summarize_texts_tfidf([])
         
         if not new_articles:
             print("Нет новых статей для обработки")
@@ -122,8 +122,8 @@ def main():
             
         print(f"Получено {len(new_articles)} новых статей для обработки")
         
-        # Сохраняем уникальные статьи
-        saved_count = save_unique_articles(new_articles)
+        # Сохраняем уникальные статьи (добавляем await)
+        saved_count = await save_unique_articles(new_articles)
         
         # Выводим результат
         print(f"\nСохранено {saved_count} уникальных статей из {len(new_articles)} обработанных")
@@ -132,6 +132,10 @@ def main():
         print(f"\nОшибка при обработке новостей: {str(e)}")
     finally:
         print("\nРабота программы завершена")
+
+def main():
+    """Точка входа для синхронного вызова"""
+    asyncio.run(async_main())
 
 if __name__ == "__main__":
     main()
