@@ -577,125 +577,49 @@ async function loadSearchResultsPage(container, query) {
     container.innerHTML = html;
 }
 
-// Глобальные переменные
-let currentFilters = {
-  articles: null,
-  location: null
-};
+// Предполагаем, что у вас есть массив статей
+const articles = [
+  { id: 1, title: 'Статья 1', categories: ['технологии', 'наука'] },
+  { id: 2, title: 'Статья 2', categories: ['наука'] },
+  { id: 3, title: 'Статья 3', categories: ['политика'] },
+];
 
-// Инициализация при загрузке
-document.addEventListener("DOMContentLoaded", function() {
-  initFilters();
-  loadNews();
-});
+// Получаем все уникальные категории из статей
+const allCategories = [...new Set(articles.flatMap(article => article.categories))];
 
-// Инициализация фильтров
-function initFilters() {
-  // Обработка выбора категории
-  document.querySelectorAll('[data-filter]').forEach(item => {
-    item.addEventListener('click', function(e) {
-      e.preventDefault();
-      currentFilters.articles = this.getAttribute('data-filter');
-      currentFilters.location = null;
-      document.getElementById('location-filter').value = '';
-      loadNews();
+// Функция для отображения фильтров
+function renderCategoryFilters() {
+  const filtersContainer = document.getElementById('dropdown-content'); // предполагаемый контейнер
+
+  allCategories.forEach(category => {
+    const filterElement = document.createElement('div');
+    filterElement.className = 'category-filter';
+    filterElement.innerHTML = `
+      <input type="checkbox" id="filter-${category}" value="${category}">
+      <label for="filter-${category}">${category}</label>
+    `;
+    filtersContainer.appendChild(filterElement);
+
+    // Добавляем обработчик изменения
+    filterElement.querySelector('input').addEventListener('change', () => {
+      const selectedCategories = Array.from(
+        document.querySelectorAll('.category-filter input:checked')
+      ).map(el => el.value);
+
+      // Вызываем вашу существующую функцию фильтрации
+      filterArticlesByCategories(selectedCategories);
     });
   });
-
-  // Обработка выбора локации
-  document.getElementById('location-filter').addEventListener('change', function() {
-    currentFilters.location = this.value;
-    loadNews();
-  });
 }
 
-// Загрузка новостей с фильтрами
-async function loadNews() {
-  try {
-    showLoader();
-
-    const params = new URLSearchParams();
-    if (currentFilters.articles) params.append('articles', currentFilters.articles);
-    if (currentFilters.location) params.append('location', currentFilters.location);
-
-    const response = await fetch(`/api/filtered-news?${params.toString()}`);
-    if (!response.ok) throw new Error('Ошибка загрузки');
-
-    const news = await response.json();
-    renderNews(news);
-
-  } catch (error) {
-    showError(error);
-  }
+// Предполагаемая существующая функция фильтрации
+function filterArticlesByCategories(selectedCategories) {
+  // Ваша реализация фильтрации
+  console.log('Фильтрация по:', selectedCategories);
+  // Здесь должна быть ваша логика фильтрации и обновления отображения статей
 }
 
-// Отображение новостей
-function renderNews(news) {
-  const container = document.getElementById('dynamic-content');
-
-  let html = `
-    <div class="news-header">
-      <h2>${getNewsTitle()}</h2>
-      <div class="news-count">Найдено: ${news.length}</div>
-    </div>
-    <div class="news-grid">
-  `;
-
-  news.forEach(item => {
-    html += `
-      <div class="news-card">
-        <img src="${item.image || '/static/default-news.jpg'}" alt="${item.title}">
-        <div class="news-body">
-          <h3>${item.title}</h3>
-          <p>${item.summary || 'Нет описания'}</p>
-          <div class="news-meta">
-            <span class="articles ${item.articles}">${getCategoryName(item.articles)}</span>
-            <span class="location">${item.location || 'Карелия'}</span>
-          </div>
-        </div>
-      </div>
-    `;
-  });
-
-  html += `</div>`;
-  container.innerHTML = html;
-}
-
-// Вспомогательные функции
-function getNewsTitle() {
-  if (currentFilters.articles && currentFilters.location) {
-    return `${getCategoryName(currentFilters.articles)} в ${currentFilters.location}`;
-  }
-  if (currentFilters.articles) return getCategoryName(currentFilters.articles);
-  if (currentFilters.location) return `Новости в ${currentFilters.location}`;
-  return 'Все новости';
-}
-
-function getCategoryName(articles) {
-  const names = {
-    'culture': 'Культура',
-    'sports': 'Спорт',
-    'tech': 'Технологии',
-    'holidays': 'Праздники',
-    'education': 'Образование'
-  };
-  return names[articles] || articles;
-}
-
-function showLoader() {
-  document.getElementById('dynamic-content').innerHTML = `
-    <div class="loader">
-      <div class="spinner"></div>
-      <p>Загрузка новостей...</p>
-    </div>
-  `;
-}
-
-function showError(error) {
-  document.getElementById('dynamic-content').innerHTML = `
-    <div class="error">
-      <p>Ошибка: ${error.message}</p>
-      <button onclick="loadNews()">Попробовать снова</button>
-    </div>
-  `;
-}
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', () => {
+  renderCategoryFilters();
+});
