@@ -14,27 +14,54 @@ class NewsCategory(Enum):
     HOLIDAYS = "Праздники"
     EDUCATION = "Образование"
 
-# Основы названий районов Петрозаводска (без окончаний)
-PETROZAVODSK_DISTRICTS_BASE = [
-    "голиковк", "древлянк", "зарек",
-    "ключев", "кукковк", "октябрьск",
-    "первомайск", "перевалк", "песк",
-    "рыбк", "центр", "южн площадк"
+# Основы названий районов Петрозаводска (без окончаний) и их полные названия
+PETROZAVODSK_DISTRICTS_INFO = [
+    ("голиковк", "Голиковка"),
+    ("древлянк", "Древлянка"),
+    ("зарек", "Зарека"),
+    ("ключев", "Ключевая"),
+    ("кукковк", "Кукковка"),
+    ("октябрьск", "Октябрьский"),
+    ("первомайск", "Первомайский"),
+    ("перевалк", "Перевалка"),
+    ("песк", "Пески"),
+    ("рыбк", "Рыбка"),
+    ("центр", "Центр"),
+    ("южн площадк", "Южная площадка")
 ]
 
-# Основы названий улиц Петрозаводска (без окончаний)
-PETROZAVODSK_STREETS_BASE = [
-    "ленин", "киров", "антикайнен", "кузьмин", "андропов",
-    "пушкинск", "маркс", "энгельс", "дзержинск", "гогол",
-    "герцен", "онежск набережн", "советск", "красноармейск",
-    "заводск", "ровио", "шуйск", "чапаев", "жуковск"
+# Основы названий улиц Петрозаводска и их полные названия
+PETROZAVODSK_STREETS_INFO = [
+    ("ленин", "Ленина"),
+    ("киров", "Кирова"),
+    ("антикайнен", "Антикайнена"),
+    ("кузьмин", "Кузьмина"),
+    ("андропов", "Андропова"),
+    ("пушкинск", "Пушкинская"),
+    ("маркс", "Маркса"),
+    ("энгельс", "Энгельса"),
+    ("дзержинск", "Дзержинского"),
+    ("гогол", "Гоголя"),
+    ("герцен", "Герцена"),
+    ("онежск набережн", "Онежская набережная"),
+    ("советск", "Советская"),
+    ("красноармейск", "Красноармейская"),
+    ("заводск", "Заводская"),
+    ("ровио", "Ровио"),
+    ("шуйск", "Шуйская"),
+    ("чапаев", "Чапаева"),
+    ("жуковск", "Жуковского")
 ]
 
-# Основы фамилий мэров Петрозаводска (без окончаний)
-PETROZAVODSK_MAYORS_BASE = [
-    "катанандов", "демин", "масляков", 
-    "левин", "любарск", "константинович", 
-    "колыхматов"
+# Основы фамилий мэров Петрозаводска и их полные имена
+PETROZAVODSK_MAYORS_INFO = [
+    ("катанандов", "Сергей Катанандов"),
+    ("демин", "Андрей Демин"),
+    ("масляков", "Виктор Масляков"),
+    ("левин", "Николай Левин"),
+    ("любарск", "Любарский"),
+    ("константинович", "Владимир Константинович"),
+    ("колыхматов", "Инна Колыхматова")
 ]
 
 CATEGORY_KEYWORDS = {
@@ -50,9 +77,9 @@ class NewsProcessor:
         self.data_updater = DataUpdater()
         # Предкомпилированные регулярные выражения для быстрого поиска
         self.petrozavodsk_re = re.compile(r'\bпетрозаводск\b', re.IGNORECASE)
-        self.districts_re = self._prepare_regex(PETROZAVODSK_DISTRICTS_BASE)
-        self.streets_re = self._prepare_regex(PETROZAVODSK_STREETS_BASE)
-        self.mayors_re = self._prepare_regex(PETROZAVODSK_MAYORS_BASE)
+        self.districts_re = self._prepare_regex([base for base, _ in PETROZAVODSK_DISTRICTS_INFO])
+        self.streets_re = self._prepare_regex([base for base, _ in PETROZAVODSK_STREETS_INFO])
+        self.mayors_re = self._prepare_regex([base for base, _ in PETROZAVODSK_MAYORS_INFO])
         
     def _prepare_regex(self, bases: List[str]) -> re.Pattern:
         """Создает регулярное выражение для поиска основ слов"""
@@ -114,9 +141,8 @@ class NewsProcessor:
             # Поиск района
             district_match = self.districts_re.search(text_lower)
             if district_match:
-                # Находим полное название района по основе
                 matched_base = district_match.group().lower()
-                for base, full in zip(PETROZAVODSK_DISTRICTS_BASE, PETROZAVODSK_DISTRICTS):
+                for base, full in PETROZAVODSK_DISTRICTS_INFO:
                     if base in matched_base:
                         location["district"] = full
                         break
@@ -125,7 +151,7 @@ class NewsProcessor:
             street_match = self.streets_re.search(text_lower)
             if street_match:
                 matched_base = street_match.group().lower()
-                for base, full in zip(PETROZAVODSK_STREETS_BASE, PETROZAVODSK_STREETS):
+                for base, full in PETROZAVODSK_STREETS_INFO:
                     if base in matched_base:
                         location["street"] = full
                         break
@@ -134,7 +160,7 @@ class NewsProcessor:
             mentioned_mayors = []
             for match in self.mayors_re.finditer(text_lower):
                 matched_base = match.group().lower()
-                for base, full in zip(PETROZAVODSK_MAYORS_BASE, PETROZAVODSK_MAYORS):
+                for base, full in PETROZAVODSK_MAYORS_INFO:
                     if base in matched_base:
                         mentioned_mayors.append(full)
             if mentioned_mayors:
