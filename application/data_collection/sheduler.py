@@ -20,7 +20,7 @@ class DataUpdater:
     def __init__(self):
         self.api_connector = APIConnector()
         self.scraper = WebScraper()
-        self.social_scraper = SocialScraper()
+        #self.social_scraper = SocialScraper()
 
         # Получаем подключение к базе данных
         self.db, self.tunnel = connect_to_mongo(
