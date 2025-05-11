@@ -84,6 +84,26 @@ class SocialScraper:
         
         return False
 
+    def _contains_url(self, text: str) -> bool:
+        """Проверяем, содержит ли текст URL-адреса"""
+        url_pattern = re.compile(
+            r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+        )
+        return bool(url_pattern.search(text))
+
+    def _clean_footer_text(self, text: str) -> str:
+        """Удаляем стандартный футер из текста"""
+        footer_patterns = [
+            r'«Фактор Новости»\s*\|\s*Подписаться\s*$',
+            r'Фактор Новости\s*\|\s*Подписаться\s*$',
+            r'Подписаться\s*$'
+        ]
+        
+        for pattern in footer_patterns:
+            text = re.sub(pattern, '', text, flags=re.IGNORECASE)
+        
+        return text.strip()
+
     async def _parse_telegram(self, client: httpx.AsyncClient, source: Dict) -> List[Dict[str, Any]]:
         """Парсинг последних постов Telegram"""
         try:
@@ -125,7 +145,19 @@ class SocialScraper:
                         continue
                     
                     full_text = text_element.get_text("\n", strip=True)
+                    
+                    # Пропускаем сообщения с URL
+                    if self._contains_url(full_text):
+                        print("Пропускаем сообщение с URL")
+                        continue
+                    
+                    # Очищаем текст от эмодзи и футера
                     clean_text = self._remove_emojis(full_text)
+                    clean_text = self._clean_footer_text(clean_text)
+                    
+                    if not clean_text:
+                        print("Пустой текст после очистки, пропускаем")
+                        continue
                     
                     lines = [line.strip() for line in clean_text.split('\n') if line.strip()]
                     first_line = lines[0] if lines else f"Сообщение из {channel_name}"
