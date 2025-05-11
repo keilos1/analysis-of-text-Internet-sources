@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import hashlib
 from datetime import datetime
-import re
 
 
 class WebScraper:
@@ -42,8 +41,9 @@ class WebScraper:
                 # Получаем полный текст статьи если указан селектор
                 full_text = self._get_full_text(link, full_text_selector) if full_text_selector else summary
                 
-                # Удаляем фразу "© «Петрозаводск говорит»" из конца текста
-                cleaned_text = self._remove_footer(full_text)
+                # Удаляем копирайт "Петрозаводск говорит" в конце текста
+                if full_text:
+                    full_text = self._remove_copyright(full_text)
 
                 articles.append({
                     "article_id": hashlib.md5(link.encode()).hexdigest(),
@@ -52,7 +52,7 @@ class WebScraper:
                     "url": link,
                     "publication_date": self.extract_date(container) or datetime.now().isoformat(),
                     "summary": summary,
-                    "text": cleaned_text,  # Используем очищенный текст
+                    "text": full_text,
                     "scraped_at": datetime.now().isoformat()
                 })
 
@@ -61,23 +61,6 @@ class WebScraper:
                 continue
 
         return articles
-
-    def _remove_footer(self, text):
-        """Удаляет фразу '© «Петрозаводск говорит»' из конца текста"""
-        if not text:
-            return text
-            
-        # Удаляем фразу с возможными вариантами оформления
-        patterns = [
-            r'\s*©\s*«Петрозаводск говорит»\s*$',
-            r'\s*©\s*Петрозаводск говорит\s*$',
-            r'\s*«Петрозаводск говорит»\s*$'
-        ]
-        
-        for pattern in patterns:
-            text = re.sub(pattern, '', text, flags=re.IGNORECASE)
-            
-        return text.strip()
 
     def extract_date(self, container):
         """Извлекаем дату публикации"""
@@ -94,23 +77,26 @@ class WebScraper:
 
         return None
 
-def _get_full_text(self, article_url, selector):
-    """Внутренний метод для получения полного текста статьи"""
-    html = self.fetch_page(article_url)
-    if not html:
-        return ""
+    def _get_full_text(self, article_url, selector):
+        """Внутренний метод для получения полного текста статьи"""
+        html = self.fetch_page(article_url)
+        if not html:
+            return ""
 
-    soup = BeautifulSoup(html, 'html.parser')
-    content = soup.select_one(selector)
+        soup = BeautifulSoup(html, 'html.parser')
+        content = soup.select_one(selector)
+        return content.get_text(strip=True, separator='\n') if content else ""
     
-    if not content:
-        return ""
+    def _remove_copyright(self, text):
+        """Удаляет копирайт Петрозаводск говорит из конца текста"""
+        copyright_patterns = [
+            "© «Петрозаводск говорит»",
+            "© <em>«Петрозаводск говорит»</em>"
+        ]
         
-    # Получаем HTML-содержимое
-    html_content = str(content)
-    
-    # Очищаем от футера
-    cleaned_html = self._remove_footer(html_content)
-    
-    # Возвращаем как чистый текст
-    return BeautifulSoup(cleaned_html, 'html.parser').get_text(strip=True, separator='\n')
+        for pattern in copyright_patterns:
+            if text.endswith(pattern):
+                text = text[:-len(pattern)].strip()
+                break
+                
+        return text
