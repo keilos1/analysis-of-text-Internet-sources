@@ -2,6 +2,7 @@
 import re
 from typing import List, Dict, Optional
 from enum import Enum
+import asyncio
 import sys
 sys.path.append("../")
 from data_collection.sheduler import DataUpdater
