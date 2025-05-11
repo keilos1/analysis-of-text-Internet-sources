@@ -464,7 +464,7 @@ h1 {
 /* Левая колонка - Дайджест */
 .digest {
     width: 300px; /* Фиксированная ширина */
-    min-height: 300px; /* Минимальная высота */
+    min-height: 500px; /* Минимальная высота */
     background-color: #ddd;
     padding: 15px;
     border-radius: 10px;
