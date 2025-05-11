@@ -110,7 +110,7 @@ async function loadPage(params) {
         case 'main':
             await loadMainPage(contentContainer);
             break;
-        case 'articles':
+        case 'category':
             await loadCategoryPage(contentContainer, type);
             break;
         case 'source':
@@ -281,11 +281,11 @@ window.changeNewsPage = function(newPage) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-async function loadCategoryPage(container, articles) {
+async function loadCategoryPage(container, category) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-        const response = await fetch(`http://78.36.44.126:8000/api/articles/${articles}`);
+        const response = await fetch(`http://78.36.44.126:8000/api/category/${category}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
@@ -300,7 +300,7 @@ async function loadCategoryPage(container, articles) {
             "education": "Образование"
         };
 
-        const categoryName = categoryNames[articles] || "Категория";
+        const categoryName = categoryNames[category] || "Категория";
 
         let html = `
             <section class="digest">
@@ -577,49 +577,125 @@ async function loadSearchResultsPage(container, query) {
     container.innerHTML = html;
 }
 
-// Предполагаем, что у вас есть массив статей
-const articles = [
-  { id: 1, title: 'Статья 1', categories: ['технологии', 'наука'] },
-  { id: 2, title: 'Статья 2', categories: ['наука'] },
-  { id: 3, title: 'Статья 3', categories: ['политика'] },
-];
+// Глобальные переменные
+let currentFilters = {
+  categories: null,
+  location: null
+};
 
-// Получаем все уникальные категории из статей
-const allCategories = [...new Set(articles.flatMap(article => article.categories))];
+// Инициализация при загрузке
+document.addEventListener("DOMContentLoaded", function() {
+  initFilters();
+  loadNews();
+});
 
-// Функция для отображения фильтров
-function renderCategoryFilters() {
-  const filtersContainer = document.getElementById('dropdown-content'); // предполагаемый контейнер
-
-  allCategories.forEach(category => {
-    const filterElement = document.createElement('div');
-    filterElement.className = 'category-filter';
-    filterElement.innerHTML = `
-      <input type="checkbox" id="filter-${category}" value="${category}">
-      <label for="filter-${category}">${category}</label>
-    `;
-    filtersContainer.appendChild(filterElement);
-
-    // Добавляем обработчик изменения
-    filterElement.querySelector('input').addEventListener('change', () => {
-      const selectedCategories = Array.from(
-        document.querySelectorAll('.category-filter input:checked')
-      ).map(el => el.value);
-
-      // Вызываем вашу существующую функцию фильтрации
-      filterArticlesByCategories(selectedCategories);
+// Инициализация фильтров
+function initFilters() {
+  // Обработка выбора категории
+  document.querySelectorAll('[data-filter]').forEach(item => {
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      currentFilters.categories = this.getAttribute('data-filter');
+      currentFilters.location = null;
+      document.getElementById('location-filter').value = '';
+      loadNews();
     });
+  });
+
+  // Обработка выбора локации
+  document.getElementById('location-filter').addEventListener('change', function() {
+    currentFilters.location = this.value;
+    loadNews();
   });
 }
 
-// Предполагаемая существующая функция фильтрации
-function filterArticlesByCategories(selectedCategories) {
-  // Ваша реализация фильтрации
-  console.log('Фильтрация по:', selectedCategories);
-  // Здесь должна быть ваша логика фильтрации и обновления отображения статей
+// Загрузка новостей с фильтрами
+async function loadNews() {
+  try {
+    showLoader();
+
+    const params = new URLSearchParams();
+    if (currentFilters.categories) params.append('categories', currentFilters.categories);
+    if (currentFilters.location) params.append('location', currentFilters.location);
+
+    const response = await fetch(`/api/filtered-news?${params.toString()}`);
+    if (!response.ok) throw new Error('Ошибка загрузки');
+
+    const news = await response.json();
+    renderNews(news);
+
+  } catch (error) {
+    showError(error);
+  }
 }
 
-// Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', () => {
-  renderCategoryFilters();
-});
+// Отображение новостей
+function renderNews(news) {
+  const container = document.getElementById('dynamic-content');
+
+  let html = `
+    <div class="news-header">
+      <h2>${getNewsTitle()}</h2>
+      <div class="news-count">Найдено: ${news.length}</div>
+    </div>
+    <div class="news-grid">
+  `;
+
+  news.forEach(item => {
+    html += `
+      <div class="news-card">
+        <img src="${item.image || '/static/default-news.jpg'}" alt="${item.title}">
+        <div class="news-body">
+          <h3>${item.title}</h3>
+          <p>${item.summary || 'Нет описания'}</p>
+          <div class="news-meta">
+            <span class="categories ${item.categories}">${getCategoryName(item.categories)}</span>
+            <span class="location">${item.location || 'Карелия'}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+// Вспомогательные функции
+function getNewsTitle() {
+  if (currentFilters.categories && currentFilters.location) {
+    return `${getCategoryName(currentFilters.categories)} в ${currentFilters.location}`;
+  }
+  if (currentFilters.categories) return getCategoryName(currentFilters.categories);
+  if (currentFilters.location) return `Новости в ${currentFilters.location}`;
+  return 'Все новости';
+}
+
+function getCategoryName(categories) {
+  const names = {
+    'culture': 'Культура',
+    'sports': 'Спорт',
+    'tech': 'Технологии',
+    'holidays': 'Праздники',
+    'education': 'Образование'
+  };
+  return names[categories] || categories;
+}
+
+function showLoader() {
+  document.getElementById('dynamic-content').innerHTML = `
+    <div class="loader">
+      <div class="spinner"></div>
+      <p>Загрузка новостей...</p>
+    </div>
+  `;
+}
+
+function showError(error) {
+  document.getElementById('dynamic-content').innerHTML = `
+    <div class="error">
+      <p>Ошибка: ${error.message}</p>
+      <button onclick="loadNews()">Попробовать снова</button>
+    </div>
+  `;
+}
