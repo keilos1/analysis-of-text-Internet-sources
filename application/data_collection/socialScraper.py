@@ -80,14 +80,15 @@ class SocialScraper:
         return posts_dict
 
     async def _parse_vk(self, client: httpx.AsyncClient, source: Dict) -> List[Dict[str, Any]]:
-        """Парсинг последних постов VK с обновленными селекторами"""
+        """Парсинг последних постов VK с улучшенными селекторами"""
         try:
             group_id = re.search(r'vk\.com/([^/]+)', source["url"]).group(1)
-            print(f"Пытаемся парсить VK группу: {group_id}")
+            print(f"Парсим VK группу: {group_id}")
 
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
+                "Accept": "text/html,application/xhtml+xml",
+                "Accept-Language": "ru-RU,ru;q=0.9"
             }
 
             response = await client.get(
@@ -96,54 +97,62 @@ class SocialScraper:
                 follow_redirects=True
             )
 
-            print(f"Статус код: {response.status_code}")
-
-            if "Доступ ограничен" in response.text:
-                print("VK требует авторизации или показывает капчу")
+            if response.status_code != 200:
+                print(f"Ошибка {response.status_code} при запросе {source['url']}")
                 return []
 
-            soup = BeautifulSoup(response.text, "html.parser")
+            soup = BeautifulSoup(response.text, 'html.parser')
 
-            # Сохраните HTML для отладки
-            with open("vk_debug.html", "w", encoding="utf-8") as f:
-                f.write(soup.prettify())
-
-            # Попробуйте разные селекторы
+            # Новые селекторы для современного VK
             posts = []
-            wall_items = soup.select(".wall_item, ._post, .Post")
+            post_elements = soup.select('.wall_item, ._post, .Post, .post')
 
-            print(f"Найдено элементов: {len(wall_items)}")
+            print(f"Найдено элементов-кандидатов: {len(post_elements)}")
 
-            for post in wall_items[:self.posts_limit]:
+            for post in post_elements[:self.posts_limit]:
                 try:
-                    # Пробуем разные варианты селекторов
-                    text_elem = post.select_one(".wall_post_text, .wall_post_content, .Post__text")
-                    time_elem = post.select_one(".rel_date, .post_date, .Post__time")
-                    link_elem = post.select_one(".post_link, .Post__anchor")
-
-                    if not text_elem or not time_elem:
+                    # 1. Получаем текст поста
+                    text_elem = post.select_one('.wall_post_text, .wall_post_content, .Post__text, .pi_text')
+                    if not text_elem:
                         continue
 
-                    post_time = self._extract_vk_time(time_elem)
-                    post_url = f"https://vk.com{link_elem['href']}" if link_elem else source["url"]
+                    post_text = text_elem.get_text('\n', strip=True)
+
+                    # 2. Получаем время поста
+                    time_elem = post.select_one('time, .rel_date, .post_date, .Post__time')
+                    if time_elem and 'datetime' in time_elem.attrs:
+                        post_time = datetime.strptime(
+                            time_elem['datetime'],
+                            "%Y-%m-%dT%H:%M:%S%z"
+                        ).replace(tzinfo=None)
+                    elif time_elem and 'time' in time_elem.attrs:
+                        post_time = datetime.fromtimestamp(int(time_elem['time']))
+                    else:
+                        post_time = datetime.now()
+
+                    # 3. Получаем ссылку на пост
+                    link_elem = post.select_one('a.post_link, a.Post__anchor')
+                    post_url = f"https://vk.com{link_elem['href']}" if link_elem else source['url']
 
                     posts.append({
                         "source_id": source.get("source_id", ""),
                         "source_name": f"VK-{group_id}",
                         "title": f"Новость из VK-{group_id}",
-                        "text": text_elem.get_text("\n", strip=True),
+                        "text": post_text,
                         "url": post_url,
                         "published_at": post_time,
                         "source_type": "vk"
                     })
+
                 except Exception as e:
                     print(f"Ошибка обработки поста: {str(e)}")
                     continue
 
+            print(f"Успешно извлечено постов: {len(posts)}")
             return posts
 
         except Exception as e:
-            print(f"Критическая ошибка парсинга VK: {str(e)}")
+            print(f"Ошибка парсинга VK: {str(e)}")
             return []
 
     def _extract_vk_time(self, post_element) -> datetime:
