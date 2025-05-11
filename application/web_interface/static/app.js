@@ -581,7 +581,7 @@ async function loadCategoryPage(container, category) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-        const response = await fetch(`http://78.36.44.126:8000/api/category/${categories}`);
+        const response = await fetch(`http://78.36.44.126:8000/api/category/${category}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
@@ -591,82 +591,83 @@ async function loadCategoryPage(container, category) {
         const categoryData = {
             "culture": {
                 name: "Культура",
-                icon: "palette",
-                description: "Новости из мира искусства, кино, музыки и литературы"
+                description: "Новости из мира искусства, кино, музыки и литературы",
+                color: "#9c27b0"
             },
             "sports": {
                 name: "Спорт",
-                icon: "sports_soccer",
-                description: "Спортивные события, матчи и турниры"
+                description: "Спортивные события, матчи и турниры",
+                color: "#4caf50"
             },
             "tech": {
                 name: "Технологии",
-                icon: "computer",
-                description: "IT-новости, гаджеты и научные разработки"
+                description: "IT-новости, гаджеты и научные разработки",
+                color: "#2196f3"
             },
             "holidays": {
                 name: "Праздники",
-                icon: "celebration",
-                description: "Праздничные события и традиции"
+                description: "Праздничные события и традиции",
+                color: "#ff9800"
             },
             "education": {
                 name: "Образование",
-                icon: "school",
-                description: "Новости образования и науки"
+                description: "Новости образования и науки",
+                color: "#607d8b"
             }
         };
 
-        const currentCategory = categoryData[categories] || {
+        const currentCategory = categoryData[category] || {
             name: "Категория",
-            icon: "categories",
-            description: "Новости по выбранной категории"
+            description: "Новости по выбранной категории",
+            color: "#9e9e9e"
         };
 
         let html = `
-            <div class="current-category">
-                <div class="current-category-icon">
-                    <span class="category-icon">${currentCategory.icon}</span>
-                </div>
-                <div>
-                    <div class="current-category-title">${currentCategory.name}</div>
-                    <div class="current-category-description">${currentCategory.description}</div>
+            <div class="category-header" style="background-color: ${currentCategory.color}20; border-left: 5px solid ${currentCategory.color};">
+                <div class="category-icon">${currentCategory.icon}</div>
+                <div class="category-info">
+                    <h2 class="category-title">${currentCategory.name}</h2>
+                    <p class="category-description">${currentCategory.description}</p>
                 </div>
             </div>
             
-            <section class="digest">
-                <h2>Новости дня</h2>
-                <ul>
-        `;
-
-        news.slice(0, 3).forEach(item => {
-            html += `<li><a href="#" data-article="${item._id.$oid}">${item.title}</a></li>`;
-        });
-
-        html += `
-                </ul>
-            </section>
-            <section class="latest-news">
-                <h2>Новости категории: ${currentCategory.name}</h2>
-        `;
-
-        news.forEach(item => {
-            const date = item.publication_date ?
-                new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
-                'Дата неизвестна';
-
-            html += `
-                <div class="news-item">
-                    <img src="foto.jpg" alt="${item.title}">
-                    <div class="news-text">
-                        <a href="#" data-article="${item._id.$oid}" class="news-title">${item.title}</a>
-                        <p>${item.summary || 'Нет описания'}</p>
-                        <small>Дата публикации: ${date}</small>
+            <div class="category-content">
+                <section class="digest">
+                    <h2>Новости дня</h2>
+                    <ul>
+                        ${news.slice(0, 3).map(item => `
+                            <li>
+                                <a href="#" data-article="${item._id.$oid}">${item.title}</a>
+                                <span class="news-date">${item.publication_date ? 
+                                    new Date(item.publication_date.$date).toLocaleDateString('ru-RU') : 
+                                    'Дата неизвестна'}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </section>
+                
+                <section class="latest-news">
+                    <h2>Все новости категории</h2>
+                    <div class="news-grid">
+                        ${news.map(item => `
+                            <div class="news-card">
+                                <div class="news-card-content">
+                                    <a href="#" data-article="${item._id.$oid}" class="news-title">${item.title}</a>
+                                    <p class="news-summary">${item.summary || 'Нет описания'}</p>
+                                    <div class="news-meta">
+                                        <span class="news-date">${item.publication_date ? 
+                                            new Date(item.publication_date.$date).toLocaleDateString('ru-RU') : 
+                                            'Дата неизвестна'}</span>
+                                        ${item.source ? `<span class="news-source">${item.source}</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
-                </div>
-            `;
-        });
+                </section>
+            </div>
+        `;
 
-        html += `</section>`;
         container.innerHTML = html;
 
     } catch (error) {
