@@ -465,8 +465,8 @@ h1 {
 /* Левая колонка - Дайджест */
 .digest {
     width: 300px; /* Фиксированная ширина */
-    max-height: 400px; /
-    min-height: 300; /* Убираем фиксированную высоту */
+    max-height: 500px; /
+    min-height: 400px; /* Убираем фиксированную высоту */
     background-color: #ddd;
     padding: 15px;
     border-radius: 10px;
@@ -497,7 +497,7 @@ h1 {
 .digest li {
     margin-bottom: 15px;
     padding: 10px;
-    background: rgba(255,255,255,0.7);
+    background: rgba(255,255,255,0.9);
     border-radius: 5px;
     transition: all 0.3s ease;
         transform: translateX(5px);
