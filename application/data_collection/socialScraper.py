@@ -1,20 +1,41 @@
 from bs4 import BeautifulSoup
 import httpx
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Dict, Any
+from sshtunnel import SSHTunnelForwarder
+from pymongo import MongoClient
+import asyncio
+import sys
+sys.path.append("../")
+from data_storage.database import connect_to_mongo
+
+# Константы подключения
+SSH_HOST = '78.36.44.126'
+SSH_PORT = 57381
+SSH_USER = 'server'
+SSH_PASSWORD = 'tppo'
+DB_NAME = 'newsPTZ'
 
 class SocialScraper:
     def __init__(self):
-        self.time_threshold = datetime.now() - timedelta(minutes=30)  # Фильтр по времени (последние 30 минут)
+        self.posts_limit = 10  # Лимит постов для сбора
+        # Подключаемся к базе данных
+        self.db, self.tunnel = connect_to_mongo(
+            ssh_host=SSH_HOST,
+            ssh_port=SSH_PORT,
+            ssh_user=SSH_USER,
+            ssh_password=SSH_PASSWORD,
+            db_name=DB_NAME
+        )
 
-    async def collect_social_data(self, sources: List[Dict]) -> Dict[str, List[Dict[str, Any]]]:
-        """Собираем данные из социальных сетей за последние 30 минут и возвращаем в виде словаря"""
+    async def collect_social_data(self, sources: List[Dict]) -> Dict[str, List[Dict[str, Any]]:
+        """Собираем последние 10 постов из социальных сетей и возвращаем в виде словаря"""
         posts_dict = {}
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             for source in sources:
-                source_id = source.get("_id", "")
+                source_id = source.get("source_id", "")
                 try:
                     if "vk.com" in source["url"]:
                         posts = await self._parse_vk(client, source)
@@ -23,16 +44,13 @@ class SocialScraper:
                     else:
                         continue
 
-                    # Фильтруем по времени (только последние 30 минут)
-                    filtered_posts = [
-                        post for post in posts
-                        if post["published_at"] > self.time_threshold
-                    ]
+                    # Ограничиваем количество постов
+                    limited_posts = posts[:self.posts_limit]
                     
                     # Добавляем посты в словарь
                     if source_id not in posts_dict:
                         posts_dict[source_id] = []
-                    posts_dict[source_id].extend(filtered_posts)
+                    posts_dict[source_id].extend(limited_posts)
 
                 except Exception as e:
                     print(f"Ошибка парсинга {source['url']}: {str(e)}")
@@ -40,7 +58,7 @@ class SocialScraper:
         return posts_dict
 
     async def _parse_vk(self, client: httpx.AsyncClient, source: Dict) -> List[Dict[str, Any]]:
-        """Парсинг постов VK за последние 30 минут"""
+        """Парсинг последних постов VK"""
         try:
             group_id = re.search(r'vk\.com/([^/]+)', source["url"]).group(1)
             response = await client.get(
@@ -50,18 +68,17 @@ class SocialScraper:
             soup = BeautifulSoup(response.text, "html.parser")
 
             posts = []
-            for post in soup.select(".wall_item"):
+            for post in soup.select(".wall_item")[:self.posts_limit]:
                 post_time = self._extract_vk_time(post)
-                if post_time > self.time_threshold:
-                    posts.append({
-                        "source_id": source.get("_id", ""),
-                        "source_name": f"VK-{group_id}",
-                        "title": f"Новость из VK-{group_id}",
-                        "text": post.select_one(".wall_post_text").get_text("\n", strip=True),
-                        "url": f"https://vk.com{post.select_one('.post_link')['href']}",
-                        "published_at": post_time,
-                        "source_type": "vk"
-                    })
+                posts.append({
+                    "source_id": source.get("source_id", ""),
+                    "source_name": f"VK-{group_id}",
+                    "title": f"Новость из VK-{group_id}",
+                    "text": post.select_one(".wall_post_text").get_text("\n", strip=True),
+                    "url": f"https://vk.com{post.select_one('.post_link')['href']}",
+                    "published_at": post_time,
+                    "source_type": "vk"
+                })
             return posts
 
         except Exception as e:
@@ -76,7 +93,7 @@ class SocialScraper:
         return datetime.now()
 
     async def _parse_telegram(self, client: httpx.AsyncClient, source: Dict) -> List[Dict[str, Any]]:
-        """Парсинг Telegram за последние 30 минут"""
+        """Парсинг последних постов Telegram"""
         try:
             channel_name = re.search(r't\.me/([^/]+)', source["url"]).group(1)
             response = await client.get(
@@ -86,18 +103,17 @@ class SocialScraper:
             soup = BeautifulSoup(response.text, "html.parser")
 
             posts = []
-            for msg in soup.select(".tgme_widget_message"):
+            for msg in soup.select(".tgme_widget_message")[:self.posts_limit]:
                 msg_time = self._extract_telegram_time(msg)
-                if msg_time > self.time_threshold:
-                    posts.append({
-                        "source_id": source.get("_id", ""),
-                        "source_name": f"Telegram-{channel_name}",
-                        "title": f"Новость из Telegram-{channel_name}",
-                        "text": msg.select_one(".tgme_widget_message_text").get_text("\n", strip=True),
-                        "url": msg.select_one(".tgme_widget_message_date")["href"],
-                        "published_at": msg_time,
-                        "source_type": "telegram"
-                    })
+                posts.append({
+                    "source_id": source.get("source_id", ""),
+                    "source_name": f"Telegram-{channel_name}",
+                    "title": f"Новость из Telegram-{channel_name}",
+                    "text": msg.select_one(".tgme_widget_message_text").get_text("\n", strip=True),
+                    "url": msg.select_one(".tgme_widget_message_date")["href"],
+                    "published_at": msg_time,
+                    "source_type": "telegram"
+                })
             return posts
 
         except Exception as e:
@@ -114,8 +130,44 @@ class SocialScraper:
             ).replace(tzinfo=None)
         return datetime.now()
 
-async def get_social_data(sources: List[Dict]) -> Dict[str, List[Dict[str, Any]]:
-    """Функция для получения данных из социальных сетей (только последние 30 минут)
-    Возвращает словарь, где ключи - идентификаторы источников, значения - списки постов"""
+    def close_connection(self):
+        """Закрывает соединение с базой данных и SSH-туннель"""
+        if hasattr(self, 'tunnel'):
+            self.tunnel.stop()
+
+async def get_social_data(sources: List[Dict]) -> Dict[str, List[Dict[str, Any]]]:
+    """Получаем последние 10 постов из социальных сетей"""
     scraper = SocialScraper()
-    return await scraper.collect_social_data(sources)
+    try:
+        return await scraper.collect_social_data(sources)
+    finally:
+        scraper.close_connection()
+
+def print_posts(posts_data: Dict[str, List[Dict[str, Any]]]):
+    """Выводим посты в консоль в удобном формате"""
+    for source_id, posts in posts_data.items():
+        print(f"\n=== Источник {source_id} ===")
+        for i, post in enumerate(posts, 1):
+            print(f"\nПост #{i}:")
+            print(f"Заголовок: {post.get('title', 'Без заголовка')}")
+            print(f"Дата: {post.get('published_at', 'Неизвестно')}")
+            print(f"Текст: {post.get('text', 'Без текста')}")
+            print(f"Ссылка: {post.get('url', 'Нет ссылки')}")
+            print(f"Тип: {post.get('source_type', 'Неизвестно')}")
+
+async def main():
+    """Основная функция для выполнения скрипта"""
+    # Пример списка источников (можно заменить на получение из базы данных)
+    sources = [
+        {"source_id": "vk_ptz", "url": "https://vk.com/petrozavodsk"},
+        {"source_id": "tg_ptz", "url": "https://t.me/petrozavodsk_now"}
+    ]
+    
+    # Получаем данные
+    posts_data = await get_social_data(sources)
+    
+    # Выводим результаты
+    print_posts(posts_data)
+
+if __name__ == "__main__":
+    asyncio.run(main())
