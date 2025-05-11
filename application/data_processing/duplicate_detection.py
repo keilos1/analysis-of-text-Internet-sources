@@ -3,8 +3,8 @@ from pymongo import MongoClient
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from typing import List, Dict
-import sys
 import asyncio
+import sys
 
 sys.path.append("../")
 
@@ -38,7 +38,7 @@ async def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95
     )
     
     try:
-        # 1. Суммаризация новых статей (добавляем await)
+        # 1. Суммаризация новых статей
         summarized_new = await summarize_texts_tfidf(new_articles)
         
         # 2. Загрузка существующих статей из базы
@@ -105,7 +105,7 @@ async def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95
 
 async def async_main():
     """
-    Асинхронный основной метод для обработки и сохранения новостей.
+    Основной метод для обработки и сохранения новостей.
     Получает статьи из функции summarize_texts_tfidf и сохраняет уникальные.
     """
     print("="*50)
@@ -113,8 +113,9 @@ async def async_main():
     print("="*50)
     
     try:
-        # Получаем обработанные новости (добавляем await)
-        new_articles = await summarize_texts_tfidf([])
+        # Получаем обработанные новости (пустой список передается, так как 
+        # summarize_texts_tfidf получает новости из news_processor.process_news())
+        new_articles = summarize_texts_tfidf([])
         
         if not new_articles:
             print("Нет новых статей для обработки")
@@ -122,8 +123,8 @@ async def async_main():
             
         print(f"Получено {len(new_articles)} новых статей для обработки")
         
-        # Сохраняем уникальные статьи (добавляем await)
-        saved_count = await save_unique_articles(new_articles)
+        # Сохраняем уникальные статьи
+        saved_count = save_unique_articles(new_articles)
         
         # Выводим результат
         print(f"\nСохранено {saved_count} уникальных статей из {len(new_articles)} обработанных")
