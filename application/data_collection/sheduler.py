@@ -9,8 +9,7 @@ import json
 sys.path.append("../")
 
 # Теперь импортируем наши модули
-from data_collection.api_connector import APIConnector
-from data_collection.scraper import WebScraper
+from data_collection.scraper import Scraper  # Переименованный модуль
 from data_collection.socialScraper import SocialScraper, get_social_data
 from data_storage.database import connect_to_mongo
 from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME
@@ -18,8 +17,7 @@ from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME
 
 class DataUpdater:
     def __init__(self):
-        self.api_connector = APIConnector()
-        self.scraper = WebScraper()
+        self.scraper = Scraper()
         self.social_scraper = SocialScraper()
 
         # Получаем подключение к базе данных
@@ -46,7 +44,7 @@ class DataUpdater:
     def _parse_source(self, source):
         """Преобразует источник из формата MongoDB в словарь"""
         return {
-            "_id": str(source.get("_id")),  # Добавляем _id для социальных источников
+            "_id": str(source.get("_id")),
             "source_id": source.get("source_id"),
             "name": source.get("name"),
             "url": source.get("url"),
@@ -56,17 +54,17 @@ class DataUpdater:
             "last_checked_time": source.get("last_checked_time")
         }
 
-    def _save_articles(self, articles):
-        """Сохраняет статьи в базу данных"""
-        try:
-            if articles:
-                result = self.db.articles.insert_many(articles)
-                print(f"Сохранено {len(result.inserted_ids)} статей")
-                return True
-            return False
-        except Exception as e:
-            print(f"Ошибка сохранения статей: {str(e)}")
-            return False
+    # def _save_articles(self, articles):
+    #     """Сохраняет статьи в базу данных"""
+    #     try:
+    #         if articles:
+    #             result = self.db.articles.insert_many(articles)
+    #             print(f"Сохранено {len(result.inserted_ids)} статей")
+    #             return True
+    #         return False
+    #     except Exception as e:
+    #         print(f"Ошибка сохранения статей: {str(e)}")
+    #         return False
 
     def _update_source_check_time(self, source_id):
         """Обновляет время последней проверки источника"""
@@ -84,7 +82,6 @@ class DataUpdater:
         try:
             print(f"\n=== Обрабатываем социальный источник: {source['name']} ({source['url']}) ===")
 
-            # Преобразуем source для совместимости с socialScraper
             social_source = {
                 "_id": source.get("_id"),
                 "url": source["url"],
@@ -138,44 +135,34 @@ class DataUpdater:
             for articles in social_articles:
                 if articles:
                     articles_data.extend(articles)
+                    # self._save_articles(articles)
                     self._update_source_check_time(articles[0]["source_id"])
 
-        # Обрабатываем обычные источники
+        # Обрабатываем обычные источники (только RSS)
         for source in regular_sources:
             print(f"\n=== Обрабатываем источник: {source['name']} ({source['url']}) ===")
 
             try:
-                # Пробуем парсить как RSS
+                # Парсим только RSS
                 if any(ext in source['url'] for ext in ['rss', 'feed', 'xml']):
                     print("Определен RSS источник")
-                    articles = self.api_connector.fetch_rss(
+                    articles = self.scraper.fetch_rss(
                         url=source['url'],
                         source_id=source['source_id'],
                         base_url=source['url'].rsplit('/', 1)[0],
                     )
                 else:
-                    # Парсим как HTML
-                    print("Определен HTML источник")
-                    html = self.scraper.fetch_page(source['url'])
-                    articles = self.scraper.parse_articles(
-                        html=html,
-                        source_id=source['source_id'],
-                        base_url=source['url'].rsplit('/', 1)[0],
-                        container_tag="article",
-                        title_tag="h2",
-                        link_tag="a",
-                        content_tag="p",
-                        full_text_selector=None
-                    ) if html else []
+                    print("Источник не поддерживается (только RSS)")
+                    articles = []
 
                 if articles:
                     print(f"Найдено {len(articles)} статей")
                     for article in articles:
                         articles_data.append(article)
+                    # self._save_articles(articles)
                 else:
                     print("Статьи не найдены")
 
-                # Обновляем время последней проверки
                 self._update_source_check_time(source['source_id'])
 
             except Exception as e:
@@ -206,11 +193,11 @@ async def main():
 
         if news_items:
             print("\n=== Последние 3 новости ===")
-            for article in news_items[-3:]:
+            for article in news_items[-20:]:
                 print(f"\n[{article['source_id']}] {article['title']}")
                 print(f"Дата: {article['publication_date']}")
                 print(f"URL: {article['url']}")
-                print(f"Текст: {article['text'][:100]}...")
+                print(f"Текст: {article['text'][:10000]}...")
 
         if social_items:
             print("\n=== Последние 3 поста из соцсетей ===")

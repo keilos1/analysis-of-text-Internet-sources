@@ -1,103 +1,138 @@
-import re
-import requests
+import feedparser
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+import re
 import hashlib
 from datetime import datetime
+from urllib.parse import urljoin
+import requests
 
 
-class WebScraper:
-    def fetch_page(self, url):
-        """Получаем HTML-контент страницы по URL"""
-        try:
-            response = requests.get(url)
-            if response.status_code == 200:
-                return response.text
-            return None
-        except Exception as e:
-            print(f"Ошибка при загрузке страницы: {e}")
+class Scraper:
+    def fetch_rss(self, url, source_id, base_url):
+        """Получаем статьи из RSS с очищенной разметкой"""
+        feed = feedparser.parse(url)
+        if feed.bozo:
             return None
 
-    def parse_articles(self, html, source_id, base_url, container_tag, title_tag, link_tag, content_tag,
-                     full_text_selector=None):
-        """Парсим статьи со страницы и получаем полный текст"""
-        soup = BeautifulSoup(html, "html.parser")
         articles = []
-        article_containers = soup.find_all(container_tag)
-
-        for container in article_containers:
+        for entry in feed.entries:
             try:
-                title_tag_content = container.find(title_tag)
-                link_tag_content = container.find(link_tag)
-                content_tag_content = container.find(content_tag)
+                title = entry.title
+                link = urljoin(base_url, entry.link)
+                article_id = hashlib.md5(link.encode()).hexdigest()
 
-                if not (title_tag_content and link_tag_content):
-                    continue
+                # Определяем полный текст в зависимости от источника
+                full_text = self.clean_html(entry.get("description", ""), url, entry)
 
-                title = title_tag_content.get_text(strip=True)
-                relative_link = link_tag_content.get('href', '')
-                link = urljoin(base_url, relative_link)
-                summary = content_tag_content.get_text(strip=True) if content_tag_content else ""
-
-                # Получаем полный текст статьи если указан селектор
-                full_text = self._get_full_text(link, full_text_selector) if full_text_selector else summary
-                
-                # Удаляем копирайт "Петрозаводск говорит" из текста
-                if full_text:
-                    full_text = self._remove_petrozavodsk_copyright(full_text)
+                # Преобразуем дату в объект datetime для MongoDB ISODate
+                publication_date = None
+                if hasattr(entry, 'published_parsed'):
+                    pub_parsed = entry.published_parsed
+                    publication_date = datetime(
+                        pub_parsed.tm_year,
+                        pub_parsed.tm_mon,
+                        pub_parsed.tm_mday,
+                        pub_parsed.tm_hour,
+                        pub_parsed.tm_min,
+                        pub_parsed.tm_sec
+                    )
 
                 articles.append({
-                    "article_id": hashlib.md5(link.encode()).hexdigest(),
+                    "article_id": article_id,
                     "source_id": source_id,
                     "title": title,
                     "url": link,
-                    "publication_date": self.extract_date(container) or datetime.now().isoformat(),
-                    "summary": summary,
+                    "category": entry.get("category", "Новости"),
+                    "publication_date": publication_date,
+                    "summary": "",
                     "text": full_text,
-                    "scraped_at": datetime.now().isoformat()
                 })
 
             except Exception as e:
-                print(f"Ошибка при парсинге статьи: {e}")
+                print(f"Ошибка при обработке статьи: {e}")
                 continue
 
         return articles
 
-    def extract_date(self, container):
-        """Извлекаем дату публикации"""
-        # Проверяем мета-теги
-        for prop in ["date", "article:published_time"]:
-            meta = container.find("meta", {"property": prop}) or container.find("meta", {"name": prop})
-            if meta and meta.get('content'):
-                return meta.get('content')
-
-        # Проверяем тег <time>
-        time_tag = container.find("time")
-        if time_tag and time_tag.has_attr('datetime'):
-            return time_tag['datetime']
-
-        return None
-
-    def _get_full_text(self, article_url, selector):
-        """Внутренний метод для получения полного текста статьи"""
-        html = self.fetch_page(article_url)
-        if not html:
+    def clean_html(self, html_content, url, entry=None):
+        """Очистка HTML с учетом особенностей разных источников"""
+        if not html_content or isinstance(html_content, list):
             return ""
 
-        soup = BeautifulSoup(html, 'html.parser')
-        content = soup.select_one(selector)
-        return content.get_text(strip=True, separator='\n') if content else ""
+        # Специальная обработка для gubdaily.ru
+        if "gubdaily.ru" in url and entry and hasattr(entry, 'content'):
+            for item in entry.content:
+                if item.get('type') == 'text/html':
+                    html_content = item.value
+                    break
+            else:
+                if hasattr(entry, 'content') and entry.content:
+                    html_content = entry.content[0].value
 
-    def _remove_petrozavodsk_copyright(self, text):
-        """Удаляет все варианты копирайта 'Петрозаводск говорит' из текста"""
-        patterns = [
-            r'©\s*[«"]?Петрозаводск говорит[»"]?',
-            r'©\s*<em>[«"]?Петрозаводск говорит[»"]?</em>',
-            r'&copy;\s*[«"]?Петрозаводск говорит[»"]?',
-            r'[«"]?Петрозаводск говорит[»"]?\s*$'
-        ]
+        # Очистка для ptzgovorit.ru
+        if "ptzgovorit.ru" in url:
+            html_content = re.sub(
+                r'©\s*<em>«Петрозаводск говорит»</em>',
+                '',
+                html_content,
+                flags=re.IGNORECASE
+            )
 
-        for pattern in patterns:
-            text = re.sub(pattern, '', text, flags=re.IGNORECASE).strip()
+        soup = BeautifulSoup(html_content, 'html.parser')
+        html = ""
 
-        return text
+        # Общая очистка тегов для всех источников
+        for tag in soup(['script', 'style', 'iframe', 'nav', 'footer',
+                         'svg', 'noscript', 'figure', 'img', 'a', 'em']):
+            tag.decompose()
+
+        # Специфическая обработка для ptzgovorit.ru
+        if "ptzgovorit.ru" in url:
+            body_div = soup.select_one('.field-name-body')
+            if body_div:
+                for div in body_div.find_all('div'):
+                    if 'Фото' in div.get_text():
+                        div.decompose()
+
+                for tag in body_div.find_all(True):
+                    tag.attrs = {}
+
+                allowed_tags = ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'blockquote']
+                for tag in body_div.find_all(True):
+                    if tag.name not in allowed_tags:
+                        tag.unwrap()
+
+                for p in body_div.find_all('p'):
+                    if not p.get_text(strip=True):
+                        p.decompose()
+
+                html = ''.join(str(child) for child in body_div.children)
+            else:
+                html = str(soup)
+        else:
+            # Общая очистка для других источников (включая gubdaily)
+            for outer_p in soup.find_all('p'):
+                if outer_p.find('p'):
+                    outer_p.unwrap()
+
+            for tag in soup.find_all(['p', 'blockquote']):
+                if not tag.get_text(strip=True):
+                    tag.decompose()
+                else:
+                    tag.attrs = {}
+
+            allowed_tags = ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'blockquote']
+            for tag in soup.find_all(True):
+                if tag.name not in allowed_tags:
+                    tag.unwrap()
+
+            for p in soup.find_all('p'):
+                if not p.get_text(strip=True):
+                    p.decompose()
+
+            html = ''.join(str(e) for e in (soup.body.contents if soup.body else soup.contents))
+
+        # Финальная очистка
+        html = re.sub(r'>\s+<', '><', html)
+        html = re.sub(r'\s*\n\s*', '', html)
+        return html.strip()
