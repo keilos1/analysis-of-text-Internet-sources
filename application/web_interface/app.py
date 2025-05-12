@@ -6,14 +6,56 @@ from bson import ObjectId, json_util
 from urllib.parse import unquote
 import json
 import sys
+from fastapi import FastAPI
+import asyncio
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+import logging
 
 sys.path.append("../")
+
 from data_storage.database import connect_to_mongo
-from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME, SITE_HOST
+from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME, SITE_HOST, CHECK_INTERVAL
+from data_processing.duplicate_detection import save_unique_articles, async_main
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+async def run_duplicate_detection():
+    """Обертка для запуска duplicate detection"""
+    try:
+        logger.info("Запуск проверки дубликатов...")
+        await async_main()
+
+        logger.info("Проверка дубликатов завершена")
+    except Exception as e:
+        logger.error(f"Ошибка при проверке дубликатов: {str(e)}")
+
+
+def start_scheduler():
+    """Запускает планировщик для периодических задач"""
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(
+        lambda: asyncio.run(run_duplicate_detection()),
+        trigger=IntervalTrigger(seconds=CHECK_INTERVAL),
+        max_instances=1,
+        name="duplicate_detection"
+    )
+    scheduler.start()
+    logger.info(f"Планировщик запущен с интервалом {CHECK_INTERVAL} секунд")
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Запускается при старте приложения"""
+    start_scheduler()
+    # Первый запуск сразу после старта
+    asyncio.create_task(run_duplicate_detection())
 
 
 def parse_json(data):
