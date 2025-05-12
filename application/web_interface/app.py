@@ -126,7 +126,7 @@ async def get_sources_by_category(category: str):
     db, tunnel = get_db_connection()
     try:
         # Декодируем URL-encoded строку
-        category_decoded = unquote(category)
+        category_decoded = category
 
         # Для отладки
         print(f"Requested category: '{category_decoded}'")
