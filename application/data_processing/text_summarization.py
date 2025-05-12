@@ -15,10 +15,11 @@ def clean_html(text: str) -> str:
     """Удаляет HTML-теги из текста с помощью регулярного выражения"""
     return re.sub(r'<[^>]+>', '', text)
 
+
 async def summarize_texts_tfidf(data: Union[List[Dict], Dict]) -> Union[List[Dict], Dict]:
     """
     Добавляет суммаризированный текст (2 самых важных предложения) к каждому посту.
-    С предварительной очисткой от HTML-тегов.
+    Очистка от HTML-тегов выполняется только для суммаризации, исходный текст остается без изменений.
     """
     news_processor = NewsProcessor()
     filtered_data = await news_processor.process_news()  # Добавлен await
@@ -27,11 +28,10 @@ async def summarize_texts_tfidf(data: Union[List[Dict], Dict]) -> Union[List[Dic
     for filtered_item in filtered_data:
         processed_item = filtered_item.copy()
         raw_text = processed_item.get("text", "")
-        
-        # Очищаем текст от HTML-тегов
+
+        # Очищаем текст от HTML-тегов ТОЛЬКО для суммаризации
         clean_text = clean_html(raw_text)
-        processed_item["text"] = clean_text
-        
+
         sentences = [sent.text for sent in nlp(clean_text).sents]
 
         if len(sentences) <= 2:
@@ -44,6 +44,9 @@ async def summarize_texts_tfidf(data: Union[List[Dict], Dict]) -> Union[List[Dic
             top_indices = sentence_scores.argsort()[-2:][::-1]
             summary = ' '.join([sentences[i] for i in sorted(top_indices)])
             processed_item["summary"] = summary.strip()
+
+        # Оригинальный текст (с тегами, если они были) сохраняется без изменений
+        processed_item["text"] = raw_text
 
         result.append(processed_item)
 
