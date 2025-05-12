@@ -123,10 +123,8 @@ async def get_latest_news():
 
 @app.get("/api/sources-by-category/{category}")
 async def get_sources_by_category(category: str):
-    db, tunnel = None, None
+    db, tunnel = get_db_connection()
     try:
-        db, tunnel = get_db_connection()
-
         # Декодируем URL-encoded строку
         category_decoded = unquote(category)
 
