@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse, JSONResponse
 from bson import ObjectId, json_util
 from urllib.parse import unquote
+from typing import List, Tuple
 import json
 import sys
 from fastapi import FastAPI
