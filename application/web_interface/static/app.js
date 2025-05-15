@@ -696,11 +696,11 @@ async function loadSearchResultsPage(container, query) {
     container.innerHTML = html;
 }
 
-async function loadCategoryPage(container, category) {
+async function loadCategoryPage(container, categories) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-        const response = await fetch(`${API_BASE_URL}/api/category/${category}`);
+        const response = await fetch(`${API_BASE_URL}/api/category/${categories}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
@@ -730,7 +730,7 @@ async function loadCategoryPage(container, category) {
             }
         };
 
-        const currentCategory = categoryData[category] || {
+        const currentCategory = categoryData[categories] || {
             name: "Категория",
             description: "Новости по выбранной категории"
         };
