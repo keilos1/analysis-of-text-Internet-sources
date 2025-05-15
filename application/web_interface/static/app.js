@@ -700,7 +700,7 @@ async function loadCategoryPage(container, category) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-        const response = await fetch(`${API_BASE_URL}/api/category/${categories}`);
+        const response = await fetch(`${API_BASE_URL}/api/category/${category}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
@@ -710,82 +710,107 @@ async function loadCategoryPage(container, category) {
         const categoryData = {
             "culture": {
                 name: "Культура",
-                icon: "palette",
                 description: "Новости из мира искусства, кино, музыки и литературы"
             },
             "sports": {
                 name: "Спорт",
-                icon: "sports_soccer",
                 description: "Спортивные события, матчи и турниры"
             },
             "tech": {
                 name: "Технологии",
-                icon: "computer",
                 description: "IT-новости, гаджеты и научные разработки"
             },
             "holidays": {
                 name: "Праздники",
-                icon: "celebration",
                 description: "Праздничные события и традиции"
             },
             "education": {
                 name: "Образование",
-                icon: "school",
                 description: "Новости образования и науки"
             }
         };
 
-        const currentCategory = categoryData[categories] || {
+        const currentCategory = categoryData[category] || {
             name: "Категория",
-            icon: "categories",
             description: "Новости по выбранной категории"
         };
 
         let html = `
-            <div class="current-category">
-                <div class="current-category-icon">
-                    <span class="category-icon">${currentCategory.icon}</span>
-                </div>
-                <div>
-                    <div class="current-category-title">${currentCategory.name}</div>
-                    <div class="current-category-description">${currentCategory.description}</div>
+            <div class="category-header">
+                <div class="category-icon">${currentCategory.icon}</div>
+                <div class="category-info">
+                    <h1>${currentCategory.name}</h1>
+                    <p class="category-description">${currentCategory.description}</p>
                 </div>
             </div>
             
-            <section class="digest">
-                <h2>Новости дня</h2>
-                <ul>
+            <div class="category-content">
+                <section class="top-news">
+                    <h2><i class="icon-star"></i> Топ новости</h2>
+                    <div class="top-news-grid">
         `;
 
+        // Топ 3 новости
         news.slice(0, 3).forEach(item => {
-            html += `<li><a href="#" data-article="${item._id.$oid}">${item.title}</a></li>`;
-        });
-
-        html += `
-                </ul>
-            </section>
-            <section class="latest-news">
-                <h2>Новости категории: ${currentCategory.name}</h2>
-        `;
-
-        news.forEach(item => {
             const date = item.publication_date ?
                 new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
                 'Дата неизвестна';
 
             html += `
-                <div class="news-item">
-                    <img src="foto.jpg" alt="${item.title}">
-                    <div class="news-text">
-                        <a href="#" data-article="${item._id.$oid}" class="news-title">${item.title}</a>
-                        <p>${item.summary || 'Нет описания'}</p>
-                        <small>Дата публикации: ${date}</small>
+                <div class="top-news-item">
+                    <div class="top-news-image">
+                        <img src="foto.jpg" alt="${item.title}">
+                    </div>
+                    <div class="top-news-content">
+                        <a href="#" data-article="${item._id.$oid}" class="top-news-title">${item.title}</a>
+                        <p class="top-news-summary">${item.summary || 'Нет описания'}</p>
+                        <div class="top-news-meta">
+                            <span class="top-news-date">${date}</span>
+                            ${item.source ? `<span class="top-news-source">${item.source}</span>` : ''}
+                        </div>
                     </div>
                 </div>
             `;
         });
 
-        html += `</section>`;
+        html += `
+                    </div>
+                </section>
+                
+                <section class="all-category-news">
+                    <h2><i class="icon-list"></i> Все новости категории</h2>
+                    <div class="category-news-list">
+        `;
+
+        // Все остальные новости
+        news.slice(3).forEach(item => {
+            const date = item.publication_date ?
+                new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
+                'Дата неизвестна';
+
+            html += `
+                <div class="category-news-item">
+                    <div class="category-news-text">
+                        <a href="#" data-article="${item._id.$oid}" class="category-news-title">${item.title}</a>
+                        <p class="category-news-summary">${item.summary || 'Нет описания'}</p>
+                        <div class="category-news-meta">
+                            <span class="category-news-date">${date}</span>
+                            ${item.source ? `<span class="category-news-source">${item.source}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="category-news-image">
+                        <img src="foto.jpg" alt="${item.title}">
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                    </div>
+                </section>
+            </div>
+        `;
+
         container.innerHTML = html;
 
     } catch (error) {
