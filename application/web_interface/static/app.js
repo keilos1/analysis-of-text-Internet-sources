@@ -142,8 +142,7 @@ async function loadPage(params) {
 // Глобальные переменные для пагинации
 let currentNewsPage = 1;
 const newsPerPage = 5;
-let originalNewsData = []; // Добавляем глобальную переменную
-let originalNewsData = []; // Добавляем глобальную переменную
+let allNewsData = [];
 
 async function loadMainPage(container) {
     try {
@@ -155,8 +154,7 @@ async function loadMainPage(container) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
         }
 
-        originalNewsData = await response.json(); // Сохраняем оригинальные данные
-        allNewsData = [...originalNewsData]; // Копируем для фильтрации
+        allNewsData = await response.json();
         currentNewsPage = 1; // Сбрасываем на первую страницу
 
         renderMainPageContent(container);
@@ -174,7 +172,7 @@ async function loadMainPage(container) {
 }
 
 function renderMainPageContent(container) {
-    // Создаем HTML для блока "Новости дня" и фильтров
+    // Создаем HTML для блока "Новости дня"
     const digestHTML = `
         <section class="digest">
             <h2>Новости дня</h2>
@@ -184,16 +182,6 @@ function renderMainPageContent(container) {
                 ).join('')}
             </ul>
         </section>
-        
-        <div class="news-filters">
-            <button class="filter-btn active" data-category="all">Все новости</button>
-            <button class="filter-btn" data-category="culture">Культура</button>
-            <button class="filter-btn" data-category="sports">Спорт</button>
-            <button class="filter-btn" data-category="tech">Технологии</button>
-            <button class="filter-btn" data-category="holidays">Праздники</button>
-            <button class="filter-btn" data-category="education">Образование</button>
-        </div>
-        
         <section class="latest-news">
             <h2>Последние новости</h2>
             <div id="news-list-container"></div>
@@ -202,9 +190,6 @@ function renderMainPageContent(container) {
     `;
 
     container.innerHTML = digestHTML;
-
-    // Инициализируем фильтры
-    setupNewsFilters();
 
     // Рендерим список новостей и пагинацию
     renderNewsList();
@@ -223,23 +208,13 @@ function renderNewsList() {
             new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
             'Дата неизвестна';
 
-        // Форматируем категории для отображения
-        const categories = item.categories ?
-            (Array.isArray(item.categories) ?
-                item.categories.join(', ') :
-                item.categories) :
-            'Без категории';
-
         return `
             <div class="news-item">
                 <img src="foto.jpg" alt="${item.title}">
                 <div class="news-text">
                     <a href="#" data-article="${item._id.$oid}" class="news-title">${item.title}</a>
                     <p>${item.summary || 'Нет описания'}</p>
-                    <div class="news-meta">
-                        <small>Дата публикации: ${date}</small>
-                        <small>Категории: ${categories}</small>
-                    </div>
+                    <small>Дата публикации: ${date}</small>
                 </div>
             </div>
         `;
@@ -721,47 +696,131 @@ async function loadSearchResultsPage(container, query) {
     container.innerHTML = html;
 }
 
-function setupNewsFilters() {
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Убираем активный класс у всех кнопок
-            document.querySelectorAll('.filter-btn').forEach(b =>
-                b.classList.remove('active'));
+async function loadCategoryPage(container, categories) {
+    try {
+        container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-            // Добавляем активный класс текущей кнопке
-            this.classList.add('active');
+        const response = await fetch(`${API_BASE_URL}/api/category/${categories}`);
 
-            // Получаем выбранную категорию
-            const category = this.dataset.category;
+        if (!response.ok) {
+            throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
+        }
 
-            // Фильтруем новости
-            filterNewsByCategory(category);
-        });
-    });
-}
-
-function filterNewsByCategory(category) {
-    if (category === 'all') {
-        allNewsData = [...originalNewsData]; // Восстанавливаем из оригинальных данных
-    } else {
-        allNewsData = originalNewsData.filter(news => {
-            // Проверяем, есть ли у новости категории и содержит ли она выбранную категорию
-            if (!news.categories) return false;
-
-            // Если categories - это массив
-            if (Array.isArray(news.categories)) {
-                return news.categories.some(cat =>
-                    cat.toLowerCase() === category);
+        const news = await response.json();
+        const categoryData = {
+            "culture": {
+                name: "Культура",
+                description: "Новости из мира искусства, кино, музыки и литературы"
+            },
+            "sports": {
+                name: "Спорт",
+                description: "Спортивные события, матчи и турниры"
+            },
+            "tech": {
+                name: "Технологии",
+                description: "IT-новости, гаджеты и научные разработки"
+            },
+            "holidays": {
+                name: "Праздники",
+                description: "Праздничные события и традиции"
+            },
+            "education": {
+                name: "Образование",
+                description: "Новости образования и науки"
             }
+        };
 
-            // Если categories - это строка (разделенная запятыми или другим разделителем)
-            return news.categories.toLowerCase().includes(category);
+        const currentCategory = categoryData[categories] || {
+            name: "Категория",
+            description: "Новости по выбранной категории"
+        };
+
+        let html = `
+            <div class="category-header">
+                <div class="category-icon">${currentCategory.icon}</div>
+                <div class="category-info">
+                    <h1>${currentCategory.name}</h1>
+                    <p class="category-description">${currentCategory.description}</p>
+                </div>
+            </div>
+            
+            <div class="category-content">
+                <section class="top-news">
+                    <h2><i class="icon-star"></i> Топ новости</h2>
+                    <div class="top-news-grid">
+        `;
+
+        // Топ 3 новости
+        news.slice(0, 3).forEach(item => {
+            const date = item.publication_date ?
+                new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
+                'Дата неизвестна';
+
+            html += `
+                <div class="top-news-item">
+                    <div class="top-news-image">
+                        <img src="foto.jpg" alt="${item.title}">
+                    </div>
+                    <div class="top-news-content">
+                        <a href="#" data-article="${item._id.$oid}" class="top-news-title">${item.title}</a>
+                        <p class="top-news-summary">${item.summary || 'Нет описания'}</p>
+                        <div class="top-news-meta">
+                            <span class="top-news-date">${date}</span>
+                            ${item.source ? `<span class="top-news-source">${item.source}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
         });
+
+        html += `
+                    </div>
+                </section>
+                
+                <section class="all-category-news">
+                    <h2><i class="icon-list"></i> Все новости категории</h2>
+                    <div class="category-news-list">
+        `;
+
+        // Все остальные новости
+        news.slice(3).forEach(item => {
+            const date = item.publication_date ?
+                new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
+                'Дата неизвестна';
+
+            html += `
+                <div class="category-news-item">
+                    <div class="category-news-text">
+                        <a href="#" data-article="${item._id.$oid}" class="category-news-title">${item.title}</a>
+                        <p class="category-news-summary">${item.summary || 'Нет описания'}</p>
+                        <div class="category-news-meta">
+                            <span class="category-news-date">${date}</span>
+                            ${item.source ? `<span class="category-news-source">${item.source}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="category-news-image">
+                        <img src="foto.jpg" alt="${item.title}">
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                    </div>
+                </section>
+            </div>
+        `;
+
+        container.innerHTML = html;
+
+    } catch (error) {
+        console.error("Ошибка при загрузке категории:", error);
+        container.innerHTML = `
+            <div class="error-message">
+                <h2>Ошибка при загрузке категории</h2>
+                <p>${error.message}</p>
+                <button onclick="history.back()">Вернуться назад</button>
+            </div>
+        `;
     }
-
-    currentNewsPage = 1; // Сбрасываем на первую страницу
-
-    // Перерисовываем список и пагинацию
-    renderNewsList();
-    renderPagination();
 }
