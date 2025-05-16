@@ -1,49 +1,50 @@
+from typing import List, Dict  # Добавьте этот импорт в начало файла
 from sshtunnel import SSHTunnelForwarder
 from pymongo import MongoClient
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from typing import List, Dict
 import sys
+import asyncio
+
 sys.path.append("../")
+
 from data_storage.database import connect_to_mongo
 from data_processing.text_summarization import summarize_texts_tfidf
+from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME
 
-# Константы подключения
-SSH_HOST = '78.36.44.126'
-SSH_PORT = 57381
-SSH_USER = 'server'
-SSH_PASSWORD = 'tppo'
-DB_NAME = 'newsPTZ'
 
-def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> int:
+async def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> int:
     """
     Сохраняет только уникальные статьи в базу данных.
     Возвращает количество сохраненных статей.
-    
-    Args:
-        new_articles: Список новых статей для сохранения
-        threshold: Порог схожести для определения уникальности (0-1)
-        
-    Returns:
-        Количество сохраненных уникальных статей
     """
     if not new_articles:
         return 0
     
-    # Подключаемся к базе данных
-    db, tunnel = connect_to_mongo(
-        ssh_host=SSH_HOST,
-        ssh_port=SSH_PORT,
-        ssh_user=SSH_USER,
-        ssh_password=SSH_PASSWORD,
-        db_name=DB_NAME
-    )
-    
+    db, tunnel = None, None
     try:
-        # 1. Суммаризация новых статей
-        summarized_new = summarize_texts_tfidf(new_articles)
+        db, tunnel = connect_to_mongo(
+            ssh_host=HOST,
+            ssh_port=PORT,
+            ssh_user=SSH_USER,
+            ssh_password=SSH_PASSWORD,
+            db_name=DB_NAME
+        )
         
-        # 2. Загрузка существующих статей из базы
+        summarized_new = await summarize_texts_tfidf(new_articles)
+        
+        # Проверка наличия обязательных полей
+        valid_articles = []
+        for article in summarized_new:
+            if not all(key in article for key in ['title', 'url', 'summary']):
+                print(f"Пропущена статья с отсутствующими полями: {article.get('article_id', 'без ID')}")
+                continue
+            valid_articles.append(article)
+        
+        if not valid_articles:
+            print("Нет валидных статей для обработки")
+            return 0
+            
         existing_articles = list(db.articles.find(
             {}, 
             {"title": 1, "summary": 1, "url": 1, "article_id": 1, "_id": 0}
@@ -51,73 +52,80 @@ def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> i
         
         saved_count = 0
         
-        # 3. Если база пуста - сохраняем все статьи
         if not existing_articles:
-            for article in summarized_new:
-                db.articles.insert_one({
-                    "article_id": article["article_id"],
-                    "source_id": article.get("source_id", ""),
-                    "title": article["title"],
-                    "url": article["url"],
-                    "publication_date": article.get("publication_date", ""),
-                    "summary": article["summary"],
-                    "text": article.get("text", ""),
-                    "categories": article.get("categories", ["Другое"]),
-                    "district": article.get("district", "Не указан")
-                })
-                saved_count += 1
+            for article in valid_articles:
+                try:
+                    db.articles.insert_one({
+                        "article_id": article.get("article_id", ""),
+                        "source_id": article.get("source_id", ""),
+                        "title": article["title"],
+                        "url": article["url"],
+                        "publication_date": article.get("publication_date", ""),
+                        "summary": article["summary"],
+                        "text": article.get("text", ""),
+                        "categories": article.get("categories", ["Другое"]),
+                        "district": article.get("district", "Не указан")
+                    })
+                    saved_count += 1
+                except Exception as e:
+                    print(f"Ошибка при сохранении статьи {article.get('article_id')}: {str(e)}")
             return saved_count
         
-        # 4. Подготовка данных для сравнения схожести
-        existing_texts = [f"{art['title']} {art['summary']}" for art in existing_articles]
-        new_texts = [f"{art['title']} {art['summary']}" for art in summarized_new]
+        existing_texts = [
+            f"{art.get('title', '')} {art.get('summary', '')}" 
+            for art in existing_articles
+        ]
+        new_texts = [
+            f"{art['title']} {art['summary']}" 
+            for art in valid_articles
+        ]
         
         vectorizer = TfidfVectorizer()
         existing_matrix = vectorizer.fit_transform(existing_texts)
         new_matrix = vectorizer.transform(new_texts)
         
-        # 5. Фильтрация и сохранение уникальных статей
-        for i, article in enumerate(summarized_new):
-            # Проверка на дубликат по URL
-            if db.articles.find_one({"url": article["url"]}):
-                continue
-            
-            # Проверка на схожесть по содержанию
-            similarities = cosine_similarity(new_matrix[i], existing_matrix)[0]
-            max_similarity = max(similarities) if similarities.size > 0 else 0
-            
-            if max_similarity < threshold:
-                db.articles.insert_one({
-                    "article_id": article["article_id"],
-                    "source_id": article.get("source_id", ""),
-                    "title": article["title"],
-                    "url": article["url"],
-                    "publication_date": article.get("publication_date", ""),
-                    "summary": article["summary"],
-                    "text": article.get("text", ""),
-                    "categories": article.get("categories", ["Другое"]),
-                    "district": article.get("district", "Не указан")
-                })
-                saved_count += 1
+        for i, article in enumerate(valid_articles):
+            try:
+                if db.articles.find_one({"url": article["url"]}):
+                    continue
+                    
+                similarities = cosine_similarity(new_matrix[i], existing_matrix)[0]
+                max_similarity = max(similarities) if similarities.size > 0 else 0
+                
+                if max_similarity < threshold:
+                    db.articles.insert_one({
+                        "article_id": article.get("article_id", ""),
+                        "source_id": article.get("source_id", ""),
+                        "title": article["title"],
+                        "url": article["url"],
+                        "publication_date": article.get("publication_date", ""),
+                        "summary": article["summary"],
+                        "text": article.get("text", ""),
+                        "categories": article.get("categories", ["Другое"]),
+                        "district": article.get("district", "Не указан")
+                    })
+                    saved_count += 1
+            except Exception as e:
+                print(f"Ошибка при обработке статьи {article.get('article_id')}: {str(e)}")
         
         return saved_count
+        
+    except Exception as e:
+        print(f"Ошибка в save_unique_articles: {str(e)}")
+        return 0
     finally:
-        # Обязательно закрываем соединение
-        tunnel.close()
+        if tunnel:
+            tunnel.close()
+            print("SSH туннель закрыт")
 
-def main():
-    """
-    Основной метод для обработки и сохранения новостей.
-    Получает статьи из функции summarize_texts_tfidf и сохраняет уникальные.
-    """
+
+async def async_main():
     print("="*50)
     print("СИСТЕМА ОБРАБОТКИ И СОХРАНЕНИЯ НОВОСТЕЙ")
     print("="*50)
     
     try:
-        # Получаем обработанные новости (пустой список передается, так как 
-        # summarize_texts_tfidf получает новости из news_processor.process_news())
-        new_articles = summarize_texts_tfidf([])
+        new_articles = await summarize_texts_tfidf([])
         
         if not new_articles:
             print("Нет новых статей для обработки")
@@ -125,16 +133,17 @@ def main():
             
         print(f"Получено {len(new_articles)} новых статей для обработки")
         
-        # Сохраняем уникальные статьи
-        saved_count = save_unique_articles(new_articles)
+        saved_count = await save_unique_articles(new_articles)
         
-        # Выводим результат
         print(f"\nСохранено {saved_count} уникальных статей из {len(new_articles)} обработанных")
         
     except Exception as e:
         print(f"\nОшибка при обработке новостей: {str(e)}")
     finally:
         print("\nРабота программы завершена")
+
+def main():
+    asyncio.run(async_main())
 
 if __name__ == "__main__":
     main()

@@ -2,6 +2,9 @@
 import re
 from typing import List, Dict, Optional
 from enum import Enum
+import asyncio
+import sys
+sys.path.append("../")
 from data_collection.sheduler import DataUpdater
 
 class NewsCategory(Enum):
@@ -30,14 +33,19 @@ CATEGORY_KEYWORDS = {
 class NewsProcessor:
     def __init__(self):
         self.data_updater = DataUpdater()
+        # Регулярное выражение для поиска всех форм слова "Петрозаводск"
+        self.petrozavodsk_pattern = re.compile(
+            r'\bПетрозаводск(?:а|у|ом|е|ий|ого|ому|им|ом)?\b',
+            re.IGNORECASE
+        )
 
-    def process_news(self) -> List[Dict]:
+    async def process_news(self) -> List[Dict]:
         """
         Получает новости через fetch_news и обрабатывает их:
-        - Оставляет только новости о Петрозаводске
+        - Оставляет только новости о Петрозаводске (с учетом разных форм слова)
         - Добавляет информацию о локации и категориях
         """
-        raw_news = self.data_updater.fetch_news()
+        raw_news = await self.data_updater.fetch_news()
         processed_news = []
 
         # Проверка на отсутствие новостей
@@ -51,8 +59,8 @@ class NewsProcessor:
             text = news_item.get("text", "")
             text_lower = text.lower()
 
-            # Проверка на принадлежность к Петрозаводску
-            if not re.search(r'\bПетрозаводск\b', text, re.IGNORECASE):
+            # Проверка на принадлежность к Петрозаводску (все формы слова)
+            if not self.petrozavodsk_pattern.search(text):
                 continue
 
             petrozavodsk_news_count += 1
@@ -90,5 +98,8 @@ class NewsProcessor:
         return processed_news
 
 if __name__ == "__main__":
-    processor = NewsProcessor()
-    processor.process_news()
+    async def main():
+        processor = NewsProcessor()
+        await processor.process_news()
+    
+    asyncio.run(main())

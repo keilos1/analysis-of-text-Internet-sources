@@ -2,6 +2,10 @@ import re
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Dict, Union
+import sys
+import asyncio
+sys.path.append("../")
+
 from data_processing.filtering import NewsProcessor
 
 # Загружаем модель spaCy для русского языка
@@ -11,23 +15,23 @@ def clean_html(text: str) -> str:
     """Удаляет HTML-теги из текста с помощью регулярного выражения"""
     return re.sub(r'<[^>]+>', '', text)
 
-def summarize_texts_tfidf(data: Union[List[Dict], Dict]) -> Union[List[Dict], Dict]:
+
+async def summarize_texts_tfidf(data: Union[List[Dict], Dict]) -> Union[List[Dict], Dict]:
     """
     Добавляет суммаризированный текст (2 самых важных предложения) к каждому посту.
-    С предварительной очисткой от HTML-тегов.
+    Очистка от HTML-тегов выполняется только для суммаризации, исходный текст остается без изменений.
     """
     news_processor = NewsProcessor()
-    filtered_data = news_processor.process_news()
+    filtered_data = await news_processor.process_news()  # Добавлен await
 
     result = []
     for filtered_item in filtered_data:
         processed_item = filtered_item.copy()
         raw_text = processed_item.get("text", "")
-        
-        # Очищаем текст от HTML-тегов
+
+        # Очищаем текст от HTML-тегов ТОЛЬКО для суммаризации
         clean_text = clean_html(raw_text)
-        processed_item["text"] = clean_text
-        
+
         sentences = [sent.text for sent in nlp(clean_text).sents]
 
         if len(sentences) <= 2:
@@ -40,6 +44,9 @@ def summarize_texts_tfidf(data: Union[List[Dict], Dict]) -> Union[List[Dict], Di
             top_indices = sentence_scores.argsort()[-2:][::-1]
             summary = ' '.join([sentences[i] for i in sorted(top_indices)])
             processed_item["summary"] = summary.strip()
+
+        # Оригинальный текст (с тегами, если они были) сохраняется без изменений
+        processed_item["text"] = raw_text
 
         result.append(processed_item)
 
@@ -61,15 +68,15 @@ def print_news_with_summary(news_data: List[Dict]) -> None:
         print(f"\nСуммаризация (ключевые предложения):\n{news_item.get('summary', 'Не удалось сгенерировать')}")
         print("-" * 50)
 
-def main():
-    """Основная функция для обработки и вывода новостей"""
+async def async_main():
+    """Асинхронная основная функция для обработки и вывода новостей"""
     print("="*50)
     print("СИСТЕМА ОБРАБОТКИ И СУММАРИЗАЦИИ НОВОСТЕЙ")
     print("="*50)
     
     try:
         # Получаем и обрабатываем новости
-        summarized_news = summarize_texts_tfidf([])
+        summarized_news = await summarize_texts_tfidf([])
         
         # Выводим результат
         print_news_with_summary(summarized_news)
@@ -84,6 +91,10 @@ def main():
         print(f"\nОшибка при обработке новостей: {str(e)}")
     finally:
         print("\nРабота программы завершена")
+
+def main():
+    """Точка входа для синхронного вызова"""
+    asyncio.run(async_main())
 
 if __name__ == "__main__":
     main()

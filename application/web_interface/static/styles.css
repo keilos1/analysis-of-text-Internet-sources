@@ -465,7 +465,8 @@ h1 {
 /* Левая колонка - Дайджест */
 .digest {
     width: 300px; /* Фиксированная ширина */
-    min-height: auto; /* Убираем фиксированную высоту */
+    max-height: 500px; /
+    min-height: 400px; /* Убираем фиксированную высоту */
     background-color: #ddd;
     padding: 15px;
     border-radius: 10px;
@@ -496,15 +497,12 @@ h1 {
 .digest li {
     margin-bottom: 15px;
     padding: 10px;
-    background: rgba(255,255,255,0.7);
+    background: rgba(255,255,255,0.9);
     border-radius: 5px;
     transition: all 0.3s ease;
+        transform: translateX(5px);
 }
 
-.digest li:hover {
-    background: rgba(255,255,255,0.9);
-    transform: translateX(5px);
-}
 /* Заголовок */
 .digest h2 {
     font-size: 20px;
@@ -528,9 +526,7 @@ h1 {
     transition: color 0.3s ease;
 }
 
-.digest a:hover {
-    color: #007bff;
-}
+
 
 /* Затемняющий слой (изначально скрыт) */
 .digest::before {
@@ -539,7 +535,7 @@ h1 {
     top: 0;
     left: 0;
     width: 100%;
-    background: rgba(0, 0, 0, 0.6); /* Полупрозрачное затемнение */
+    background: rgba(0, 0, 0, 0.9); /* Полупрозрачное затемнение */
     opacity: 0;
     transition: opacity 0.5s ease-in-out;
     border-radius: 10px;
@@ -549,17 +545,17 @@ h1 {
 .digest:hover {
     width: 50%; /* Увеличивается до половины контейнера */
     background: url('daba.jpg') no-repeat center center/cover;
-    color: white;
+   color: #007bff;
 }
 
 /* Показываем затемняющий слой при наведении */
 .digest:hover::before {
-    opacity: 1;
+    opacity: 5;
 }
 
 /* Меняем цвет ссылок на белый при наведении */
 .digest:hover a {
-    color: white;
+    color: black;
     position: relative;
     z-index: 2; /* Поднимаем текст выше затемняющего слоя */
 }
@@ -570,7 +566,12 @@ h1 {
     z-index: 2;
 }
 
-
+.digest:hover li {
+    background: rgba(255, 255, 255, 0.9); /* Почти непрозрачный белый */
+    padding: 12px; /* Увеличим отступы для лучшей читаемости */
+    border-radius: 6px; /* Скруглим углы */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Легкая тень для объема */
+}
 /* Правая колонка - Последние новости */
 .latest-news {
     flex: 1; /* Занимает оставшееся пространство */
@@ -1186,4 +1187,133 @@ footer {
     padding: 3px 8px;
     background: #f5f5f5;
     border-radius: 4px;
+}
+
+.full-width {
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.news-grid-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    width: 100%;
+}
+
+.news-item-full {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 20px;
+    width: 100%;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.news-item-full:hover {
+    transform: translateY(-5px);
+}
+
+.news-image-container {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.news-image-fixed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+    border-radius: 5px;
+}
+
+.news-item-full:hover .news-image-fixed {
+    transform: scale(1.05);
+}
+
+.news-content-expanded {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-decoration: none;
+}
+
+.news-title-expanded {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.news-summary-expanded {
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 15px;
+}
+
+.news-meta-expanded {
+    display: flex;
+    gap: 15px;
+    color: #777;
+    font-size: 14px;
+}
+
+.load-more-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    background: #f5f5f5;
+    border: none;
+    border-radius: 8px;
+    color: #333;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.load-more-btn:hover {
+    background: #e0e0e0;
+}
+
+.load-more-btn i {
+    margin-right: 8px;
+}
+
+.news-image {
+    width: 200px;
+    height: 200px;
+    overflow: hidden;
+    border-radius: 5px;
+}
+
+.news-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+/* Стиль заголовка (как в предыдущей версии) */
+.news-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.news-title:hover {
+    color: #b02323;
+    text-decoration: none;
 }
