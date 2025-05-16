@@ -298,7 +298,7 @@ async function loadCategoryPage(container, category) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-        const response = await fetch(`${API_BASE_URL}/api/sources-by-category/${category}`);
+        const response = await fetch(`${API_BASE_URL}/api/articles-by-category/${category}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);

@@ -164,6 +164,41 @@ async def get_sources_by_category(category: str):
         if tunnel:
             tunnel.close()
 
+
+# Новый эндпоинт только для статей по категории
+@app.get("/api/articles-by-category/{category}")
+async def get_articles_by_category(category: str):
+    db, tunnel = get_db_connection()
+    try:
+        # Декодируем URL-encoded строку
+        category_decoded = unquote(category)
+
+        # Находим все источники этой категории
+        sources = list(db.sources.find({"category": category_decoded}))
+        if not sources:
+            return JSONResponse(
+                status_code=200,
+                content={"articles": []}
+            )
+
+        # Получаем статьи этих источников
+        source_ids = [s["source_id"] for s in sources]
+        articles = list(db.articles.find(
+            {"source_id": {"$in": source_ids}},
+            {"_id": 1, "title": 1, "summary": 1, "publication_date": 1, "source_id": 1, "categories": 1}
+        ).sort("publication_date", -1).limit(100))
+
+        return {
+            "articles": parse_json(articles)
+        }
+
+    except Exception as e:
+        print(f"Error in get_articles_by_category: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if tunnel:
+            tunnel.close()
+
 # API для получения полной статьи
 @app.get("/api/article/{article_id}")
 async def get_article(article_id: str):
@@ -197,6 +232,7 @@ async def get_article(article_id: str):
         raise HTTPException(status_code=500, detail=f"Ошибка получения статьи: {str(e)}")
     finally:
         tunnel.close()
+
 
 
 # API для поиска новостей
@@ -241,3 +277,4 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+
