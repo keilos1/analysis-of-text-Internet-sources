@@ -1317,3 +1317,49 @@ footer {
     color: #b02323;
     text-decoration: none;
 }
+#dynamic-content, #news-list-container {
+    transition: opacity 0.3s ease;
+}
+
+.pagination {
+    display: flex;
+    gap: 5px;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+.page-btn, .current-page {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.page-btn {
+    background: white;
+    cursor: pointer;
+}
+
+.page-btn:hover {
+    background: #f0f0f0;
+}
+
+.current-page {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.page-dots {
+    padding: 5px 10px;
+}
+#news-list-container, #news-pagination {
+    transition: opacity 0.01s ease !important;
+    transform: translateZ(0); /* Аппаратное ускорение */
+    backface-visibility: hidden; /* Фикс для мерцания в некоторых браузерах */
+}
+
+/* Оптимизация рендеринга списка новостей */
+.news-item {
+    will-change: transform;
+    contain: content;
+}
