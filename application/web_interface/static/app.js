@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 function initApp() {
     setCurrentDate();
     setupNavigation();
+    setupCategoryDropdown();
     loadPage(getCurrentPage());
 
     document.addEventListener('click', function(e) {
@@ -726,4 +727,65 @@ async function loadSearchResultsPage(container, query) {
     container.innerHTML = html;
 }
 
+/**
+ * Настраивает выпадающее меню категорий
+ */
+function setupCategoryDropdown() {
+    const dropdownBtn = document.querySelector('.dropdown-btn');
+    const dropdownContent = document.querySelector('.dropdown-content');
 
+    if (!dropdownBtn || !dropdownContent) return;
+
+    // Обработчик клика по кнопке
+    dropdownBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        dropdownContent.classList.toggle('show');
+    });
+
+    // Обработчики для пунктов меню
+    dropdownContent.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Закрываем меню после выбора
+            dropdownContent.classList.remove('show');
+
+            // Удаляем активный класс у всех пунктов
+            dropdownContent.querySelectorAll('a').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Добавляем активный класс текущему пункту
+            this.classList.add('active');
+
+            // Обновляем текст кнопки на выбранную категорию
+            dropdownBtn.textContent = this.textContent;
+
+            // Получаем параметры из data-атрибутов
+            const page = this.getAttribute('data-page');
+            const type = this.getAttribute('data-type');
+
+            // Обновляем URL и загружаем страницу
+            const url = `?page=${page}&type=${type}`;
+            history.pushState({ page, type }, '', url);
+            loadPage({ page, type });
+        });
+    });
+
+    // Закрытие меню при клике вне его
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.dropdown')) {
+            dropdownContent.classList.remove('show');
+        }
+    });
+
+    // Инициализация активного состояния при загрузке
+    const currentPage = getCurrentPage();
+    if (currentPage.page === 'category') {
+        const activeLink = dropdownContent.querySelector(`a[data-type="${currentPage.type}"]`);
+        if (activeLink) {
+            activeLink.classList.add('active');
+            dropdownBtn.textContent = activeLink.textContent;
+        }
+    }
+}
