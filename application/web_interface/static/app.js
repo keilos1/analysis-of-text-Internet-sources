@@ -142,7 +142,8 @@ async function loadPage(params) {
 // Глобальные переменные для пагинации
 let currentNewsPage = 1;
 const newsPerPage = 5;
-let allNewsData = [];
+let originalNewsData = []; // Добавляем глобальную переменную
+let originalNewsData = []; // Добавляем глобальную переменную
 
 async function loadMainPage(container) {
     try {
@@ -154,7 +155,8 @@ async function loadMainPage(container) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
         }
 
-        allNewsData = await response.json();
+        originalNewsData = await response.json(); // Сохраняем оригинальные данные
+        allNewsData = [...originalNewsData]; // Копируем для фильтрации
         currentNewsPage = 1; // Сбрасываем на первую страницу
 
         renderMainPageContent(container);
@@ -172,7 +174,7 @@ async function loadMainPage(container) {
 }
 
 function renderMainPageContent(container) {
-    // Создаем HTML для блока "Новости дня"
+    // Создаем HTML для блока "Новости дня" и фильтров
     const digestHTML = `
         <section class="digest">
             <h2>Новости дня</h2>
@@ -182,6 +184,16 @@ function renderMainPageContent(container) {
                 ).join('')}
             </ul>
         </section>
+        
+        <div class="news-filters">
+            <button class="filter-btn active" data-category="all">Все новости</button>
+            <button class="filter-btn" data-category="culture">Культура</button>
+            <button class="filter-btn" data-category="sports">Спорт</button>
+            <button class="filter-btn" data-category="tech">Технологии</button>
+            <button class="filter-btn" data-category="holidays">Праздники</button>
+            <button class="filter-btn" data-category="education">Образование</button>
+        </div>
+        
         <section class="latest-news">
             <h2>Последние новости</h2>
             <div id="news-list-container"></div>
@@ -190,6 +202,9 @@ function renderMainPageContent(container) {
     `;
 
     container.innerHTML = digestHTML;
+
+    // Инициализируем фильтры
+    setupNewsFilters();
 
     // Рендерим список новостей и пагинацию
     renderNewsList();
@@ -208,13 +223,23 @@ function renderNewsList() {
             new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
             'Дата неизвестна';
 
+        // Форматируем категории для отображения
+        const categories = item.categories ?
+            (Array.isArray(item.categories) ?
+                item.categories.join(', ') :
+                item.categories) :
+            'Без категории';
+
         return `
             <div class="news-item">
                 <img src="foto.jpg" alt="${item.title}">
                 <div class="news-text">
                     <a href="#" data-article="${item._id.$oid}" class="news-title">${item.title}</a>
                     <p>${item.summary || 'Нет описания'}</p>
-                    <small>Дата публикации: ${date}</small>
+                    <div class="news-meta">
+                        <small>Дата публикации: ${date}</small>
+                        <small>Категории: ${categories}</small>
+                    </div>
                 </div>
             </div>
         `;
@@ -696,3 +721,47 @@ async function loadSearchResultsPage(container, query) {
     container.innerHTML = html;
 }
 
+function setupNewsFilters() {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Убираем активный класс у всех кнопок
+            document.querySelectorAll('.filter-btn').forEach(b =>
+                b.classList.remove('active'));
+
+            // Добавляем активный класс текущей кнопке
+            this.classList.add('active');
+
+            // Получаем выбранную категорию
+            const category = this.dataset.category;
+
+            // Фильтруем новости
+            filterNewsByCategory(category);
+        });
+    });
+}
+
+function filterNewsByCategory(category) {
+    if (category === 'all') {
+        allNewsData = [...originalNewsData]; // Восстанавливаем из оригинальных данных
+    } else {
+        allNewsData = originalNewsData.filter(news => {
+            // Проверяем, есть ли у новости категории и содержит ли она выбранную категорию
+            if (!news.categories) return false;
+
+            // Если categories - это массив
+            if (Array.isArray(news.categories)) {
+                return news.categories.some(cat =>
+                    cat.toLowerCase() === category);
+            }
+
+            // Если categories - это строка (разделенная запятыми или другим разделителем)
+            return news.categories.toLowerCase().includes(category);
+        });
+    }
+
+    currentNewsPage = 1; // Сбрасываем на первую страницу
+
+    // Перерисовываем список и пагинацию
+    renderNewsList();
+    renderPagination();
+}
