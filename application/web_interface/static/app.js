@@ -311,48 +311,9 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
 
         const russianCategory = categoryMapping[category] || category;
 
-        // Метаданные категорий для отображения
-        const categoryMeta = {
-            "culture": {
-                title: "Культура",
-                description: "Новости из мира искусства, кино, музыки и литературы",
-                icon: "🎭"
-            },
-            "sports": {
-                title: "Спорт",
-                description: "Спортивные события, матчи и турниры",
-                icon: "⚽"
-            },
-            "tech": {
-                title: "Технологии",
-                description: "IT-новости, гаджеты и научные разработки",
-                icon: "💻"
-            },
-            "holidays": {
-                title: "Праздники",
-                description: "Праздничные события и традиции",
-                icon: "🎉"
-            },
-            "education": {
-                title: "Образование",
-                description: "Новости образования и науки",
-                icon: "📚"
-            }
-        };
-
-        const currentCategory = categoryMeta[category] || {
-            title: russianCategory,
-            description: `Новости категории ${russianCategory}`,
-            icon: "📰"
-        };
-
-        // Запрос статей по категории (учитываем массив categories)
+        // Запрос статей по категории
         const response = await fetch(
-            `${API_BASE_URL}/api/articles?` + new URLSearchParams({
-                categories: russianCategory,
-                offset: offset,
-                limit: limit
-            })
+            `${API_BASE_URL}/api/articles-by-category/${encodeURIComponent(russianCategory)}?offset=${offset}&limit=${limit}`
         );
 
         if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
@@ -362,13 +323,7 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
         if (offset === 0) {
             container.innerHTML = `
                 <div class="news-section full-width">
-                    <div class="category-header">
-                        <div class="category-icon">${currentCategory.icon}</div>
-                        <div class="category-info">
-                            <h2 class="category-title">${currentCategory.title}</h2>
-                            <p class="category-description">${currentCategory.description}</p>
-                        </div>
-                    </div>
+                    <h2 class="category-title">${russianCategory}</h2>
                     <div class="news-grid-container"></div>
                 </div>
             `;
@@ -397,9 +352,6 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
                         <span><i class="far fa-calendar-alt"></i> ${pubDate}</span>
                         ${article.categories?.length ? `
                             <span><i class="fas fa-tag"></i> ${article.categories.join(', ')}</span>
-                        ` : ''}
-                        ${article.district ? `
-                            <span><i class="fas fa-map-marker-alt"></i> ${article.district}</span>
                         ` : ''}
                     </div>
                 </div>
@@ -431,7 +383,7 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
         console.error("Ошибка загрузки категории:", error);
         container.innerHTML = `
             <div class="error-message">
-                <h2>Ошибка при загрузке категории "${category}"</h2>
+                <h2>Ошибка при загрузке категории</h2>
                 <p>${error.message}</p>
                 <div class="error-actions">
                     <button class="btn-back" onclick="history.back()">
