@@ -294,17 +294,19 @@ window.changeNewsPage = function(newPage) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-async function loadCategoryPage(container, categories) {
+async function loadCategoryPage(container, category) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
-        const response = await fetch(`${API_BASE_URL}/api/category/${categories}`);
+        const response = await fetch(`${API_BASE_URL}/api/sources-by-category/${category}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
         }
 
-        const news = await response.json();
+        const data = await response.json();
+        const { sources, articles } = data;
+
         const categoryData = {
             "culture": {
                 name: "Культура",
@@ -328,7 +330,7 @@ async function loadCategoryPage(container, categories) {
             }
         };
 
-        const currentCategory = categoryData[categories] || {
+        const currentCategory = categoryData[category] || {
             name: "Категория",
             description: "Новости по выбранной категории"
         };
@@ -349,10 +351,12 @@ async function loadCategoryPage(container, categories) {
         `;
 
         // Топ 3 новости
-        news.slice(0, 3).forEach(item => {
+        articles.slice(0, 3).forEach(item => {
             const date = item.publication_date ?
                 new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
                 'Дата неизвестна';
+
+            const sourceInfo = sources.find(s => s.source_id === item.source_id) || {};
 
             html += `
                 <div class="top-news-item">
@@ -364,7 +368,7 @@ async function loadCategoryPage(container, categories) {
                         <p class="top-news-summary">${item.summary || 'Нет описания'}</p>
                         <div class="top-news-meta">
                             <span class="top-news-date">${date}</span>
-                            ${item.source ? `<span class="top-news-source">${item.source}</span>` : ''}
+                            ${sourceInfo.name ? `<span class="top-news-source">${sourceInfo.name}</span>` : ''}
                         </div>
                     </div>
                 </div>
@@ -381,10 +385,12 @@ async function loadCategoryPage(container, categories) {
         `;
 
         // Все остальные новости
-        news.slice(3).forEach(item => {
+        articles.slice(3).forEach(item => {
             const date = item.publication_date ?
                 new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
                 'Дата неизвестна';
+
+            const sourceInfo = sources.find(s => s.source_id === item.source_id) || {};
 
             html += `
                 <div class="category-news-item">
@@ -393,7 +399,7 @@ async function loadCategoryPage(container, categories) {
                         <p class="category-news-summary">${item.summary || 'Нет описания'}</p>
                         <div class="category-news-meta">
                             <span class="category-news-date">${date}</span>
-                            ${item.source ? `<span class="category-news-source">${item.source}</span>` : ''}
+                            ${sourceInfo.name ? `<span class="category-news-source">${sourceInfo.name}</span>` : ''}
                         </div>
                     </div>
                     <div class="category-news-image">
