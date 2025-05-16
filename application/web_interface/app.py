@@ -7,7 +7,6 @@ from urllib.parse import unquote
 from typing import List, Tuple
 import json
 import sys
-from fastapi import FastAPI
 import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
