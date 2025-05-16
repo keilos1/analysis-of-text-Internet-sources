@@ -300,7 +300,7 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
         document.getElementById('loader').style.display = 'block';
         if (offset === 0) container.innerHTML = '';
 
-        // Соответствие между английскими ключами и русскоязычными категориями
+        // Маппинг категорий (английские ключи → русские названия)
         const categoryMapping = {
             "culture": "Культура",
             "sports": "Спорт",
@@ -311,47 +311,59 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
 
         const russianCategory = categoryMapping[category] || category;
 
-        // Описания категорий для отображения
-        const categoryDisplayData = {
+        // Метаданные категорий для отображения
+        const categoryMeta = {
             "culture": {
                 title: "Культура",
                 description: "Новости из мира искусства, кино, музыки и литературы",
+                icon: "🎭"
             },
             "sports": {
                 title: "Спорт",
                 description: "Спортивные события, матчи и турниры",
+                icon: "⚽"
             },
             "tech": {
                 title: "Технологии",
                 description: "IT-новости, гаджеты и научные разработки",
+                icon: "💻"
             },
             "holidays": {
                 title: "Праздники",
                 description: "Праздничные события и традиции",
+                icon: "🎉"
             },
             "education": {
                 title: "Образование",
                 description: "Новости образования и науки",
+                icon: "📚"
             }
         };
 
-        const currentCategory = categoryDisplayData[category] || {
+        const currentCategory = categoryMeta[category] || {
             title: russianCategory,
             description: `Новости категории ${russianCategory}`,
+            icon: "📰"
         };
 
-        // Получаем данные с пагинацией
+        // Запрос статей по категории (учитываем массив categories)
         const response = await fetch(
-            `${API_BASE_URL}/api/articles-by-category/${encodeURIComponent(russianCategory)}?offset=${offset}&limit=${limit}`
+            `${API_BASE_URL}/api/articles?` + new URLSearchParams({
+                categories: russianCategory,
+                offset: offset,
+                limit: limit
+            })
         );
+
         if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
         const { articles, total } = await response.json();
 
-        // Формируем HTML
+        // Формирование HTML
         if (offset === 0) {
             container.innerHTML = `
                 <div class="news-section full-width">
                     <div class="category-header">
+                        <div class="category-icon">${currentCategory.icon}</div>
                         <div class="category-info">
                             <h2 class="category-title">${currentCategory.title}</h2>
                             <p class="category-description">${currentCategory.description}</p>
@@ -364,46 +376,49 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
 
         const newsGrid = container.querySelector('.news-grid-container');
 
-        // Добавляем новости
-        articles.forEach(item => {
-            const date = item.publication_date ?
-                new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
+        // Добавление статей
+        articles.forEach(article => {
+            const pubDate = article.publication_date ?
+                new Date(article.publication_date.$date).toLocaleDateString('ru-RU') :
                 'Дата неизвестна';
 
-            const newsItem = document.createElement('div');
-            newsItem.className = 'news-item-full';
-            newsItem.innerHTML = `
+            const articleItem = document.createElement('div');
+            articleItem.className = 'news-item-full';
+            articleItem.innerHTML = `
                 <div class="news-image-container">
-                    <img src="${item.image_url || 'foto.jpg'}" alt="${item.title}" class="news-image-fixed">
+                    <img src="${article.image_url || 'foto.jpg'}" alt="${article.title}" class="news-image-fixed">
                 </div>
                 <div class="news-content-expanded">
                     <h3>
-                        <a href="#" data-article="${item._id.$oid}" class="news-title">${item.title}</a>
+                        <a href="#" data-article="${article._id.$oid}" class="news-title">${article.title}</a>
                     </h3>
-                    <p class="news-summary-expanded">${item.summary || 'Нет описания'}</p>
+                    <p class="news-summary-expanded">${article.summary || 'Нет описания'}</p>
                     <div class="news-meta-expanded">
-                        <span><i class="far fa-calendar-alt"></i> ${date}</span>
-                        ${item.categories ? `
-                            <span><i class="fas fa-tag"></i> ${formatCategories(item.categories)}</span>
+                        <span><i class="far fa-calendar-alt"></i> ${pubDate}</span>
+                        ${article.categories?.length ? `
+                            <span><i class="fas fa-tag"></i> ${article.categories.join(', ')}</span>
+                        ` : ''}
+                        ${article.district ? `
+                            <span><i class="fas fa-map-marker-alt"></i> ${article.district}</span>
                         ` : ''}
                     </div>
                 </div>
             `;
-            newsGrid.appendChild(newsItem);
+            newsGrid.appendChild(articleItem);
         });
 
-        // Добавляем кнопку "Показать еще" если есть еще новости
+        // Кнопка "Показать ещё" (если есть дополнительные статьи)
         if (offset + limit < total && !container.querySelector('.load-more-btn')) {
             const loadMoreBtn = document.createElement('button');
             loadMoreBtn.className = 'load-more-btn';
-            loadMoreBtn.innerHTML = '<i class="fas fa-plus"></i> Показать еще';
+            loadMoreBtn.innerHTML = '<i class="fas fa-plus"></i> Показать ещё';
             loadMoreBtn.addEventListener('click', () => {
                 loadCategoryPage(container, category, offset + limit, limit);
             });
             container.querySelector('.news-section').appendChild(loadMoreBtn);
         }
 
-        // Добавляем обработчики событий
+        // Обработчики кликов по статьям
         container.querySelectorAll('[data-article]').forEach(link => {
             link.addEventListener('click', async (e) => {
                 e.preventDefault();
@@ -416,26 +431,21 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
         console.error("Ошибка загрузки категории:", error);
         container.innerHTML = `
             <div class="error-message">
-                <h2>Ошибка при загрузке категории</h2>
+                <h2>Ошибка при загрузке категории "${category}"</h2>
                 <p>${error.message}</p>
                 <div class="error-actions">
-                    <button class="btn-back" onclick="history.back()"><i class="fas fa-arrow-left"></i> Назад</button>
-                    <button class="btn-retry" onclick="loadCategoryPage(container, '${category}')"><i class="fas fa-sync-alt"></i> Повторить</button>
+                    <button class="btn-back" onclick="history.back()">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </button>
+                    <button class="btn-retry" onclick="loadCategoryPage(container, '${category}')">
+                        <i class="fas fa-sync-alt"></i> Повторить
+                    </button>
                 </div>
             </div>
         `;
     } finally {
-        // Скрываем загрузчик
         document.getElementById('loader').style.display = 'none';
     }
-}
-
-// Вспомогательная функция для форматирования категорий
-function formatCategories(categories) {
-    if (Array.isArray(categories)) {
-        return categories.join(', ');
-    }
-    return categories;
 }
 
 function setupCategoryTabs() {
