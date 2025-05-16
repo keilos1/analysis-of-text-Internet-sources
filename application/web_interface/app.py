@@ -167,29 +167,37 @@ async def get_sources_by_category(category: str):
 
 # Новый эндпоинт только для статей по категории
 @app.get("/api/articles-by-category/{category}")
-async def get_articles_by_category(category: str):
+async def get_articles_by_category(
+        category: str,
+        skip: int = 0,
+        limit: int = 10
+):
     db, tunnel = get_db_connection()
     try:
-        # Декодируем URL-encoded строку
-        category_decoded = unquote(category)
+        # Прямой поиск по категории в массиве categories
+        query = {"categories": category}
 
-        # Находим все источники этой категории
-        sources = list(db.sources.find({"category": category_decoded}))
-        if not sources:
-            return JSONResponse(
-                status_code=200,
-                content={"articles": []}
-            )
-
-        # Получаем статьи этих источников
-        source_ids = [s["source_id"] for s in sources]
         articles = list(db.articles.find(
-            {"source_id": {"$in": source_ids}},
-            {"_id": 1, "title": 1, "summary": 1, "publication_date": 1, "source_id": 1, "categories": 1}
-        ).sort("publication_date", -1).limit(100))
+            query,
+            {
+                "_id": 1,
+                "title": 1,
+                "summary": 1,
+                "publication_date": 1,
+                "categories": 1,
+                "district": 1,
+                "image_url": 1
+            }
+        )
+                        .sort("publication_date", -1)
+                        .skip(skip)
+                        .limit(limit))
+
+        total = db.articles.count_documents(query)
 
         return {
-            "articles": parse_json(articles)
+            "articles": parse_json(articles),
+            "total": total
         }
 
     except Exception as e:
