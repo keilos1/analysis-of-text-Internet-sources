@@ -10,5 +10,5 @@ MONGO_HOST = '127.0.0.1'
 MONGO_PORT = 27017
 
 # Параметры подключения сайта
-SITE_HOST = 'localhost'
+SITE_HOST = '78.36.44.126'
 CHECK_INTERVAL = 1800
