@@ -70,18 +70,25 @@ def connect_to_mongo(
     ssh_port,
     ssh_user,
     ssh_password,
-    remote_host='127.0.0.1',
-    remote_port=27017,
-    db_name='newsPTZ'
+    mongo_host,
+    mongo_port,
+    db_name
 ):
-    tunnel = SSHTunnelForwarder(
-        (ssh_host, ssh_port),
-        ssh_username=ssh_user,
-        ssh_password=ssh_password,
-        remote_bind_address=(remote_host, remote_port)
-    )
-    tunnel.start()
-    client = MongoClient('127.0.0.1', tunnel.local_bind_port)
-    db = client[db_name]
-    return Database(db), tunnel
+    if not ssh_host:
+        # Локальное подключение без SSH-туннеля
+        client = MongoClient(mongo_host, mongo_port)
+        db = client[db_name]
+        return Database(db), None
+    else:
+        # Подключение через SSH-туннель
+        tunnel = SSHTunnelForwarder(
+            (ssh_host, ssh_port),
+            ssh_username=ssh_user,
+            ssh_password=ssh_password,
+            remote_bind_address=(mongo_host, mongo_port)  # используем новые имена
+        )
+        tunnel.start()
+        client = MongoClient('127.0.0.1', tunnel.local_bind_port)
+        db = client[db_name]
+        return Database(db), tunnel
 

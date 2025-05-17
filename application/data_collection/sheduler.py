@@ -12,7 +12,7 @@ sys.path.append("../")
 from data_collection.scraper import Scraper  # Переименованный модуль
 from data_collection.socialScraper import SocialScraper, get_social_data
 from data_storage.database import connect_to_mongo
-from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME
+from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME, MONGO_HOST, MONGO_PORT
 
 
 class DataUpdater:
@@ -22,12 +22,14 @@ class DataUpdater:
 
         # Получаем подключение к базе данных
         self.db, self.tunnel = connect_to_mongo(
-            ssh_host=HOST,
-            ssh_port=PORT,
-            ssh_user=SSH_USER,
-            ssh_password=SSH_PASSWORD,
-            db_name=DB_NAME
-        )
+        ssh_host=HOST,          # если пустое - будет локальное подключение
+        ssh_port=PORT,
+        ssh_user=SSH_USER,
+        ssh_password=SSH_PASSWORD,
+        mongo_host=MONGO_HOST,
+        mongo_port=MONGO_PORT,
+        db_name=DB_NAME
+    )
 
         # Получаем источники из БД
         self.sources = self._get_sources_from_db()
@@ -53,18 +55,6 @@ class DataUpdater:
             "area_of_the_city": source.get("area_of_the_city"),
             "last_checked_time": source.get("last_checked_time")
         }
-
-    # def _save_articles(self, articles):
-    #     """Сохраняет статьи в базу данных"""
-    #     try:
-    #         if articles:
-    #             result = self.db.articles.insert_many(articles)
-    #             print(f"Сохранено {len(result.inserted_ids)} статей")
-    #             return True
-    #         return False
-    #     except Exception as e:
-    #         print(f"Ошибка сохранения статей: {str(e)}")
-    #         return False
 
     def _update_source_check_time(self, source_id):
         """Обновляет время последней проверки источника"""

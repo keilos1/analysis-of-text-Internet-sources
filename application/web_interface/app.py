@@ -16,7 +16,7 @@ import logging
 sys.path.append("../")
 
 from data_storage.database import connect_to_mongo
-from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME, SITE_HOST, CHECK_INTERVAL
+from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME, SITE_HOST, CHECK_INTERVAL, MONGO_HOST, MONGO_PORT
 from data_processing.duplicate_detection import save_unique_articles, async_main
 
 app = FastAPI()
@@ -66,10 +66,12 @@ def parse_json(data):
 def get_db_connection():
     """Создает и возвращает подключение к базе данных"""
     return connect_to_mongo(
-        ssh_host=HOST,
+        ssh_host=HOST,          # если пустое - будет локальное подключение
         ssh_port=PORT,
         ssh_user=SSH_USER,
         ssh_password=SSH_PASSWORD,
+        mongo_host=MONGO_HOST,  # новый параметр вместо remote_host
+        mongo_port=MONGO_PORT,   # новый параметр вместо remote_port
         db_name=DB_NAME
     )
 
@@ -96,7 +98,8 @@ async def get_all_sources():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        tunnel.close()
+        if tunnel:
+            tunnel.close()
 
 # API для получения последних новостей
 @app.get("/api/latest-news")
@@ -119,7 +122,8 @@ async def get_latest_news():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка получения новостей: {str(e)}")
     finally:
-        tunnel.close()
+        if tunnel:
+            tunnel.close()
 
 @app.get("/api/sources-by-category/{category}")
 async def get_sources_by_category(
@@ -247,7 +251,8 @@ async def get_article(article_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка получения статьи: {str(e)}")
     finally:
-        tunnel.close()
+        if tunnel:
+            tunnel.close()
 
 
 
@@ -279,7 +284,8 @@ async def search_news(query: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка поиска: {str(e)}")
     finally:
-        tunnel.close()
+        if tunnel:
+            tunnel.close()
 
 
 @app.get("/api/config")
