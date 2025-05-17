@@ -306,7 +306,8 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
             "sports": "Спорт",
             "tech": "Технологии",
             "holidays": "Праздники",
-            "education": "Образование"
+            "education": "Образование",
+            "other": "Другое"  // Добавлена новая категория
         };
 
         const russianCategory = categoryMapping[category] || category;
@@ -324,6 +325,7 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
             container.innerHTML = `
                 <div class="news-section full-width">
                     <h2 class="category-title">${russianCategory}</h2>
+                    ${category === 'other' ? `<p class="category-description">Разные новости, не вошедшие в основные категории</p>` : ''}
                     <div class="news-grid-container"></div>
                 </div>
             `;

@@ -4,8 +4,10 @@ from typing import List, Dict, Optional
 from enum import Enum
 import asyncio
 import sys
+
 sys.path.append("../")
 from data_collection.sheduler import DataUpdater
+
 
 class NewsCategory(Enum):
     CULTURE = "Культура"
@@ -13,6 +15,8 @@ class NewsCategory(Enum):
     TECHNOLOGY = "Технологии"
     HOLIDAYS = "Праздники"
     EDUCATION = "Образование"
+    OTHER = "Другое"  # Добавлена новая категория
+
 
 # Только районы Петрозаводска
 PETROZAVODSK_DISTRICTS = [
@@ -29,6 +33,7 @@ CATEGORY_KEYWORDS = {
     NewsCategory.HOLIDAYS: ["праздник", "день города", "фестиваль"],
     NewsCategory.EDUCATION: ["образован", "школ", "университет"]
 }
+
 
 class NewsProcessor:
     def __init__(self):
@@ -71,6 +76,10 @@ class NewsProcessor:
                 if any(keyword in text_lower for keyword in keywords):
                     detected_categories.append(category.value)
 
+            # Если категории не найдены, добавляем "Другое"
+            if not detected_categories:
+                detected_categories.append(NewsCategory.OTHER.value)
+
             # Определение района
             location = {"city": "Петрозаводск"}
             for district in PETROZAVODSK_DISTRICTS:
@@ -81,14 +90,14 @@ class NewsProcessor:
             # Вывод в консоль
             print("Title:", news_item.get("title", ""))
             print("Text:", text)
-            print("Categories:", detected_categories or ["Другое"])
+            print("Categories:", detected_categories)
             print("District:", location.get("district", "Не указан"))
             print("-" * 50)
 
             processed_news.append({
                 **news_item,
                 "location": location,
-                "categories": detected_categories or ["Другое"]
+                "categories": detected_categories
             })
 
         # Проверка, что после фильтрации остались новости
@@ -97,9 +106,11 @@ class NewsProcessor:
 
         return processed_news
 
+
 if __name__ == "__main__":
     async def main():
         processor = NewsProcessor()
         await processor.process_news()
-    
+
+
     asyncio.run(main())
