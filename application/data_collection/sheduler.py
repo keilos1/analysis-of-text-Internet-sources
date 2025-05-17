@@ -5,14 +5,15 @@ import asyncio
 from bson import ObjectId, json_util
 import json
 
-# Добавляем пути до того как импортируем наши модули
+# Добавляем пути до модулей
 sys.path.append("../")
 
-# Теперь импортируем наши модули
-from data_collection.scraper import Scraper  # Переименованный модуль
+# Импорт модулей
+from data_collection.scraper import Scraper
 from data_collection.socialScraper import SocialScraper, get_social_data
+from data_collection.googleSearch import collect_news  # ← Добавлен импорт Google поиска
 from data_storage.database import connect_to_mongo
-from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME, MONGO_HOST, MONGO_PORT
+from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME, MONGO_HOST, MONGO_PORT, API_KEY, GOOGLE_CX
 
 
 class DataUpdater:
@@ -20,22 +21,25 @@ class DataUpdater:
         self.scraper = Scraper()
         self.social_scraper = SocialScraper()
 
-        # Получаем подключение к базе данных
+        # Подключение к БД
         self.db, self.tunnel = connect_to_mongo(
-        ssh_host=HOST,          # если пустое - будет локальное подключение
-        ssh_port=PORT,
-        ssh_user=SSH_USER,
-        ssh_password=SSH_PASSWORD,
-        mongo_host=MONGO_HOST,
-        mongo_port=MONGO_PORT,
-        db_name=DB_NAME
-    )
+            ssh_host=HOST,
+            ssh_port=PORT,
+            ssh_user=SSH_USER,
+            ssh_password=SSH_PASSWORD,
+            mongo_host=MONGO_HOST,
+            mongo_port=MONGO_PORT,
+            db_name=DB_NAME
+        )
 
-        # Получаем источники из БД
+        # Загрузка источников
         self.sources = self._get_sources_from_db()
 
+        # API ключи
+        self.google_api_key = API_KEY  # ← Укажи свой ключ
+        self.google_cx = GOOGLE_CX
+
     def _get_sources_from_db(self):
-        """Получает список источников из базы данных"""
         try:
             sources = list(self.db.sources.find())
             return [self._parse_source(source) for source in sources]
@@ -44,7 +48,6 @@ class DataUpdater:
             return []
 
     def _parse_source(self, source):
-        """Преобразует источник из формата MongoDB в словарь"""
         return {
             "_id": str(source.get("_id")),
             "source_id": source.get("source_id"),
@@ -57,7 +60,6 @@ class DataUpdater:
         }
 
     def _update_source_check_time(self, source_id):
-        """Обновляет время последней проверки источника"""
         try:
             self.db.sources.update_one(
                 {"source_id": source_id},
@@ -68,7 +70,6 @@ class DataUpdater:
             print(f"Ошибка обновления времени проверки: {str(e)}")
 
     async def _process_social_source(self, source):
-        """Обрабатывает источники из социальных сетей"""
         try:
             print(f"\n=== Обрабатываем социальный источник: {source['name']} ({source['url']}) ===")
 
@@ -108,15 +109,17 @@ class DataUpdater:
         articles_data = []
         social_sources = []
         regular_sources = []
+        google_source = None
 
-        # Разделяем источники на социальные и обычные
         for source in self.sources:
-            if "vk.com" in source["url"] or "t.me" in source["url"]:
+            if source["source_id"] == "Google search":
+                google_source = source
+            elif "vk.com" in source["url"] or "t.me" in source["url"]:
                 social_sources.append(source)
             else:
                 regular_sources.append(source)
 
-        # Обрабатываем социальные сети асинхронно
+        # Обработка соцсетей
         if social_sources:
             print("\n=== Обработка социальных сетей ===")
             social_articles = await asyncio.gather(
@@ -125,15 +128,12 @@ class DataUpdater:
             for articles in social_articles:
                 if articles:
                     articles_data.extend(articles)
-                    # self._save_articles(articles)
                     self._update_source_check_time(articles[0]["source_id"])
 
-        # Обрабатываем обычные источники (только RSS)
+        # Обработка RSS
         for source in regular_sources:
             print(f"\n=== Обрабатываем источник: {source['name']} ({source['url']}) ===")
-
             try:
-                # Парсим только RSS
                 if any(ext in source['url'] for ext in ['rss', 'feed', 'xml']):
                     print("Определен RSS источник")
                     articles = self.scraper.fetch_rss(
@@ -147,11 +147,7 @@ class DataUpdater:
 
                 if articles:
                     print(f"Найдено {len(articles)} статей")
-                    for article in articles:
-                        articles_data.append(article)
-                    # self._save_articles(articles)
-                else:
-                    print("Статьи не найдены")
+                    articles_data.extend(articles)
 
                 self._update_source_check_time(source['source_id'])
 
@@ -159,14 +155,41 @@ class DataUpdater:
                 print(f"Ошибка при обработке источника: {str(e)}")
                 continue
 
+        # Обработка Google поиска
+        if google_source:
+            print("\n=== Поиск через Google ===")
+            google_queries = [
+                "новости Петрозаводска",
+                "Петрозаводск происшествия",
+                "Петрозаводск экономика",
+                "Петрозаводск культура",
+                "Петрозаводск политика"
+            ]
+
+            google_results = collect_news(google_queries, self.google_api_key, self.google_cx, results_per_query=5)
+
+            for article in google_results:
+                article.update({
+                    "source_id": google_source["source_id"],
+                    "category": google_source["category"],
+                    "district": google_source["district"],
+                    "area_of_the_city": google_source["area_of_the_city"],
+                    "source_type": "google"
+                })
+
+            if google_results:
+                print(f"Найдено {len(google_results)} новостей через Google")
+                articles_data.extend(google_results)
+                self._update_source_check_time(google_source["source_id"])
+            else:
+                print("Google новости не найдены")
+
         return articles_data
 
     def __del__(self):
-        """Закрывает соединение с БД при уничтожении объекта"""
-        if hasattr(self, 'tunnel'):
-            if self.tunnel:
-                self.tunnel.close()
-                print("SSH туннель закрыт")
+        if hasattr(self, 'tunnel') and self.tunnel:
+            self.tunnel.close()
+            print("SSH туннель закрыт")
 
 
 async def main():
@@ -177,26 +200,38 @@ async def main():
     print("\n=== Итоговый отчет ===")
     print(f"Всего собрано статей/постов: {len(news)}")
 
-    if news:
-        # Разделяем новости и посты для отчета
-        news_items = [n for n in news if n.get("source_type") not in ["vk", "telegram"]]
-        social_items = [n for n in news if n.get("source_type") in ["vk", "telegram"]]
+    if not news:
+        print("Нет новых данных.")
+        return
 
-        if news_items:
-            print("\n=== Последние 3 новости ===")
-            for article in news_items[-20:]:
-                print(f"\n[{article['source_id']}] {article['title']}")
-                print(f"Дата: {article['publication_date']}")
-                print(f"URL: {article['url']}")
-                print(f"Текст: {article['text'][:10000]}...")
+    # Разделение по источникам
+    google_items = [n for n in news if n.get("source_type") == "google"]
+    news_items = [n for n in news if n.get("source_type") not in ["vk", "telegram", "google"]]
+    social_items = [n for n in news if n.get("source_type") in ["vk", "telegram"]]
 
-        if social_items:
-            print("\n=== Последние 3 поста из соцсетей ===")
-            for post in social_items[-3:]:
-                print(f"\n[{post['source_id']}] {post['title']}")
-                print(f"Дата: {post['publication_date']}")
-                print(f"URL: {post['url']}")
-                print(f"Текст: {post['text'][:100]}...")
+    if news_items:
+        print("\n=== Последние 3 новости (RSS и другие сайты) ===")
+        for article in news_items[-3:]:
+            print(f"\n[{article['source_id']}] {article['title']}")
+            print(f"Дата: {article.get('publication_date')}")
+            print(f"URL: {article.get('url')}")
+            print(f"Текст: {article.get('text', '')[:500]}...")
+
+    if google_items:
+        print("\n=== Последние 3 новости из Google ===")
+        for article in google_items[-3:]:
+            print(f"\n[{article['source_id']}] {article['title']}")
+            print(f"Дата: {article.get('publication_date')}")
+            print(f"URL: {article.get('url')}")
+            print(f"Текст: {article.get('text', '')[:500]}...")
+
+    if social_items:
+        print("\n=== Последние 3 поста из соцсетей ===")
+        for post in social_items[-3:]:
+            print(f"\n[{post['source_id']}] {post['title']}")
+            print(f"Дата: {post.get('publication_date')}")
+            print(f"URL: {post.get('url')}")
+            print(f"Текст: {post.get('text', '')[:500]}...")
 
 
 if __name__ == "__main__":
