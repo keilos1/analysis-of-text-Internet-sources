@@ -1,8 +1,13 @@
+# Фильтрация данных по тематике и местоположению
 import re
-from typing import List, Dict, Optional
+from typing import List, Dict
 from enum import Enum
+import asyncio
+import sys
 
-from application.data_collection.sheduler import DataUpdater
+sys.path.append("../")
+from data_collection.sheduler import DataUpdater
+
 
 class NewsCategory(Enum):
     CULTURE = "Культура"
@@ -10,6 +15,7 @@ class NewsCategory(Enum):
     TECHNOLOGY = "Технологии"
     HOLIDAYS = "Праздники"
     EDUCATION = "Образование"
+    OTHER = "Другое"
 
 
 # Только районы Петрозаводска
@@ -20,6 +26,7 @@ PETROZAVODSK_DISTRICTS = [
     "Рыбка", "Центр", "Южная площадка"
 ]
 
+# Улучшенный словарь с регулярными выражениями
 CATEGORY_KEYWORDS = {
     NewsCategory.CULTURE: [
         r'\bкультур[а-я]*\b', r'\bмузе[йя]\b', r'\bтеатр[а-я]*\b',
@@ -63,33 +70,49 @@ CATEGORY_KEYWORDS = {
     ]
 }
 
+
 class NewsProcessor:
     def __init__(self):
-        self.data_updater = DataUpdater()  # Создаем экземпляр DataUpdater
+        self.data_updater = DataUpdater()
+        self.petrozavodsk_pattern = re.compile(
+            r'\bПетрозаводск(?:а|у|ом|е|ий|ого|ому|им|ом)?\b',
+            re.IGNORECASE
+        )
+        # Предкомпилируем регулярные выражения для производительности
+        self.compiled_patterns = {
+            category: [re.compile(pattern, re.IGNORECASE) for pattern in patterns]
+            for category, patterns in CATEGORY_KEYWORDS.items()
+        }
 
-    def process_news(self) -> List[Dict]:
-        """
-        Получает новости через fetch_news и обрабатывает их:
-        - Оставляет только новости о Петрозаводске
-        - Добавляет информацию о локации и категориях
-        """
-        # Получаем сырые новости из источников
-        raw_news = self.data_updater.fetch_news()  # Вызываем метод экземпляра
+    async def process_news(self) -> List[Dict]:
+        raw_news = await self.data_updater.fetch_news()
         processed_news = []
+
+        if not raw_news:
+            print("Новостей нет")
+            return processed_news
+
+        petrozavodsk_news_count = 0
 
         for news_item in raw_news:
             text = news_item.get("text", "")
-            text_lower = text.lower()
+            title = news_item.get("title", "")
 
             # Проверка на принадлежность к Петрозаводску
-            if not re.search(r'\bПетрозаводск\b', text, re.IGNORECASE):
+            if not self.petrozavodsk_pattern.search(text):
                 continue
+
+            petrozavodsk_news_count += 1
 
             # Определение категорий
             detected_categories = []
-            for category, keywords in CATEGORY_KEYWORDS.items():
-                if any(keyword in text_lower for keyword in keywords):
+            for category, patterns in self.compiled_patterns.items():
+                if any(pattern.search(text) for pattern in patterns):
                     detected_categories.append(category.value)
+
+            # Если категории не найдены, добавляем "Другое"
+            if not detected_categories:
+                detected_categories.append(NewsCategory.OTHER.value)
 
             # Определение района
             location = {"city": "Петрозаводск"}
@@ -98,11 +121,32 @@ class NewsProcessor:
                     location["district"] = district
                     break
 
-            # Добавляем обработанную новость
+            # Вывод в консоль
+            print("Title:", title)
+            print("Text:", text[:100] + "...")  # Выводим первые 100 символов текста
+            print("Categories:", ", ".join(detected_categories))
+            print("District:", location.get("district", "Не указан"))
+            print("-" * 50)
+
             processed_news.append({
-                **news_item,
+                "title": title,
+                "text": text,
                 "location": location,
-                "categories": detected_categories or ["Другое"]
+                "categories": detected_categories,
+                "source": news_item.get("source", ""),
+                "date": news_item.get("date", "")
             })
 
+        if petrozavodsk_news_count == 0:
+            print("Новостей о Петрозаводске нет")
+
         return processed_news
+
+
+if __name__ == "__main__":
+    async def main():
+        processor = NewsProcessor()
+        await processor.process_news()
+
+
+    asyncio.run(main())
