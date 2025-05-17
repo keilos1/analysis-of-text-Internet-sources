@@ -1,8 +1,8 @@
-# Параметры подключения
-HOST = '78.36.44.126'
-PORT = 57381
-SSH_USER = 'server'
-SSH_PASSWORD = 'tppo'
+# Параметры подключения (оставьте HOST, SSH_USER и SSH_PASSWORD равными '' и PORT = 0 если база данных на локальной машине)
+HOST = ''
+PORT = 0
+SSH_USER = ''
+SSH_PASSWORD = ''
 
 # Параметры MongoDB
 DB_NAME = 'newsPTZ'

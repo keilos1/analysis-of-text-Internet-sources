@@ -10,7 +10,7 @@ sys.path.append("../")
 
 from data_storage.database import connect_to_mongo
 from data_processing.text_summarization import summarize_texts_tfidf
-from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME
+from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME, MONGO_HOST, MONGO_PORT
 
 
 async def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95) -> int:
@@ -24,10 +24,12 @@ async def save_unique_articles(new_articles: List[Dict], threshold: float = 0.95
     db, tunnel = None, None
     try:
         db, tunnel = connect_to_mongo(
-            ssh_host=HOST,
+            ssh_host=HOST,          # если пустое - будет локальное подключение
             ssh_port=PORT,
             ssh_user=SSH_USER,
             ssh_password=SSH_PASSWORD,
+            mongo_host=MONGO_HOST,
+            mongo_port=MONGO_PORT,
             db_name=DB_NAME
         )
         
