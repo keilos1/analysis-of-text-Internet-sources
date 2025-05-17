@@ -11,7 +11,7 @@ sys.path.append("../")
 # Импорт модулей
 from data_collection.scraper import Scraper
 from data_collection.socialScraper import SocialScraper, get_social_data
-from data_collection.googleSearch import collect_news  # ← Добавлен импорт Google поиска
+from data_collection.googleSearch import collect_news  # Добавлен импорт Google поиска
 from data_storage.database import connect_to_mongo
 from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME, MONGO_HOST, MONGO_PORT, API_KEY, GOOGLE_CX
 
