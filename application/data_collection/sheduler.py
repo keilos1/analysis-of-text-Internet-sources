@@ -164,8 +164,9 @@ class DataUpdater:
     def __del__(self):
         """Закрывает соединение с БД при уничтожении объекта"""
         if hasattr(self, 'tunnel'):
-            self.tunnel.close()
-            print("SSH туннель закрыт")
+            if self.tunnel:
+                self.tunnel.close()
+                print("SSH туннель закрыт")
 
 
 async def main():
