@@ -299,9 +299,6 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
         // Показываем загрузчик
         document.getElementById('loader').style.display = 'block';
 
-        // Сохраняем текущий scroll position
-        const scrollPosition = window.scrollY;
-
         // Если это первая загрузка, очищаем контейнер
         if (offset === 0) {
             container.innerHTML = '';
@@ -340,47 +337,42 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
 
         const newsGrid = container.querySelector('.news-grid-container');
 
-        // Добавление новых статей (без дублирования)
+        // Добавление новых статей
         articles.forEach(article => {
-            // Проверяем, нет ли уже такой статьи в контейнере
-            const existingArticle = newsGrid.querySelector(`[data-article-id="${article._id.$oid}"]`);
-            if (!existingArticle) {
-                const pubDate = article.publication_date ?
-                    new Date(article.publication_date.$date).toLocaleDateString('ru-RU') :
-                    'Дата неизвестна';
+            const pubDate = article.publication_date ?
+                new Date(article.publication_date.$date).toLocaleDateString('ru-RU') :
+                'Дата неизвестна';
 
-                const articleItem = document.createElement('div');
-                articleItem.className = 'news-item-full';
-                articleItem.setAttribute('data-article-id', article._id.$oid);
-                articleItem.innerHTML = `
-                    <div class="news-image-container">
-                        <img src="${article.image_url || 'foto.jpg'}" alt="${article.title}" class="news-image-fixed">
+            const articleItem = document.createElement('div');
+            articleItem.className = 'news-item-full';
+            articleItem.innerHTML = `
+                <div class="news-image-container">
+                    <img src="${article.image_url || 'foto.jpg'}" alt="${article.title}" class="news-image-fixed">
+                </div>
+                <div class="news-content-expanded">
+                    <h3>
+                        <a href="#" data-article="${article._id.$oid}" class="news-title">${article.title}</a>
+                    </h3>
+                    <p class="news-summary-expanded">${article.summary || 'Нет описания'}</p>
+                    <div class="news-meta-expanded">
+                        <span><i class="far fa-calendar-alt"></i> ${pubDate}</span>
+                        ${article.categories?.length ? `
+                            <span><i class="fas fa-tag"></i> ${article.categories.join(', ')}</span>
+                        ` : ''}
                     </div>
-                    <div class="news-content-expanded">
-                        <h3>
-                            <a href="#" data-article="${article._id.$oid}" class="news-title">${article.title}</a>
-                        </h3>
-                        <p class="news-summary-expanded">${article.summary || 'Нет описания'}</p>
-                        <div class="news-meta-expanded">
-                            <span><i class="far fa-calendar-alt"></i> ${pubDate}</span>
-                            ${article.categories?.length ? `
-                                <span><i class="fas fa-tag"></i> ${article.categories.join(', ')}</span>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-                newsGrid.appendChild(articleItem);
-            }
+                </div>
+            `;
+            newsGrid.appendChild(articleItem);
         });
 
-        // Удаляем старую кнопку "Показать ещё", если она есть
-        const oldLoadMoreBtn = container.querySelector('.load-more-btn');
-        if (oldLoadMoreBtn) {
-            oldLoadMoreBtn.remove();
+        // Удаляем кнопку "Показать ещё", если она уже есть
+        const existingLoadMoreBtn = container.querySelector('.load-more-btn');
+        if (existingLoadMoreBtn) {
+            existingLoadMoreBtn.remove();
         }
 
-        // Добавляем новую кнопку "Показать ещё" только если есть еще статьи
-        if (offset + limit < total) {
+        // Добавляем кнопку "Показать ещё" только если есть еще статьи для загрузки
+        if (articles.length === limit && offset + limit < total) {
             const loadMoreBtn = document.createElement('button');
             loadMoreBtn.className = 'load-more-btn';
             loadMoreBtn.innerHTML = '<i class="fas fa-plus"></i> Показать ещё';
@@ -390,7 +382,7 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
             container.querySelector('.news-section').appendChild(loadMoreBtn);
         }
 
-        // Обработчики кликов по статьям (для новых статей)
+        // Обработчики кликов по статьям
         container.querySelectorAll('[data-article]').forEach(link => {
             link.addEventListener('click', async (e) => {
                 e.preventDefault();
@@ -398,9 +390,6 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
                 await loadArticle(articleId);
             });
         });
-
-        // Восстанавливаем scroll position после загрузки
-        window.scrollTo(0, scrollPosition);
 
     } catch (error) {
         console.error("Ошибка загрузки категории:", error);
