@@ -9,355 +9,7 @@ body {
     padding: 20px;
 }
 
-/* Базовые медиа-запросы для адаптивности */
-@media (max-width: 992px) {
-    .container {
-        padding: 30px;
-    }
-    
-    .header-content {
-        flex-direction: column;
-        margin-top: 0;
-    }
-    
-    h1 {
-        position: static;
-        margin: 20px 0;
-    }
-    
-    .logo-box {
-        margin-bottom: 15px;
-    }
-    
-    .content {
-        flex-direction: column;
-    }
-    
-    .digest, .latest-news, .news-section {
-        width: 100%;
-    }
-    
-    .digest:hover {
-        width: 100%;
-    }
-    
-    .news-article {
-        flex-direction: column;
-    }
-    
-    .article-text, .article-image {
-        width: 100%;
-    }
-    
-    .article-image {
-        margin-top: 20px;
-    }
-}
 
-@media (max-width: 768px) {
-    .container {
-        padding: 20px;
-    }
-    
-    h1 {
-        font-size: 40px !important;
-    }
-    
-    .news-item {
-        flex-direction: column;
-    }
-    
-    .news-item img {
-        width: 100%;
-        height: auto;
-        margin-bottom: 15px;
-    }
-    
-    .nav-container {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .nav-container nav {
-        flex-direction: column;
-        align-items: flex-start;
-        width: 100%;
-    }
-    
-    .nav-container nav a,
-    .nav-container nav .dropdown {
-        padding: 10px 0;
-        width: 100%;
-    }
-    
-    .nav-container nav a::after,
-    .nav-container nav .dropdown::after {
-        display: none;
-    }
-    
-    .search-container {
-        width: 100%;
-        margin-top: 15px;
-    }
-    
-    .dropdown-content {
-        position: static;
-        opacity: 1;
-        visibility: visible;
-        box-shadow: none;
-        display: none;
-    }
-    
-    .dropdown:hover .dropdown-content {
-        display: block;
-    }
-}
-
-/* Мобильная адаптация (до 576px) */
-@media (max-width: 576px) {
-    /* Общие стили */
-    body {
-        padding: 10px;
-        background-attachment: scroll; /* Убираем фиксированный фон для производительности */
-    }
-    /* Общие стили для изображений */
-    .news-item img,
-    .article-image img,
-    .search-result-item img {
-        max-width: 100% !important;
-        height: auto !important;
-        margin: 0 auto !important;
-        display: block;
-    }
-    
-    /* Контейнеры для изображений */
-    .news-item,
-    .article-image,
-    .search-result-item {
-        width: 100% !important;
-        padding: 0 5px;
-        box-sizing: border-box;
-    }
-    
-    /* Новостные блоки */
-    .news-item {
-        flex-direction: column !important;
-    }
-    
-    /* Статьи */
-    .news-article {
-        flex-direction: column !important;
-    }
-    
-    .article-text, 
-    .article-image {
-        width: 100% !important;
-        padding: 0 5px;
-    }
-    
-    /* Галереи (если есть) */
-    .gallery img {
-        max-width: 100%;
-        height: auto;
-    }
-    .container {
-        padding: 15px !important;
-        margin: 5px auto;
-    }
-    
-    /* Шапка */
-    .header-content {
-        flex-direction: column;
-        margin-top: 0 !important;
-        align-items: center;
-    }
-    
-    h1 {
-        position: static !important;
-        font-size: 32px !important;
-        margin: 15px 0 !important;
-        order: 2; /* Меняем порядок элементов */
-    }
-    
-    .logo-box {
-        width: 80px !important;
-        height: 80px !important;
-        order: 1;
-        margin-bottom: 10px;
-    }
-    
-    .date {
-        order: 3;
-        margin-top: 10px;
-        font-size: 16px;
-    }
-    
-    /* Навигация */
-    .nav-container {
-        flex-direction: column;
-        padding: 10px 5px;
-    }
-    
-    .nav-container nav {
-        flex-direction: column;
-        width: 100%;
-        gap: 5px;
-    }
-    
-    .nav-container nav a,
-    .nav-container nav .dropdown {
-        padding: 8px 0 !important;
-        width: 100%;
-        text-align: center;
-        border-bottom: 1px solid #ccc;
-    }
-    
-    .nav-container nav a::after,
-    .nav-container nav .dropdown::after {
-        display: none;
-    }
-    
-    .search-container {
-        width: 100%;
-        margin-top: 10px;
-        justify-content: center;
-    }
-    
-    .search-input {
-        width: 100% !important;
-        max-width: none !important;
-        opacity: 1 !important;
-        margin-left: 0;
-    }
-    
-    /* Контент */
-    .content {
-        flex-direction: column;
-    }
-    
-    .digest, 
-    .latest-news, 
-    .news-section {
-        width: 100% !important;
-    }
-    
-    
-    .digest:hover {
-        width: 100% !important; /* Отключаем эффект расширения на мобильных */
-    }
-    
-    /* Новости */
-    .news-item {
-        flex-direction: column;
-    }
-    
-    .news-item img {
-        width: 100% !important;
-        height: auto;
-        margin-bottom: 10px;
-    }
-    
-    /* Статьи */
-    .news-article {
-        flex-direction: column;
-    }
-    
-    .article-text, 
-    .article-image {
-        width: 100% !important;
-    }
-    
-    .article-image {
-        margin-top: 15px;
-    }
-    
-    .headline {
-        font-size: 22px !important;
-    }
-    
-    /* Фильтры */
-    .filter-container {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    #district-filter {
-        max-width: none !important;
-        margin-top: 8px;
-    }
-    
-    /* Даты */
-    .date-weekday, 
-    .date-month {
-        font-size: 16px;
-    }
-    
-    .date-day {
-        font-size: 18px;
-    }
-    
-    .date-year {
-        font-size: 14px;
-    }
-    
-    /* Выпадающие меню */
-    .dropdown-content {
-        position: static !important;
-        display: none;
-        width: 100%;
-        box-shadow: none;
-    }
-    
-    .dropdown:hover .dropdown-content {
-        display: block;
-    }
-    
-    /* Результаты поиска */
-    .search-title {
-        font-size: 24px !important;
-    }
-    
-    .result-meta {
-        flex-direction: column;
-        gap: 5px;
-    }
-}
-
-/* Дополнительные правки для очень маленьких экранов (до 400px) */
-@media (max-width: 400px) {
-    /* Уменьшаем отступы для изображений */
-    .news-item img,
-    .article-image {
-        padding: 0;
-        margin: 0 0 10px 0 !important;
-    }
-    
-    /* Убираем возможные фиксированные размеры */
-    .news-item img {
-        width: 100% !important;
-        height: auto !important;
-    }
-    h1 {
-        font-size: 28px !important;
-    }
-    
-    .container {
-        padding: 10px !important;
-    }
-    
-    .digest h2 {
-        font-size: 20px;
-        padding: 8px 15px;
-    }
-    
-    .latest-news h2 {
-        font-size: 22px;
-    }
-    
-    .article-text p {
-        font-size: 16px !important;
-    }
-}
 
 .container {
     max-width: 900px;
@@ -1026,24 +678,7 @@ footer {
     color: #b02323;
 }
 
-/* Адаптивность */
-@media (max-width: 768px) {
-    .search-results-container {
-        padding: 15px;
-    }
-    
-    .search-title {
-        font-size: 26px;
-    }
-    
-    .search-item-title {
-        font-size: 18px;
-    }
-    
-    .search-item-desc {
-        font-size: 15px;
-    }
-}
+
 
 .pagination {
     display: flex;
@@ -1316,4 +951,220 @@ footer {
 .news-title:hover {
     color: #b02323;
     text-decoration: none;
+}
+/* Мобильная версия с двухстрочным заголовком и датой */
+@media (max-width: 576px) {
+    .container {
+        padding: 10px !important;
+        background: white;
+    }
+
+    .header-content {
+        display: grid;
+        grid-template-areas: 
+            "logo title-part1 date"
+            "logo title-part2 date";
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 5px 10px;
+        margin-bottom: 15px;
+        margin-top: 0;
+    }
+
+    h1 {
+        grid-area: title-part1;
+        font-size: 28px !important;
+        text-align: left;
+        margin: 0 !important;
+        padding: 0;
+        white-space: nowrap;
+        flex-grow: 1;
+
+        order: unset;
+    }
+
+    .header-content::after {
+        content: "";
+        grid-area: title-part2;
+        font-size: 22px;
+        font-family: 'COMMERCIALSCRIPT BT', serif;
+        text-align: left;
+    }
+
+    .logo-box {
+        grid-area: logo;
+        width: 60px !important;
+        height: 60px !important;
+        margin: 0 !important;
+        order: unset;
+    }
+
+    .date {
+        grid-area: date;
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        font-size: 14px;
+        white-space: nowrap;
+        padding-left: 10px;
+
+    }
+
+    .date-weekday {
+        font-weight: bold;
+    }
+
+    .date-day {
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    /* Стили для главного новостного блока */
+    .news-item {
+        flex-direction: column;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+    }
+    
+    .news-item img {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 250px;
+        margin-bottom: 10px;
+    }
+    
+    .news-text {
+        width: 100%;
+    }
+    
+    .news-title {
+        font-size: 20px !important;
+        color: #b02323;
+        margin-bottom: 8px;
+    }
+    
+    .news-text p {
+        font-size: 16px !important;
+        line-height: 1.4;
+        color: #333;
+    }
+    
+    /* Адаптация дайджеста для мобильной версии */
+    .digest {
+        display: block !important;
+      
+        width: calc(100% - 20px) !important; /* Учитываем padding контейнера */
+        max-height: none !important;
+        min-height: auto !important;
+        margin-bottom: 20px !important;
+        padding: 10px !important;
+    }
+
+    .digest h2 {
+        font-size: 20px !important;
+        padding: 8px 15px !important;
+    }
+
+    .digest ul {
+        margin: 10px 0 !important;
+    }
+
+    .digest li {
+        padding: 8px !important;
+        margin-bottom: 10px !important;
+    }
+
+    .digest a {
+        font-size: 15px !important;
+    }
+
+    /* Скрываем лишние элементы */
+    .filter-container,
+    .nav-container,
+    .content-wrapper {
+        display: none;
+    }
+    
+    /* Стили для заголовка "Новости Петрозаводска" */
+    .news-header {
+        display: block;
+        margin-bottom: 15px;
+    }
+    
+    .news-header h2 {
+        font-size: 24px;
+        color: #333;
+        border-bottom: 2px solid #b02323;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
+    }
+    
+    /* Стили для даты новости */
+    .news-date {
+        font-size: 14px;
+        color: #777;
+        margin-bottom: 5px;
+    }
+    
+    /* Упрощенная структура контента */
+    .content {
+        flex-direction: column;
+        margin-top: 0;
+    }
+    
+    .latest-news {
+        width: 100%;
+        padding: 0;
+    }
+    
+    /* Стили для блока "Новости дня" */
+    .news-section-title {
+        font-size: 20px;
+        background: #b02323;
+        color: white;
+        padding: 8px 15px;
+        margin: 15px 0;
+    }
+}
+
+/* Дополнительные стили для очень маленьких экранов */
+@media (max-width: 400px) {
+    h1 {
+        font-size: 20px !important;
+    }
+    
+    .header-content::after {
+        font-size: 20px;
+    }
+    
+    .logo-box {
+        width: 50px !important;
+        height: 50px !important;
+    }
+
+    .date {
+        font-size: 12px !important;
+        padding-left: 5px !important;
+    }
+
+    .date-day {
+        font-size: 14px !important;
+    }
+
+    .news-title {
+        font-size: 18px !important;
+    }
+    
+    .news-text p {
+        font-size: 15px !important;
+    }
+
+    .digest h2 {
+        font-size: 18px !important;
+    }
+
+    .digest a {
+        font-size: 14px !important;
+    }
 }
