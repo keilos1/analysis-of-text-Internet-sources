@@ -77,14 +77,23 @@ class Scraper:
                 html_content,
                 flags=re.IGNORECASE
             )
+            html_content = re.sub(
+                r'©\s*«Петрозаводск говорит»',
+                '',
+                html_content,
+                flags=re.IGNORECASE
+            )
 
         soup = BeautifulSoup(html_content, 'html.parser')
         html = ""
 
         # Общая очистка тегов для всех источников
         for tag in soup(['script', 'style', 'iframe', 'nav', 'footer',
-                         'svg', 'noscript', 'figure', 'img', 'a', 'em']):
+                         'svg', 'noscript', 'figure', 'img']):
             tag.decompose()
+
+        for a_tag in soup.find_all('a'):
+            a_tag.unwrap()
 
         # Специфическая обработка для ptzgovorit.ru
         if "ptzgovorit.ru" in url:
