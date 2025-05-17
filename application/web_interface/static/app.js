@@ -298,16 +298,23 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
     try {
         // Показываем загрузчик
         document.getElementById('loader').style.display = 'block';
-        if (offset === 0) container.innerHTML = '';
 
-        // Маппинг категорий (английские ключи → русские названия)
+        // Сохраняем текущий scroll position
+        const scrollPosition = window.scrollY;
+
+        // Если это первая загрузка, очищаем контейнер
+        if (offset === 0) {
+            container.innerHTML = '';
+        }
+
+        // Маппинг категорий
         const categoryMapping = {
             "culture": "Культура",
             "sports": "Спорт",
             "tech": "Технологии",
             "holidays": "Праздники",
             "education": "Образование",
-            "other": "Другое"  // Добавлена новая категория
+            "other": "Другое"
         };
 
         const russianCategory = categoryMapping[category] || category;
@@ -320,7 +327,7 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
         if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
         const { articles, total } = await response.json();
 
-        // Формирование HTML
+        // Если это первая загрузка, создаем основную структуру
         if (offset === 0) {
             container.innerHTML = `
                 <div class="news-section full-width">
@@ -333,36 +340,47 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
 
         const newsGrid = container.querySelector('.news-grid-container');
 
-        // Добавление статей
+        // Добавление новых статей (без дублирования)
         articles.forEach(article => {
-            const pubDate = article.publication_date ?
-                new Date(article.publication_date.$date).toLocaleDateString('ru-RU') :
-                'Дата неизвестна';
+            // Проверяем, нет ли уже такой статьи в контейнере
+            const existingArticle = newsGrid.querySelector(`[data-article-id="${article._id.$oid}"]`);
+            if (!existingArticle) {
+                const pubDate = article.publication_date ?
+                    new Date(article.publication_date.$date).toLocaleDateString('ru-RU') :
+                    'Дата неизвестна';
 
-            const articleItem = document.createElement('div');
-            articleItem.className = 'news-item-full';
-            articleItem.innerHTML = `
-                <div class="news-image-container">
-                    <img src="${article.image_url || 'foto.jpg'}" alt="${article.title}" class="news-image-fixed">
-                </div>
-                <div class="news-content-expanded">
-                    <h3>
-                        <a href="#" data-article="${article._id.$oid}" class="news-title">${article.title}</a>
-                    </h3>
-                    <p class="news-summary-expanded">${article.summary || 'Нет описания'}</p>
-                    <div class="news-meta-expanded">
-                        <span><i class="far fa-calendar-alt"></i> ${pubDate}</span>
-                        ${article.categories?.length ? `
-                            <span><i class="fas fa-tag"></i> ${article.categories.join(', ')}</span>
-                        ` : ''}
+                const articleItem = document.createElement('div');
+                articleItem.className = 'news-item-full';
+                articleItem.setAttribute('data-article-id', article._id.$oid);
+                articleItem.innerHTML = `
+                    <div class="news-image-container">
+                        <img src="${article.image_url || 'foto.jpg'}" alt="${article.title}" class="news-image-fixed">
                     </div>
-                </div>
-            `;
-            newsGrid.appendChild(articleItem);
+                    <div class="news-content-expanded">
+                        <h3>
+                            <a href="#" data-article="${article._id.$oid}" class="news-title">${article.title}</a>
+                        </h3>
+                        <p class="news-summary-expanded">${article.summary || 'Нет описания'}</p>
+                        <div class="news-meta-expanded">
+                            <span><i class="far fa-calendar-alt"></i> ${pubDate}</span>
+                            ${article.categories?.length ? `
+                                <span><i class="fas fa-tag"></i> ${article.categories.join(', ')}</span>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                newsGrid.appendChild(articleItem);
+            }
         });
 
-        // Кнопка "Показать ещё" (если есть дополнительные статьи)
-        if (offset + limit < total && !container.querySelector('.load-more-btn')) {
+        // Удаляем старую кнопку "Показать ещё", если она есть
+        const oldLoadMoreBtn = container.querySelector('.load-more-btn');
+        if (oldLoadMoreBtn) {
+            oldLoadMoreBtn.remove();
+        }
+
+        // Добавляем новую кнопку "Показать ещё" только если есть еще статьи
+        if (offset + limit < total) {
             const loadMoreBtn = document.createElement('button');
             loadMoreBtn.className = 'load-more-btn';
             loadMoreBtn.innerHTML = '<i class="fas fa-plus"></i> Показать ещё';
@@ -372,7 +390,7 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
             container.querySelector('.news-section').appendChild(loadMoreBtn);
         }
 
-        // Обработчики кликов по статьям
+        // Обработчики кликов по статьям (для новых статей)
         container.querySelectorAll('[data-article]').forEach(link => {
             link.addEventListener('click', async (e) => {
                 e.preventDefault();
@@ -380,6 +398,9 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
                 await loadArticle(articleId);
             });
         });
+
+        // Восстанавливаем scroll position после загрузки
+        window.scrollTo(0, scrollPosition);
 
     } catch (error) {
         console.error("Ошибка загрузки категории:", error);
