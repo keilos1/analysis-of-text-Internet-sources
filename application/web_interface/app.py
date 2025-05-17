@@ -122,43 +122,51 @@ async def get_latest_news():
         tunnel.close()
 
 @app.get("/api/sources-by-category/{category}")
-async def get_sources_by_category(category: str):
+async def get_sources_by_category(
+    category: str,
+    offset: int = 0,
+    limit: int = 10
+):
+    if limit > 50:
+        limit = 50  # Защита от слишком больших значений
+
     db, tunnel = get_db_connection()
     try:
-        # Декодируем URL-encoded строку
         category_decoded = category
-
-        # Для отладки
         print(f"Requested category: '{category_decoded}'")
 
-        # Находим все источники этой категории
         sources = list(db.sources.find({"category": category_decoded}))
         print(f"Found {len(sources)} sources")
 
         if not sources:
             return JSONResponse(
                 status_code=200,
-                content={"sources": [], "articles": []}
+                content={"articles": [], "total": 0}
             )
 
-        # Получаем source_ids для поиска статей
         source_ids = [s["source_id"] for s in sources]
 
-        # Находим статьи этих источников
+        # Получаем статьи с пагинацией
         articles = list(db.articles.find(
             {"source_id": {"$in": source_ids}},
             {"_id": 1, "title": 1, "summary": 1, "publication_date": 1, "source_id": 1, "categories": 1}
-        ).sort("publication_date", -1).limit(100))
+        )
+        .sort("publication_date", -1)
+        .skip(offset)
+        .limit(limit))
 
-        print(f"Found {len(articles)} articles")
+        # Общее количество статей для этой категории
+        total = db.articles.count_documents({"source_id": {"$in": source_ids}})
+
+        print(f"Returning {len(articles)} articles (offset={offset}, limit={limit}), total: {total}")
 
         return {
-            "sources": parse_json(sources),
-            "articles": parse_json(articles)
+            "articles": parse_json(articles),
+            "total": total
         }
 
     except Exception as e:
-        print(f"Error in get_sources_by_category: {str(e)}")
+        print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if tunnel:
@@ -285,4 +293,3 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
-

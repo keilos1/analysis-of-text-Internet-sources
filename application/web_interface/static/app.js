@@ -243,7 +243,7 @@ function renderPagination() {
     }
 
     // Номера страниц
-    const maxVisiblePages = 5;
+    const maxVisiblePages = 3;
     let startPage = Math.max(1, currentNewsPage - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
