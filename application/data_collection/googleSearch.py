@@ -1,6 +1,6 @@
 import http.client
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import urlencode
 import hashlib
 import time
@@ -45,6 +45,7 @@ class GoogleNewsCollector:
             print(f"Не удалось извлечь текст и дату по ссылке {url}: {e}")
             return "", datetime.now()
 
+    # Внутри класса GoogleNewsCollector
     def search_news(self, query, source_id="Google search", category="Новости", num=10):
         params = {
             'key': self.api_key,
@@ -53,23 +54,40 @@ class GoogleNewsCollector:
             'num': num
         }
 
-        query_string = f"/customsearch/v1?{urlencode(params)}"
-        self.conn.request("GET", query_string)
-        res = self.conn.getresponse()
+        try:
+            query_string = f"/customsearch/v1?{urlencode(params)}"
+            self.conn.request("GET", query_string)
+            res = self.conn.getresponse()
 
-        if res.status != 200:
-            print(f"Ошибка HTTP: {res.status} {res.reason}")
+            if res.status == 429:
+                print(f"[429 Too Many Requests] Превышен лимит Google API для запроса '{query}'. Пропуск.")
+                return []
+
+            if res.status != 200:
+                print(f"Ошибка HTTP: {res.status} {res.reason}")
+                return []
+
+            data = json.loads(res.read())
+        except Exception as e:
+            print(f"Ошибка при обработке новостей: {e}")
             return []
 
         data = json.loads(res.read())
         items = data.get('items', [])
         results = []
 
+        three_days_ago = datetime.now() - timedelta(days=3)
+
         for item in items:
             url = item.get('link', '')
             title = item.get('title', '')
 
             full_text, publication_date = self.fetch_full_text_and_date(url)
+
+            # Фильтрация: пропускаем, если публикация старше 3 дней
+            if publication_date < three_days_ago:
+                print(f"Пропущено (старое): {title} — {publication_date}")
+                continue
 
             article = {
                 "article_id": self.generate_article_id(url),
@@ -78,7 +96,7 @@ class GoogleNewsCollector:
                 "url": url,
                 "category": category,
                 "publication_date": publication_date,
-                "summary": "",  # summary пустой
+                "summary": "",
                 "text": full_text,
                 "source_type": "google"
             }
@@ -90,7 +108,7 @@ class GoogleNewsCollector:
         self.conn.close()
 
 
-def collect_news(queries, api_key, cx, results_per_query=5, source_id="Google search", category="Новости"):
+def collect_news(queries, api_key, cx, results_per_query=10, source_id="Google search", category="Новости"):
     collector = GoogleNewsCollector(api_key, cx)
     all_results = []
 
