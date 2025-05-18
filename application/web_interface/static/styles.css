@@ -1168,3 +1168,13 @@ footer {
         font-size: 14px !important;
     }
 }
+
+.article-url {
+    margin-top: 20px;
+    font-size: 14px;
+}
+.article-url a {
+    color: #0066cc;
+    text-decoration: underline;
+}
+
