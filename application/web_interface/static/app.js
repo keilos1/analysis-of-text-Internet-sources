@@ -691,19 +691,20 @@ async function loadSearchResultsPage(container, query) {
     if (searchData.results.length > 0) {
         html += '<div class="results-list">';
         searchData.results.forEach(item => {
-            html += `
-                <div class="search-item">
-                    <div class="search-item-header">
-                        <a href="${item.url}" target="_blank" class="search-item-title">${item.title}</a>
-                        <span class="search-item-date">${item.date}</span>
-                    </div>
-                    <p class="search-item-desc">${item.description}</p>
-                    <div class="search-item-footer">
-                        <span class="search-item-source">${item.source}</span>
-                    </div>
+        html += `
+            <div class="search-item">
+                <div class="search-item-header">
+                    <a href="#" class="search-item-title" data-article="${item.id}">${item.title}</a>
+                    <span class="search-item-date">${item.date}</span>
                 </div>
-            `;
-        });
+                <p class="search-item-desc">${item.description}</p>
+                <div class="search-item-footer">
+                    <span class="search-item-source">${item.source}</span>
+                </div>
+            </div>
+        `;
+    });
+
         html += '</div>';
     } else {
         html += `
