@@ -166,7 +166,7 @@ class DataUpdater:
                 "Петрозаводск политика"
             ]
 
-            google_results = collect_news(google_queries, self.google_api_key, self.google_cx, results_per_query=5)
+            google_results = collect_news(google_queries, self.google_api_key, self.google_cx, results_per_query=10)
 
             for article in google_results:
                 article.update({
