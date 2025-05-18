@@ -51,7 +51,9 @@ class GoogleNewsCollector:
             'key': self.api_key,
             'cx': self.cx,
             'q': query,
-            'num': num
+            'num': num,
+            'sort': 'date',
+            'dateRestrict': 'd3'
         }
 
         try:
