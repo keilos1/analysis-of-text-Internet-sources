@@ -24,6 +24,7 @@ class GoogleNewsCollector:
             article.parse()
 
             text = article.text.strip()
+            title = article.title.strip()
 
             pub_date = article.publish_date
             if pub_date is None:
@@ -39,7 +40,7 @@ class GoogleNewsCollector:
                     pub_date.second if pub_date.second is not None else 0,
                 )
 
-            return text, pub_date
+            return title, text, pub_date
 
         except Exception as e:
             print(f"Не удалось извлечь текст и дату по ссылке {url}: {e}")
@@ -81,9 +82,12 @@ class GoogleNewsCollector:
 
         for item in items:
             url = item.get('link', '')
-            title = item.get('title', '')
+            fallback_title = item.get('title', '')
 
-            full_text, publication_date = self.fetch_full_text_and_date(url)
+            title, full_text, publication_date = self.fetch_full_text_and_date(url)
+
+            if not title:
+                title = fallback_title
 
             # Фильтрация: пропускаем, если публикация старше 3 дней
             if publication_date < three_days_ago:
