@@ -296,30 +296,27 @@ window.changeNewsPage = function(newPage) {
 
 async function loadCategoryPage(container, category, offset = 0, limit = 10) {
     try {
-        // Показываем загрузчик
         document.getElementById('loader').style.display = 'block';
-
-        // Сохраняем текущую позицию скролла
         const scrollPosition = window.scrollY;
 
-        // Если это первая загрузка, очищаем контейнер
         if (offset === 0) {
             container.innerHTML = '';
         }
 
-        // Маппинг категорий
+        // Расширенный маппинг категорий
         const categoryMapping = {
             "culture": "Культура",
             "sports": "Спорт",
             "tech": "Технологии",
             "holidays": "Праздники",
             "education": "Образование",
-            "other": "Другое"
+            "other": "Другое",
+            "incidents": "Происшествия",
+            "society": "Общество"
         };
 
         const russianCategory = categoryMapping[category] || category;
 
-        // Запрос статей по категории
         const response = await fetch(
             `${API_BASE_URL}/api/articles-by-category/${encodeURIComponent(russianCategory)}?offset=${offset}&limit=${limit}`
         );
@@ -327,26 +324,22 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
         if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
         const { articles, total } = await response.json();
 
-        // Если это первая загрузка, создаем основную структуру
         if (offset === 0) {
             container.innerHTML = `
                 <div class="news-section full-width">
                     <h2 class="category-title">${russianCategory}</h2>
-                    ${category === 'other' ? `<p class="category-description">Разные новости, не вошедшие в основные категории</p>` : ''}
+                    ${category === 'other' ? '<p class="category-description">Разные новости, не вошедшие в основные категории</p>' : ''}
                     <div class="news-grid-container"></div>
                 </div>
             `;
         }
 
         const newsGrid = container.querySelector('.news-grid-container');
-
-        // Собираем ID уже загруженных статей
         const loadedArticleIds = new Set();
         newsGrid.querySelectorAll('[data-article-id]').forEach(el => {
             loadedArticleIds.add(el.getAttribute('data-article-id'));
         });
 
-        // Добавляем только новые статьи
         articles.forEach(article => {
             if (!loadedArticleIds.has(article._id.$oid)) {
                 const pubDate = article.publication_date ?
@@ -367,9 +360,8 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
                         <p class="news-summary-expanded">${article.summary || 'Нет описания'}</p>
                         <div class="news-meta-expanded">
                             <span><i class="far fa-calendar-alt"></i> ${pubDate}</span>
-                            ${article.categories?.length ? `
-                                <span><i class="fas fa-tag"></i> ${article.categories.join(', ')}</span>
-                            ` : ''}
+                            ${article.categories?.length ? 
+                                `<span><i class="fas fa-tag"></i> ${article.categories.join(', ')}</span>` : ''}
                         </div>
                     </div>
                 `;
@@ -377,13 +369,9 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
             }
         });
 
-        // Удаляем старую кнопку "Показать ещё"
         const oldLoadMoreBtn = container.querySelector('.load-more-btn');
-        if (oldLoadMoreBtn) {
-            oldLoadMoreBtn.remove();
-        }
+        if (oldLoadMoreBtn) oldLoadMoreBtn.remove();
 
-        // Добавляем кнопку "Показать ещё" только если есть еще статьи
         if (offset + articles.length < total) {
             const loadMoreBtn = document.createElement('button');
             loadMoreBtn.className = 'load-more-btn';
@@ -394,7 +382,6 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
             container.querySelector('.news-section').appendChild(loadMoreBtn);
         }
 
-        // Обработчики кликов по статьям (только для новых)
         articles.forEach(article => {
             const newLink = newsGrid.querySelector(`[data-article="${article._id.$oid}"]`);
             if (newLink) {
@@ -405,7 +392,6 @@ async function loadCategoryPage(container, category, offset = 0, limit = 10) {
             }
         });
 
-        // Восстанавливаем позицию скролла
         window.scrollTo(0, scrollPosition);
 
     } catch (error) {
