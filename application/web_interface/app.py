@@ -316,7 +316,7 @@ async def get_config():
 async def get_digest():
     db, tunnel = get_db_connection()
     try:
-        articles = list(db.digest.find().sort("duplicate_count", -1))
+        articles = list(db.daily_digest.find().sort("duplicate_count", -1))
         return parse_json(articles)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка получения дайджеста: {str(e)}")
