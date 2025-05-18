@@ -601,6 +601,7 @@ async function loadArticle(articleId) {
                 </div>
             </div>
         `;
+
     } catch (error) {
         console.error("Ошибка при загрузке статьи:", error);
         const contentContainer = document.getElementById('dynamic-content');
