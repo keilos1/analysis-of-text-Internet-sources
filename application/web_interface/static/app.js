@@ -592,7 +592,11 @@ async function loadArticle(articleId) {
                     <h2 class="headline">${article.title}</h2>
                     <div class="article-meta">
                         <span class="article-date">${pubDate}</span>
-                        ${article.source ? `<span class="article-source">Источник: ${article.source}</span>` : ''}
+                        ${article.url ? `
+                            <div class="article-source-url">
+                                <p><strong>Источник:</strong> <a href="${article.url}" target="_blank">${article.url}</a></p>
+                            </div>
+                        ` : ''}
                     </div>
                     <div class="article-content">${article.text || 'Содержание отсутствует'}</div>
                 </div>
