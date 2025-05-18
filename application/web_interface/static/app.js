@@ -172,13 +172,26 @@ async function loadMainPage(container) {
     }
 }
 
-function renderMainPageContent(container) {
-    // Создаем HTML для блока "Новости дня"
+async function renderMainPageContent(container) {
+    // Получаем digest (новости дня)
+    let digestArticles = [];
+    try {
+        const digestResponse = await fetch(`${API_BASE_URL}/api/digest`);
+        if (digestResponse.ok) {
+            digestArticles = await digestResponse.json();
+        } else {
+            console.warn("Не удалось загрузить digest:", digestResponse.status);
+        }
+    } catch (err) {
+        console.error("Ошибка при загрузке digest:", err);
+    }
+
+    // HTML-блок "Новости дня" (digest)
     const digestHTML = `
         <section class="digest">
             <h2>Новости дня</h2>
             <ul>
-                ${allNewsData.slice(0, 3).map(item =>
+                ${digestArticles.slice(0, 3).map(item =>
                     `<li><a href="#" data-article="${item._id.$oid}">${item.title}</a></li>`
                 ).join('')}
             </ul>
@@ -192,10 +205,20 @@ function renderMainPageContent(container) {
 
     container.innerHTML = digestHTML;
 
+    // Назначаем обработчики на ссылки в digest
+    container.querySelectorAll('[data-article]').forEach(link => {
+        link.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const articleId = link.getAttribute('data-article');
+            await loadArticle(articleId);
+        });
+    });
+
     // Рендерим список новостей и пагинацию
     renderNewsList();
     renderPagination();
 }
+
 
 function renderNewsList() {
     const startIndex = (currentNewsPage - 1) * newsPerPage;
