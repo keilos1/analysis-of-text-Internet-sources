@@ -75,6 +75,7 @@ class GoogleNewsCollector:
             print(f"Ошибка при обработке новостей: {e}")
             return []
 
+
         items = data.get('items', [])
         results = []
 
