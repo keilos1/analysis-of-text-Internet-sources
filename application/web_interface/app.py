@@ -12,12 +12,16 @@ import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import logging
+from pytz import timezone
+from apscheduler.triggers.cron import CronTrigger
 
 sys.path.append("../")
 
 from data_storage.database import connect_to_mongo
 from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME, SITE_HOST, CHECK_INTERVAL, MONGO_HOST, MONGO_PORT
 from data_processing.duplicate_detection import save_unique_articles, async_main
+from data_processing.digest_generator import digest_generator
+
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -39,24 +43,37 @@ async def run_duplicate_detection():
 
 
 def start_scheduler():
-    """Запускает планировщик для периодических задач"""
-    scheduler = BackgroundScheduler()
+    scheduler = BackgroundScheduler(timezone=timezone("Europe/Moscow"))
+
+    # Задача: дубликаты каждые CHECK_INTERVAL секунд
     scheduler.add_job(
         lambda: asyncio.run(run_duplicate_detection()),
         trigger=IntervalTrigger(seconds=CHECK_INTERVAL),
         max_instances=1,
         name="duplicate_detection"
     )
+
+    # Задача: формирование дайджеста каждый день в 12:00 по Москве
+    scheduler.add_job(
+        lambda: asyncio.run(digest_generator()),
+        trigger=CronTrigger(hour=12, minute=0),
+        max_instances=1,
+        name="daily_digest"
+    )
+
     scheduler.start()
-    logger.info(f"Планировщик запущен с интервалом {CHECK_INTERVAL} секунд")
+    logger.info("Планировщик запущен")
+
 
 
 @app.on_event("startup")
 async def startup_event():
-    """Запускается при старте приложения"""
     start_scheduler()
-    # Первый запуск сразу после старта
+    # Первый запуск сбора новостей
     asyncio.create_task(run_duplicate_detection())
+    # И также — формируем дайджест при первом запуске (по желанию)
+    asyncio.create_task(digest_generator())
+
 
 
 def parse_json(data):
@@ -293,6 +310,20 @@ async def get_config():
     return {
         "SITE_HOST": SITE_HOST,
     }
+
+
+@app.get("/api/digest")
+async def get_digest():
+    db, tunnel = get_db_connection()
+    try:
+        articles = list(db.digest.find().sort("duplicate_count", -1))
+        return parse_json(articles)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка получения дайджеста: {str(e)}")
+    finally:
+        if tunnel:
+            tunnel.close()
+
 
 
 if __name__ == "__main__":
