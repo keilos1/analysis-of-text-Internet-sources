@@ -592,13 +592,13 @@ async function loadArticle(articleId) {
                     <h2 class="headline">${article.title}</h2>
                     <div class="article-meta">
                         <span class="article-date">${pubDate}</span>
+                    </div>
+                    <div class="article-content">${article.text || 'Содержание отсутствует'}</div>
                         ${article.url ? `
                             <div class="article-source-url">
                                 <p><strong>Источник:</strong> <a href="${article.url}" target="_blank">${article.url}</a></p>
                             </div>
                         ` : ''}
-                    </div>
-                    <div class="article-content">${article.text || 'Содержание отсутствует'}</div>
                 </div>
                 <div class="article-image">
                     <img src="foto.jpg" alt="Фотография новости">
