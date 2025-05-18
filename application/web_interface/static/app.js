@@ -587,20 +587,22 @@ async function loadArticle(articleId) {
         history.pushState({ page: 'article', type: articleId }, '', `?page=article&id=${articleId}`);
 
         contentContainer.innerHTML = `
-            <div class="news-article">
-                <div class="article-text">
-                    <h2 class="headline">${article.title}</h2>
-                    <div class="article-meta">
-                        <span class="article-date">${pubDate}</span>
-                        ${article.source ? `<span class="article-source">Источник: ${article.source}</span>` : ''}
-                    </div>
-                    <div class="article-content">${article.text || 'Содержание отсутствует'}</div>
+        <div class="news-article">
+            <div class="article-text">
+                <h2 class="headline">${article.title}</h2>
+                <div class="article-meta">
+                    <span class="article-date">${pubDate}</span>
+                    ${article.source ? `<span class="article-source">Источник: ${article.source}</span>` : ''}
                 </div>
-                <div class="article-image">
-                    <img src="foto.jpg" alt="Фотография новости">
-                </div>
+                <div class="article-content">${article.text || 'Содержание отсутствует'}</div>
             </div>
-        `;
+            <div class="article-image">
+                <img src="foto.jpg" alt="Фотография новости">
+            </div>
+        </div>
+    `;
+
+
     } catch (error) {
         console.error("Ошибка при загрузке статьи:", error);
         const contentContainer = document.getElementById('dynamic-content');
