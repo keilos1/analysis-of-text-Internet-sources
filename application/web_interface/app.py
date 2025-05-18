@@ -316,6 +316,7 @@ async def get_config():
 async def get_digest():
     db, tunnel = get_db_connection()
     try:
+        # Получаем все статьи из коллекции daily_digest, сортированные по убыванию duplicate_count
         articles = list(db.daily_digest.find().sort("duplicate_count", -1))
         return parse_json(articles)
     except Exception as e:
