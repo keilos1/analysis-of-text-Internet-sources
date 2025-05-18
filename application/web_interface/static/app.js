@@ -718,6 +718,15 @@ async function loadSearchResultsPage(container, query) {
 
     html += '</div>';
     container.innerHTML = html;
+    // Назначаем обработчики для перехода к статье
+    container.querySelectorAll('[data-article]').forEach(link => {
+        link.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const articleId = link.getAttribute('data-article');
+            await loadArticle(articleId);
+        });
+    });
+
 }
 
 /**
