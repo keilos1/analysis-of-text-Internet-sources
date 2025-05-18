@@ -149,17 +149,20 @@ async function loadMainPage(container) {
     try {
         container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
 
+        // Загружаем обычные последние новости
         const response = await fetch(`${API_BASE_URL}/api/latest-news`);
-
         if (!response.ok) {
             throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
         }
 
         allNewsData = await response.json();
-        currentNewsPage = 1; // Сбрасываем на первую страницу
+        currentNewsPage = 1;
 
-        renderMainPageContent(container);
+        // Загружаем digest отдельно
+        const digestResponse = await fetch(`${API_BASE_URL}/api/digest`);
+        const digestData = digestResponse.ok ? await digestResponse.json() : [];
 
+        await renderMainPageContent(container, digestData); // ПЕРЕДАЁМ digest
     } catch (error) {
         console.error("Ошибка при загрузке новостей:", error);
         container.innerHTML = `
@@ -172,28 +175,16 @@ async function loadMainPage(container) {
     }
 }
 
-async function renderMainPageContent(container) {
-    // Получаем digest (новости дня)
-    let digestArticles = [];
-    try {
-        const digestResponse = await fetch(`${API_BASE_URL}/api/digest`);
-        if (digestResponse.ok) {
-            digestArticles = await digestResponse.json();
-        } else {
-            console.warn("Не удалось загрузить digest:", digestResponse.status);
-        }
-    } catch (err) {
-        console.error("Ошибка при загрузке digest:", err);
-    }
 
-    // HTML-блок "Новости дня" (digest)
+async function renderMainPageContent(container, digestArticles = []) {
     const digestHTML = `
         <section class="digest">
             <h2>Новости дня</h2>
             <ul>
-                ${digestArticles.slice(0, 3).map(item =>
-                    `<li><a href="#" data-article="${item._id.$oid}">${item.title}</a></li>`
-                ).join('')}
+                ${digestArticles.slice(0, 3).map(item => {
+                    const id = item._id?.$oid || item._id || "";
+                    return `<li><a href="#" data-article="${id}">${item.title}</a></li>`;
+                }).join('')}
             </ul>
         </section>
         <section class="latest-news">
@@ -205,7 +196,7 @@ async function renderMainPageContent(container) {
 
     container.innerHTML = digestHTML;
 
-    // Назначаем обработчики на ссылки в digest
+    // События на клик по digest
     container.querySelectorAll('[data-article]').forEach(link => {
         link.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -214,7 +205,6 @@ async function renderMainPageContent(container) {
         });
     });
 
-    // Рендерим список новостей и пагинацию
     renderNewsList();
     renderPagination();
 }
