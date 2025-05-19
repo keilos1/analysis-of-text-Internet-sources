@@ -58,7 +58,7 @@ async def digest_generator():
         db.daily_digest.delete_many({})
 
         # Обеспечим уникальные `_id` (если вдруг используется ObjectId())
-        digest_docs = [{**art, "_id": ObjectId()} for art in primary_articles]
+        digest_docs = [art for art in primary_articles]
         db.daily_digest.insert_many(digest_docs)
 
         logger.info(f"Дайджест сформирован: {len(digest_docs)} статей")
