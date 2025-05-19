@@ -29,12 +29,16 @@ from contextlib import asynccontextmanager
 async def lifespan(app: FastAPI):
     print(">>> lifespan запущен <<<")
 
+    # Запускаем планировщик
+    start_scheduler()
+
     # запуск задач после старта event loop
     loop = asyncio.get_event_loop()
     loop.call_soon(lambda: asyncio.create_task(run_duplicate_detection()))
     loop.call_soon(lambda: asyncio.create_task(digest_generator()))
 
     yield
+
 
 app = FastAPI(lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
