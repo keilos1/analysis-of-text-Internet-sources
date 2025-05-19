@@ -25,6 +25,17 @@ from data_processing.digest_generator import digest_generator
 from contextlib import asynccontextmanager
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print(">>> lifespan запущен <<<")
+
+    # запуск задач после старта event loop
+    loop = asyncio.get_event_loop()
+    loop.call_soon(lambda: asyncio.create_task(run_duplicate_detection()))
+    loop.call_soon(lambda: asyncio.create_task(digest_generator()))
+
+    yield
+
 app = FastAPI(lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -65,21 +76,6 @@ def start_scheduler():
 
     scheduler.start()
     logger.info("Планировщик запущен")
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Запускаем планировщик
-    start_scheduler()
-
-    loop = asyncio.get_event_loop()
-
-    # Гарантируем запуск после старта event loop
-    loop.call_soon(lambda: asyncio.create_task(run_duplicate_detection()))
-    loop.call_soon(lambda: asyncio.create_task(digest_generator()))
-
-    yield
-
 
 
 
