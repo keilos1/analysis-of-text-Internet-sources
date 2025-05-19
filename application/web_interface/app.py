@@ -45,10 +45,10 @@ async def run_duplicate_detection():
 def start_scheduler():
     scheduler = BackgroundScheduler(timezone=timezone("Europe/Moscow"))
 
-    # Задача: дубликаты каждые CHECK_INTERVAL секунд
+    # Задача: удаление дубликатов каждые 30 минут
     scheduler.add_job(
         lambda: asyncio.run(run_duplicate_detection()),
-        trigger=IntervalTrigger(seconds=CHECK_INTERVAL),
+        trigger=IntervalTrigger(minutes=30),  # <-- изменено с seconds=CHECK_INTERVAL
         max_instances=1,
         name="duplicate_detection"
     )
@@ -63,7 +63,6 @@ def start_scheduler():
 
     scheduler.start()
     logger.info("Планировщик запущен")
-
 
 
 @app.on_event("startup")
