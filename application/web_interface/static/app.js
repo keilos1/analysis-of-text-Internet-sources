@@ -197,13 +197,17 @@ async function renderMainPageContent(container, digestArticles = []) {
     container.innerHTML = digestHTML;
 
     // События на клик по digest
+    // События на клик по digest → переход на страницу статьи
     container.querySelectorAll('[data-article]').forEach(link => {
-        link.addEventListener('click', async (e) => {
+        link.addEventListener('click', (e) => {
             e.preventDefault();
             const articleId = link.getAttribute('data-article');
-            await loadArticle(articleId);
+            const url = `?page=article&id=${articleId}`;
+            history.pushState({ page: 'article', type: articleId }, '', url);
+            loadPage({ page: 'article', type: articleId });
         });
     });
+
 
     renderNewsList();
     renderPagination();
@@ -716,9 +720,12 @@ async function loadSearchResultsPage(container, query) {
                     <span class="search-item-date">${item.date}</span>
                 </div>
                 <p class="search-item-desc">${item.description}</p>
-                <div class="search-item-footer">
-                    <span class="search-item-source">${item.source}</span>
-                </div>
+                ${item.source && item.source !== 'неизвестен' ? `
+                    <div class="search-item-footer">
+                        <span class="search-item-source">${item.source}</span>
+                    </div>
+                ` : ''}
+
             </div>
         `;
     });
