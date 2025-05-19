@@ -22,6 +22,8 @@ from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME, SITE_HOST
 from data_processing.duplicate_detection import save_unique_articles, async_main
 from data_processing.digest_generator import digest_generator
 
+from contextlib import asynccontextmanager
+
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -64,14 +66,19 @@ def start_scheduler():
     scheduler.start()
     logger.info("Планировщик запущен")
 
-
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Запускаем планировщик
     start_scheduler()
-    # Первый запуск сбора новостей
+
+    # Первый запуск проверки дубликатов и генерации дайджеста
     asyncio.create_task(run_duplicate_detection())
-    # И также — формируем дайджест при первом запуске (по желанию)
     asyncio.create_task(digest_generator())
+
+    yield  # Дальше работает само приложение
+    # Здесь можно было бы добавить код завершения, если нужно
+
+app = FastAPI(lifespan=lifespan)
 
 
 
