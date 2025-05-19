@@ -14,7 +14,7 @@ from data_storage.database import connect_to_mongo
 from data_processing.text_summarization import summarize_texts_tfidf
 from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME, MONGO_HOST, MONGO_PORT
 
-async def save_unique_articles(summarized_new: List[Dict], threshold: float = 0.15) -> int:
+async def save_unique_articles(summarized_new: List[Dict], threshold: float = 0.2) -> int:
     if not summarized_new:
         return 0
 
