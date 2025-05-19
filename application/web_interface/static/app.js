@@ -205,8 +205,8 @@ async function renderMainPageContent(container, digestArticles = []) {
             e.preventDefault();
             const articleId = link.getAttribute('data-article');
             const url = `?page=article&id=${articleId}`;
-            history.pushState({ page: 'article', type: articleId }, '', url);
-            loadPage({ page: 'article', type: articleId });
+            history.pushState({ page: 'article', id: articleId }, '', url);
+            loadPage({ page: 'article', id: articleId });
         });
     });
 
