@@ -111,9 +111,11 @@ function getCurrentPage() {
     return {
         page: params.get('page') || 'main',
         type: params.get('type') || null,
+        id: params.get('id') || null,
         query: params.get('query') || null
     };
 }
+
 
 async function loadPage(params) {
     const { page, type, query } = params;
@@ -130,7 +132,7 @@ async function loadPage(params) {
             await loadSourcePage(contentContainer, type);
             break;
         case 'article':
-            await loadArticlePage(contentContainer, type);
+            await loadArticlePage(contentContainer, params.id || type);
             break;
         case 'search':
             await loadSearchResultsPage(contentContainer, query);
