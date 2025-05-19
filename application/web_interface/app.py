@@ -66,19 +66,20 @@ def start_scheduler():
     scheduler.start()
     logger.info("Планировщик запущен")
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Запускаем планировщик
     start_scheduler()
 
-    # Первый запуск проверки дубликатов и генерации дайджеста
-    asyncio.create_task(run_duplicate_detection())
-    asyncio.create_task(digest_generator())
+    loop = asyncio.get_event_loop()
 
-    yield  # Дальше работает само приложение
-    # Здесь можно было бы добавить код завершения, если нужно
+    # Гарантируем запуск после старта event loop
+    loop.call_soon(lambda: asyncio.create_task(run_duplicate_detection()))
+    loop.call_soon(lambda: asyncio.create_task(digest_generator()))
 
-app = FastAPI(lifespan=lifespan)
+    yield
+
 
 
 
