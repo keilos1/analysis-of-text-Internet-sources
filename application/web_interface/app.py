@@ -12,35 +12,14 @@ import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import logging
-from pytz import timezone
-from apscheduler.triggers.cron import CronTrigger
 
 sys.path.append("../")
 
 from data_storage.database import connect_to_mongo
 from config.config import HOST, PORT, SSH_USER, SSH_PASSWORD, DB_NAME, SITE_HOST, CHECK_INTERVAL, MONGO_HOST, MONGO_PORT
 from data_processing.duplicate_detection import save_unique_articles, async_main
-from data_processing.digest_generator import digest_generator
 
-from contextlib import asynccontextmanager
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    print(">>> lifespan запущен <<<")
-
-    # Запускаем планировщик
-    start_scheduler()
-
-    # запуск задач после старта event loop
-    loop = asyncio.get_event_loop()
-    loop.call_soon(lambda: asyncio.create_task(run_duplicate_detection()))
-    loop.call_soon(lambda: asyncio.create_task(digest_generator()))
-
-    yield
-
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -60,27 +39,24 @@ async def run_duplicate_detection():
 
 
 def start_scheduler():
-    scheduler = BackgroundScheduler(timezone=timezone("Europe/Moscow"))
-
-    # Задача: удаление дубликатов каждые 30 минут
+    """Запускает планировщик для периодических задач"""
+    scheduler = BackgroundScheduler()
     scheduler.add_job(
         lambda: asyncio.run(run_duplicate_detection()),
-        trigger=IntervalTrigger(minutes=30),  # <-- изменено с seconds=CHECK_INTERVAL
+        trigger=IntervalTrigger(seconds=CHECK_INTERVAL),
         max_instances=1,
         name="duplicate_detection"
     )
-
-    # Задача: формирование дайджеста каждый день в 12:00 по Москве
-    scheduler.add_job(
-        lambda: asyncio.run(digest_generator()),
-        trigger=CronTrigger(hour=12, minute=0),
-        max_instances=1,
-        name="daily_digest"
-    )
-
     scheduler.start()
-    logger.info("Планировщик запущен")
+    logger.info(f"Планировщик запущен с интервалом {CHECK_INTERVAL} секунд")
 
+
+@app.on_event("startup")
+async def startup_event():
+    """Запускается при старте приложения"""
+    start_scheduler()
+    # Первый запуск сразу после старта
+    asyncio.create_task(run_duplicate_detection())
 
 
 def parse_json(data):
