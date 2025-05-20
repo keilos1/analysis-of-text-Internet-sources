@@ -144,16 +144,24 @@ function getCurrentPage() {
     };
 }
 
-
-// Модифицируем функцию loadPage для работы с loader
 async function loadPage(params) {
     const loader = document.getElementById('page-loader');
+    const contentContainer = document.getElementById('dynamic-content');
+    
     try {
         loader.style.display = 'flex';
         
+        // Сохраняем текущую высоту контента перед загрузкой
+        const currentScroll = window.scrollY;
+        const containerHeight = contentContainer.offsetHeight;
+        
+        // Добавляем временный контент-заполнитель
+        contentContainer.innerHTML = `
+            <div class="content-placeholder" style="min-height: ${containerHeight}px"></div>
+        `;
+        
         const { page, type, query } = params;
-        const contentContainer = document.getElementById('dynamic-content');
-
+        
         switch(page) {
             case 'main':
                 await loadMainPage(contentContainer);
@@ -173,12 +181,23 @@ async function loadPage(params) {
             default:
                 await loadMainPage(contentContainer);
         }
+        
+        // Восстанавливаем позицию скролла
+        window.scrollTo(0, currentScroll);
     } catch (error) {
         console.error('Error loading page:', error);
+        contentContainer.innerHTML = `
+            <div class="error-message">
+                <h2>Ошибка загрузки</h2>
+                <p>${error.message}</p>
+                <button onclick="location.reload()">Обновить страницу</button>
+            </div>
+        `;
     } finally {
         loader.style.display = 'none';
     }
 }
+
 // Глобальные переменные для пагинации
 let currentNewsPage = 1;
 const newsPerPage = 5;
