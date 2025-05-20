@@ -1216,3 +1216,10 @@ footer {
     min-height: 60vh; /* Занимает минимум 60% высоты экрана */
     position: relative; /* Для правильного позиционирования лоадера */
 }
+.content-placeholder {
+    transition: min-height 0.3s ease;
+}
+
+#dynamic-content {
+    transition: min-height 0.3s ease;
+}
