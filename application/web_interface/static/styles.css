@@ -116,43 +116,44 @@ h1 {
 
 /* Левая колонка - Дайджест */
 .digest {
-    width: 300px; /* Фиксированная ширина */
-    max-height: 500px; /
-    min-height: 400px; /* Убираем фиксированную высоту */
+    width: 300px;
+    min-height: 400px;
     background-color: #ddd;
     padding: 15px;
     border-radius: 10px;
     transition: all 0.5s ease-in-out;
     overflow: hidden;
     position: relative;
-    flex-shrink: 0; /* Запрещаем сжатие */
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
 }
 
-/* Контейнер для списка новостей в дайджесте */
+/* Добавляем плавное изменение размера текста */
 .digest-content {
-    flex-grow: 1; /* Занимает все доступное пространство */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between; /* Равномерно распределяет пространство */
+    flex-grow: 1;
+    transition: all 0.5s ease-in-out;
+}
+.digest:hover .digest-content {
+    transform: scale(0.95); /* Небольшое уменьшение */
+    padding: 5px; /* Компенсируем уменьшение */
 }
 
-/* Список */
+/* Улучшаем анимацию для списка */
 .digest ul {
     list-style: none;
     padding: 0;
     margin: 15px 0;
-    flex-grow: 1; /* Занимает доступное пространство */
+    transition: all 0.5s ease-in-out;
 }
 
+/* Анимация для элементов списка */
 .digest li {
     margin-bottom: 15px;
     padding: 10px;
     background: rgba(255,255,255,0.9);
     border-radius: 5px;
-    transition: all 0.3s ease;
-        transform: translateX(5px);
+    transition: all 0.5s ease-in-out;
 }
 
 /* Заголовок */
@@ -223,6 +224,8 @@ h1 {
     padding: 12px; /* Увеличим отступы для лучшей читаемости */
     border-radius: 6px; /* Скруглим углы */
     box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Легкая тень для объема */
+    transform: scale(0.98); /* Легкое сжатие */
+    margin-bottom: 12px; /* Уменьшаем отступ */
 }
 /* Правая колонка - Последние новости */
 .latest-news {
