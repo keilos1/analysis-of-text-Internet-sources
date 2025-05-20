@@ -1212,3 +1212,7 @@ footer {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+#dynamic-content {
+    min-height: 60vh; /* Занимает минимум 60% высоты экрана */
+    position: relative; /* Для правильного позиционирования лоадера */
+}
