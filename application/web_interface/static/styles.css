@@ -1,863 +1,1179 @@
-let API_BASE_URL = 'http://localhost:8000'; // Значение по умолчанию
-// Добавляем элемент для спиннера загрузки
+body {
+    font-family: 'COMMERCIALSCRIPT BT', serif;
+    background-image: url('fullfon2.jpg'); /* Путь к фото */
+    background-size: cover; /* Заполнение всего экрана */
+    background-position: center; /* Центрирование */
+    background-attachment: fixed; /* Фиксированный фон при прокрутке */
+    background-repeat: no-repeat; /* Отключение повторов */
+    margin: 0;
+    padding: 20px;
+}
 
-const loaderHTML = `
-    <div id="page-loader">
-        <div class="spinner"></div>
-    </div>
-`;
-// Инициализация приложения
-document.addEventListener("DOMContentLoaded", async function() {
-    // Добавляем loader в DOM
-    document.body.insertAdjacentHTML('afterbegin', loaderHTML);
-    const loader = document.getElementById('page-loader');
+
+
+.container {
+    max-width: 900px;
+    margin: 10px auto;
+    background: #f2f2f2;
+    padding:  50px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+header {
+    border-bottom: 3px solid black;
+    padding-bottom: 0px;
+    margin-bottom: 0;
+}
+.header-content {
+    display: flex;
+    margin: -55px auto 0px; /* Поднимаем контейнер на 30px вверх */
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+
+
+
     
-    try {
-        loader.style.display = 'flex';
-        
-        // Загружаем конфигурацию
-        const response = await fetch('/api/config');
-        if (response.ok) {
-            const config = await response.json();
-            API_BASE_URL = `http://${config.SITE_HOST}:8000`;
-            console.log('API base URL set to:', API_BASE_URL);
-        }
-    } catch (error) {
-        console.error('Error loading config:', error);
-    } finally {
-        // Скрываем loader после загрузки конфигурации
-        loader.style.display = 'none';
-    }
+}
+h1 {
+    font-size: 55px !important; 
+    font-weight: bold;
+    text-align: center;
+    position: absolute;
+     left: 0;
+    right: 0;
+    margin: 0 auto;
+    pointer-events: none; /* Чтобы можно было кликать элементы под ним */
+    flex-grow: 1;
 
-    // Инициализация приложения
-    initApp();
-});
-function initApp() {
-    setCurrentDate();
-    setupNavigation();
-    setupCategoryDropdown();
+}
+.date {
+    font-size: 18px;
+}
+.logo-box {
+    width: 120px;
+    height: 120px;
+    background-image: url('logo6.png'); /* Путь к логотипу */
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Навигация */
+.navigation {
+
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0px;
+    padding: 10px;
+    background: #ddd;
+
+}
+.navigation input {
+    padding: 5px;
+}
+
+/* Новый блок подразделов и категорий */
+
+.sections, .categories {
+     width: 48%;
+}
+.sections h3, .categories h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+.sections ul, .categories ul {
+    list-style: none;
+    padding: 0;
+}
+.sections li, .categories li {
+    margin-bottom: 8px;
+}
+.sections a, .categories a {
+    text-decoration: none;
+    color: black;
+    font-size: 16px;
+}
+.sections a:hover, .categories a:hover {
+    text-decoration: underline;
+}
+
+/* Двухколоночный макет */
+.content {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+/* Новый контейнер для обертки контента */
+.content-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    width: 100%;
+}
+
+
+/* Левая колонка - Дайджест */
+.digest {
+    width: 300px; /* Фиксированная ширина */
+    max-height: 500px; /
+    min-height: 400px; /* Убираем фиксированную высоту */
+    background-color: #ddd;
+    padding: 15px;
+    border-radius: 10px;
+    transition: all 0.5s ease-in-out;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0; /* Запрещаем сжатие */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Контейнер для списка новостей в дайджесте */
+.digest-content {
+    flex-grow: 1; /* Занимает все доступное пространство */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Равномерно распределяет пространство */
+}
+
+/* Список */
+.digest ul {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+    flex-grow: 1; /* Занимает доступное пространство */
+}
+
+.digest li {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 5px;
+    transition: all 0.3s ease;
+        transform: translateX(5px);
+}
+
+/* Заголовок */
+.digest h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+    font-family: 'COMMERCIALSCRIPT BT';
+    background-color: #b02323; /* Красный фон */
+    color: white; /* Белый текст */
+    padding: 10px 20px; /* Отступы внутри прямоугольника */
+    font-size: 24px;
+    margin: 0;
+}
+
+
+
+/* Ссылки */
+.digest a {
+    text-decoration: none;
+    color: black;
+    font-size: 16px;
+    font-family: 'consolas';
+    transition: color 0.3s ease;
+}
+
+
+
+/* Затемняющий слой (изначально скрыт) */
+.digest::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.9); /* Полупрозрачное затемнение */
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    border-radius: 10px;
+}
+
+/* Эффект увеличения и смены фона */
+.digest:hover {
+    width: 50%; /* Увеличивается до половины контейнера */
+    background: url('daba.jpg') no-repeat center center/cover;
+   color: #007bff;
+}
+
+/* Показываем затемняющий слой при наведении */
+.digest:hover::before {
+    opacity: 5;
+}
+
+/* Меняем цвет ссылок на белый при наведении */
+.digest:hover a {
+    color: black;
+    position: relative;
+    z-index: 2; /* Поднимаем текст выше затемняющего слоя */
+}
+
+/* Указываем, что текст внутри остается поверх затемнения */
+.digest:hover ul, .digest:hover h2 {
+    position: relative;
+    z-index: 2;
+}
+
+.digest:hover li {
+    background: rgba(255, 255, 255, 0.9); /* Почти непрозрачный белый */
+    padding: 12px; /* Увеличим отступы для лучшей читаемости */
+    border-radius: 6px; /* Скруглим углы */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Легкая тень для объема */
+}
+/* Правая колонка - Последние новости */
+.latest-news {
+    flex: 1; /* Занимает оставшееся пространство */
+    min-width: 300px; /* Минимальная ширина */
+    padding: 15px;
+}
+
+.latest-news h2 {
+    font-size: 25px;
+    margin-bottom: 10px;
+    font-family: 'COMMERCIALSCRIPT BT';
+    border-bottom: 2px solid grey;
+}
+
+.latest-news .news-item {
+    border-bottom: 1px solid #ccc; /* Серый разделитель */
+    padding-bottom: 15px; /* Отступ перед линией */
+    margin-bottom: 15px; /* Отступ после линии */
+}
+
+.latest-news .news-item:last-child {
+    border-bottom: none; /* Убираем линию у последней новости */
+}
+
+.news-item {
+    display: flex; /* Включаем flex-контейнер */
     
-    // Показываем loader перед загрузкой страницы
-    const loader = document.getElementById('page-loader');
-    loader.style.display = 'flex';
+    gap: 15px; /* Расстояние между картинкой и текстом */
+    margin-bottom: 20px; /* Отступы между новостями */
+    font-family: 'Consolas', monospace; /* Исправлена ошибка: пропущена ";" */
+}
+
+.news-item img {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border: 1px solid #ccc;
+    border-radius: 5px; /* Скругление углов */
+}
+
+.news-text {
+    flex-grow: 1; /* Позволяет тексту занимать оставшееся пространство */
+}
+
+.news-title {
+    display: block;
+    font-size: 18px; /* Размер шрифта заголовка */
+    font-weight: bold; /* Полужирный шрифт */
+    color: #333; /* Темный цвет текста */
+    text-decoration: none; /* Убираем подчеркивание */
+    margin-bottom: 5px; /* Отступ снизу */
+}
+
+.news-title:hover {
+    color: #b02323; /* Цвет при наведении */
+    text-decoration: none;
     
-    // Загружаем страницу и скрываем loader после загрузки
-    loadPage(getCurrentPage()).finally(() => {
-        loader.style.display = 'none';
-    });
+}
 
-    document.addEventListener('click', function(e) {
-        if (e.target.matches('[data-article]')) {
-            e.preventDefault();
-            const articleId = e.target.getAttribute('data-article');
-            
-            // Показываем loader перед загрузкой статьи
-            const loader = document.getElementById('page-loader');
-            loader.style.display = 'flex';
-            
-            loadArticle(articleId).finally(() => {
-                loader.style.display = 'none';
-            });
+.news-text p {
+    font-size: 14px;
+    color: #555; /* Цвет для описания */
+    margin-top: 5px;
+}
+
+.news-item a {
+    text-decoration: none;
+    color: black;
+    font-size: 16px;
+}
+
+.news-item a:hover {
+    text-decoration: underline;
+}
+
+/* Подвал */
+footer {
+    text-align: center;
+    margin-top: 20px;
+    padding: 10px;
+    background: #b02323;
+    color: white;
+}
+/* Стили для выпадающих списков */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-btn {
+    background-color: #ddd;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    font-family: 'consolas';
+}
+
+.dropdown-content {
+    left: 0;
+    top: 100%; /* Располагаем прямо под кнопкой */
+    margin-top: 5px; /* Небольшой отступ от кнопки */
+    display: block;
+    position: absolute;
+    background-color: white;
+    min-width: 200px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    font-family: 'consolas';
+    
+    opacity: 0;
+    transform: translateY(-10px);
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.dropdown-content a {
+    display: block;
+    padding: 10px;
+    text-decoration: none;
+    color: black;
+}
+
+.dropdown-content a:hover {
+    background-color: #f1f1f1;
+}
+
+/* Показываем список при наведении */
+.dropdown:hover .dropdown-content {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+}
+
+
+/* Контейнер для всей верхней навигации */
+
+.nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 900px;
+    margin: 10px auto;
+    padding: 10px;
+    background: #ddd;
+    flex-wrap: wrap; /* Добавлено: чтобы элементы переносились на новую строку */
+}
+
+.nav-container nav {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap; /* Добавлено: перенос элементов при нехватке места */
+}
+
+.nav-container input {
+    padding: 5px;
+    font-size: 14px;
+    flex-grow: 1; /* Добавлено: чтобы поле поиска сжималось при уменьшении экрана */
+    max-width: 200px; /* Ограничение ширины */
+    min-width: 120px; /* Минимальная ширина */
+}
+.nav-link{
+    text-decoration: none;
+    color: black;
+    font-size: 16px;
+    font-family: 'consolas';
+}
+.nav-container nav a,
+.nav-container nav .dropdown {
+    position: relative;
+    padding: 0 15px;
+}
+
+.nav-container nav a::after,
+.nav-container nav .dropdown::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 30px;
+    background-color: gray;
+}
+
+.nav-container nav a:last-child::after,
+.nav-container nav .dropdown:last-child::after {
+    display: none;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+    /* Новые свойства для правильного позиционирования */
+    flex-direction: row-reverse; /* Меняем порядок элементов */
+    justify-content: flex-end; /* Выравниваем по правому краю */
+    ackground-size: contain;
+    background-repeat: no-repeat;
+}
+
+.search-input {
+    width: 0;
+    padding: 5px;
+    border: 1px solid #ccc;
+    outline: none;
+    transition: width 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-left: 5px; /* Отступ теперь слева, между полем и иконкой */
+}
+
+.search-icon {
+    width: 30px;
+    cursor: pointer;
+    /* Убираем margin-left, так как порядок элементов изменился */
+}
+
+/* При наведении на контейнер поле поиска появляется слева от иконки */
+.search-container:hover .search-input {
+    width: 150px;
+    opacity: 1;
+}
+
+.news-item a + p {
+    display: block;
+    margin-top: 5px;
+}
+.date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.date-weekday {
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.date-day {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.date-month {
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.date-year {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Блок фильтрации */
+        .filter-container {
+            display: flex;
+            align-items: center;
+            background-color: #f5f5f5;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        if (e.target.matches('.search-item-title') && e.target.href) {
-            return;
-        }
-    });
-
-    initSearch();
-}
-function initSearch() {
-    const searchInput = document.querySelector('.search-input');
-    const searchButton = document.querySelector('.search-button');
-
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const query = this.value.trim();
-                if (query) {
-                    performSearch(query);
-                }
-            }
-        });
-    }
-
-    if (searchButton) {
-        searchButton.addEventListener('click', function() {
-            const query = searchInput.value.trim();
-            if (query) {
-                performSearch(query);
-            }
-        });
-    }
-}
-
-function setCurrentDate() {
-    const dateElement = document.getElementById("current-date");
-    if (!dateElement) return;
-
-    const today = new Date();
-    const weekdayShort = today.toLocaleDateString("ru-RU", { weekday: 'short' });
-    const weekdayFormatted = weekdayShort.charAt(0).toUpperCase() + weekdayShort.slice(1).toLowerCase();
-    const day = today.getDate();
-    const month = today.toLocaleDateString("ru-RU", { month: 'long' });
-    const year = today.getFullYear();
-
-    dateElement.innerHTML = `
-        <div class="date-weekday">${weekdayFormatted}</div>
-        <div class="date-day">${day}</div>
-        <div class="date-month">${month}</div>
-        <div class="date-year">${year}</div>
-    `;
-}
-
-function setupNavigation() {
-    document.querySelectorAll('[data-page]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const page = this.getAttribute('data-page');
-            const type = this.getAttribute('data-type');
-
-            const url = type ? `?page=${page}&type=${type}` : `?page=${page}`;
-            history.pushState({ page, type }, '', url);
-
-            loadPage({ page, type });
-        });
-    });
-
-    window.addEventListener('popstate', function(e) {
-        if (e.state) {
-            loadPage(e.state);
-        } else {
-            loadPage(getCurrentPage());
-        }
-    });
-}
-
-function getCurrentPage() {
-    const params = new URLSearchParams(window.location.search);
-    return {
-        page: params.get('page') || 'main',
-        type: params.get('type') || null,
-        id: params.get('id') || null,
-        query: params.get('query') || null
-    };
-}
-
-
-// Модифицируем функцию loadPage для работы с loader
-async function loadPage(params) {
-    const loader = document.getElementById('page-loader');
-    try {
-        loader.style.display = 'flex';
-        
-        const { page, type, query } = params;
-        const contentContainer = document.getElementById('dynamic-content');
-
-        switch(page) {
-            case 'main':
-                await loadMainPage(contentContainer);
-                break;
-            case 'category':
-                await loadCategoryPage(contentContainer, type);
-                break;
-            case 'source':
-                await loadSourcePage(contentContainer, type);
-                break;
-            case 'article':
-                await loadArticlePage(contentContainer, params.id || type);
-                break;
-            case 'search':
-                await loadSearchResultsPage(contentContainer, query);
-                break;
-            default:
-                await loadMainPage(contentContainer);
-        }
-    } catch (error) {
-        console.error('Error loading page:', error);
-    } finally {
-        loader.style.display = 'none';
-    }
-}
-// Глобальные переменные для пагинации
-let currentNewsPage = 1;
-const newsPerPage = 5;
-let allNewsData = [];
-
-async function loadMainPage(container) {
-    try {
-        container.innerHTML = '<div class="loading-spinner">Загрузка новостей...</div>';
-
-        // Загружаем обычные последние новости
-        const response = await fetch(`${API_BASE_URL}/api/latest-news`);
-        if (!response.ok) {
-            throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
+        /* Иконка фильтра */
+        .filter-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
         }
 
-        allNewsData = await response.json();
-        currentNewsPage = 1;
+        /* Стили для надписи "Фильтрация по районам" */
+        .filter-container label {
+            font-size: 16px;
+            font-weight: bold;
+            margin-right: 10px;
+            white-space: nowrap;
+        }
 
-        // Загружаем digest отдельно
-        const digestResponse = await fetch(`${API_BASE_URL}/api/digest`);
-        const digestData = digestResponse.ok ? await digestResponse.json() : [];
+        /* Стили для выпадающего списка */
+        #district-filter {
+            padding: 5px 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            background-color: white;
+            flex-grow: 1;
+            max-width: 200px;
+        }
 
-        await renderMainPageContent(container, digestData); // ПЕРЕДАЁМ digest
-    } catch (error) {
-        console.error("Ошибка при загрузке новостей:", error);
-        container.innerHTML = `
-            <div class="error-message">
-                <h2>Ошибка при загрузке новостей</h2>
-                <p>${error.message}</p>
-                <button onclick="location.reload()">Попробовать снова</button>
-            </div>
-        `;
-    }
+        /* Контейнер для новостей и фильтра */
+        .news-section {
+            width: 70%;
+            display: flex;
+            flex-direction: column;
+        }
+
+/* Основной контейнер статьи */
+.news-article {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+/* Левая колонка - текст */
+.article-text {
+    width: 60%;
+}
+
+/* Заголовок статьи */
+.headline {
+    font-size: 28px;
+    font-weight: bold;
+    color: #b02323;
+    margin-bottom: 15px;
+}
+
+/* Текст новости */
+.article-text p {
+    font-size: 18px;
+    line-height: 1.6;
+    color: #333;
+}
+
+/* Правая колонка - изображение */
+.article-image {
+    width: 35%;
+    max-width: 500px;
+}
+
+.article-image img {
+    width: 100%;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Стили для страницы результатов поиска */
+.search-results-container {
+    width: 100%;
+    padding: 20px;
+    background-color: rgba(242, 242, 242, 0.95);
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+.search-title {
+    font-family: 'COMMERCIALSCRIPT BT', serif;
+    font-size: 32px;
+    color: #black;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid grey;
+}
+
+.results-count {
+    font-family: 'Consolas', monospace;
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 25px;
+    font-style: italic;
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.search-result-item {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    border-left: 4px solid #b02323;
+}
+
+.search-result-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(176, 35, 35, 0.1);
+}
+
+/* Стили для заголовков результатов */
+.search-item-title {
+    font-family: 'Consolas', monospace;
+    font-size: 20px;
+    font-weight: bold;
+    color: #000; /* Черный цвет по умолчанию */
+    text-decoration: none; /* Убираем подчеркивание */
+    display: block;
+    margin-bottom: 10px;
+    transition: color 0.3s ease;
+}
+
+.search-item-title:hover {
+    color: #b02323; /* Красный цвет при наведении */
+    text-decoration: none; /* Гарантируем отсутствие подчеркивания */
+}
+
+.search-item-desc {
+    font-family: 'Consolas', monospace;
+    font-size: 16px;
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.result-meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Consolas', monospace;
+    font-size: 14px;
+    color: black;
+}
+
+.no-results {
+    text-align: center;
+    padding: 40px 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.no-results-title {
+    font-family: 'COMMERCIALSCRIPT BT', serif;
+    font-size: 24px;
+    color: #b02323;
+    margin-bottom: 15px;
+}
+
+.no-results-text {
+    font-family: 'Consolas', monospace;
+    font-size: 16px;
+    color: #555;
+    line-height: 1.5;
+}
+
+.search-query {
+    font-weight: bold;
+    color: #b02323;
 }
 
 
-async function renderMainPageContent(container, digestArticles = []) {
-    const digestHTML = `
-        <section class="digest">
-            <h2>Новости дня</h2>
-            <ul>
-                ${digestArticles.slice(0, 3).map(item => {
-                    const id = item._id?.$oid || item._id || "";
-                    return `<li><a href="#" data-article="${id}">${item.title}</a></li>`;
-                }).join('')}
-            </ul>
-        </section>
-        <section class="latest-news">
-            <h2>Последние новости</h2>
-            <div id="news-list-container"></div>
-            <div id="news-pagination"></div>
-        </section>
-    `;
 
-    container.innerHTML = digestHTML;
-
-    // События на клик по digest
-    // События на клик по digest → переход на страницу статьи
-    container.querySelectorAll('[data-article]').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const articleId = link.getAttribute('data-article');
-            const url = `?page=article&id=${articleId}`;
-            history.pushState({ page: 'article', id: articleId }, '', url);
-            loadPage({ page: 'article', id: articleId });
-        });
-    });
-
-
-    renderNewsList();
-    renderPagination();
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
-
-function renderNewsList() {
-    const startIndex = (currentNewsPage - 1) * newsPerPage;
-    const paginatedNews = allNewsData.slice(startIndex, startIndex + newsPerPage);
-    const newsContainer = document.getElementById('news-list-container');
-
-    if (!newsContainer) return;
-
-    newsContainer.innerHTML = paginatedNews.map(item => {
-        const date = item.publication_date ?
-            new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
-            'Дата неизвестна';
-
-        return `
-            <div class="news-item">
-                <img src="foto.jpg" alt="${item.title}">
-                <div class="news-text">
-                    <a href="#" data-article="${item._id.$oid}" class="news-title">${item.title}</a>
-                    <p>${item.summary || 'Нет описания'}</p>
-                    <small>Дата публикации: ${date}</small>
-                </div>
-            </div>
-        `;
-    }).join('');
+.page-btn {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    background: #f8f8f8;
+    color: #333;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
 }
 
-function renderPagination() {
-    const totalPages = Math.ceil(allNewsData.length / newsPerPage);
-    const paginationContainer = document.getElementById('news-pagination');
-
-    if (!paginationContainer || totalPages <= 1) {
-        if (paginationContainer) paginationContainer.innerHTML = '';
-        return;
-    }
-
-    let paginationHTML = '<div class="pagination">';
-
-    // Кнопка "Назад"
-    if (currentNewsPage > 1) {
-        paginationHTML += `
-            <button class="page-btn" onclick="changeNewsPage(${currentNewsPage - 1})">
-                ← Назад
-            </button>
-        `;
-    }
-
-    // Номера страниц
-    const maxVisiblePages = 3;
-    let startPage = Math.max(1, currentNewsPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage - startPage + 1 < maxVisiblePages) {
-        startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    if (startPage > 1) {
-        paginationHTML += `<button class="page-btn" onclick="changeNewsPage(1)">1</button>`;
-        if (startPage > 2) {
-            paginationHTML += `<span class="page-dots">...</span>`;
-        }
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-        if (i === currentNewsPage) {
-            paginationHTML += `<span class="current-page">${i}</span>`;
-        } else {
-            paginationHTML += `<button class="page-btn" onclick="changeNewsPage(${i})">${i}</button>`;
-        }
-    }
-
-    if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-            paginationHTML += `<span class="page-dots">...</span>`;
-        }
-        paginationHTML += `<button class="page-btn" onclick="changeNewsPage(${totalPages})">${totalPages}</button>`;
-    }
-
-    // Кнопка "Вперед"
-    if (currentNewsPage < totalPages) {
-        paginationHTML += `
-            <button class="page-btn" onclick="changeNewsPage(${currentNewsPage + 1})">
-                Вперед →
-            </button>
-        `;
-    }
-
-    paginationHTML += '</div>';
-    paginationContainer.innerHTML = paginationHTML;
+.page-btn:hover {
+    background: #e8e8e8;
 }
 
-// Функция для смены страницы (должна быть в глобальной области видимости)
-window.changeNewsPage = function(newPage) {
-    currentNewsPage = newPage;
-    renderNewsList();
-    renderPagination();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-};
+.current-page {
+    padding: 8px 12px;
+    background: #b02323;
+    color: white;
+    border-radius: 4px;
+}
 
-async function loadCategoryPage(container, category, offset = 0, limit = 10) {
-    try {
-        document.getElementById('loader').style.display = 'block';
-        const scrollPosition = window.scrollY;
+.page-dots {
+    padding: 8px 4px;
+}
 
-        if (offset === 0) {
-            container.innerHTML = '';
-        }
+/* Стили для фильтров */
+.news-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
 
-        // Расширенный маппинг категорий
-        const categoryMapping = {
-            "culture": "Культура",
-            "sports": "Спорт",
-            "tech": "Технологии",
-            "holidays": "Праздники",
-            "education": "Образование",
-            "other": "Другое",
-            "incidents": "Происшествия",
-            "society": "Общество"
-        };
+.news-filter {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    min-width: 180px;
+}
 
-        const russianCategory = categoryMapping[category] || category;
+.filter-btn {
+    padding: 8px 16px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
 
-        const response = await fetch(
-            `${API_BASE_URL}/api/articles-by-category/${encodeURIComponent(russianCategory)}?offset=${offset}&limit=${limit}`
-        );
+.filter-btn:hover {
+    background: #45a049;
+}
 
-        if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
-        const { articles, total } = await response.json();
+/* Заголовок новостей */
+.news-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
 
-        if (offset === 0) {
-            container.innerHTML = `
-                <div class="news-section full-width">
-                    <h2 class="category-title">${russianCategory}</h2>
-                    ${category === 'other' ? '<p class="category-description">Разные новости, не вошедшие в основные категории</p>' : ''}
-                    <div class="news-grid-container"></div>
-                </div>
-            `;
-        }
+.news-count {
+    color: #666;
+    font-size: 0.9em;
+}
 
-        const newsGrid = container.querySelector('.news-grid-container');
-        const loadedArticleIds = new Set();
-        newsGrid.querySelectorAll('[data-article-id]').forEach(el => {
-            loadedArticleIds.add(el.getAttribute('data-article-id'));
-        });
+/* Список новостей */
+.news-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
 
-        articles.forEach(article => {
-            if (!loadedArticleIds.has(article._id.$oid)) {
-                const pubDate = article.publication_date ?
-                    new Date(article.publication_date.$date).toLocaleDateString('ru-RU') :
-                    'Дата неизвестна';
+.news-item {
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s;
+}
 
-                const articleItem = document.createElement('div');
-                articleItem.className = 'news-item-full';
-                articleItem.setAttribute('data-article-id', article._id.$oid);
-                articleItem.innerHTML = `
-                    <div class="news-image-container">
-                        <img src="${article.image_url || 'foto.jpg'}" alt="${article.title}" class="news-image-fixed">
-                    </div>
-                    <div class="news-content-expanded">
-                        <h3>
-                            <a href="#" data-article="${article._id.$oid}" class="news-title">${article.title}</a>
-                        </h3>
-                        <p class="news-summary-expanded">${article.summary || 'Нет описания'}</p>
-                        <div class="news-meta-expanded">
-                            <span><i class="far fa-calendar-alt"></i> ${pubDate}</span>
-                            ${article.categories?.length ? 
-                                `<span><i class="fas fa-tag"></i> ${article.categories.join(', ')}</span>` : ''}
-                        </div>
-                    </div>
-                `;
-                newsGrid.appendChild(articleItem);
-            }
-        });
+.news-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
 
-        const oldLoadMoreBtn = container.querySelector('.load-more-btn');
-        if (oldLoadMoreBtn) oldLoadMoreBtn.remove();
+.news-image img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
 
-        if (offset + articles.length < total) {
-            const loadMoreBtn = document.createElement('button');
-            loadMoreBtn.className = 'load-more-btn';
-            loadMoreBtn.innerHTML = '<i class="fas fa-plus"></i> Показать ещё';
-            loadMoreBtn.addEventListener('click', () => {
-                loadCategoryPage(container, category, offset + articles.length, limit);
-            });
-            container.querySelector('.news-section').appendChild(loadMoreBtn);
-        }
+.news-content {
+    padding: 15px;
+}
 
-        articles.forEach(article => {
-            const newLink = newsGrid.querySelector(`[data-article="${article._id.$oid}"]`);
-            if (newLink) {
-                newLink.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    await loadArticle(article._id.$oid);
-                });
-            }
-        });
+.news-content h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.2em;
+}
 
-        window.scrollTo(0, scrollPosition);
+.news-content h3 a {
+    color: #333;
+    text-decoration: none;
+}
 
-    } catch (error) {
-        console.error("Ошибка загрузки категории:", error);
-        container.innerHTML = `
-            <div class="error-message">
-                <h2>Ошибка при загрузке категории</h2>
-                <p>${error.message}</p>
-                <div class="error-actions">
-                    <button class="btn-back" onclick="history.back()">
-                        <i class="fas fa-arrow-left"></i> Назад
-                    </button>
-                    <button class="btn-retry" onclick="loadCategoryPage(container, '${category}')">
-                        <i class="fas fa-sync-alt"></i> Повторить
-                    </button>
-                </div>
-            </div>
-        `;
-    } finally {
-        document.getElementById('loader').style.display = 'none';
+.news-content h3 a:hover {
+    color: #4CAF50;
+}
+
+.news-excerpt {
+    color: #666;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.news-meta {
+    display: flex;
+    gap: 10px;
+    font-size: 0.8em;
+    color: #888;
+}
+
+.news-meta span {
+    display: inline-block;
+    padding: 3px 8px;
+    background: #f5f5f5;
+    border-radius: 4px;
+}
+
+.full-width {
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.news-grid-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    width: 100%;
+}
+
+.news-item-full {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 20px;
+    width: 100%;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.news-item-full:hover {
+    transform: translateY(-5px);
+}
+
+.news-image-container {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.news-image-fixed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+    border-radius: 5px;
+}
+
+.news-item-full:hover .news-image-fixed {
+    transform: scale(1.05);
+}
+
+.news-content-expanded {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-decoration: none;
+}
+
+.news-title-expanded {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.news-summary-expanded {
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 15px;
+}
+
+.news-meta-expanded {
+    display: flex;
+    gap: 15px;
+    color: #777;
+    font-size: 14px;
+}
+
+.load-more-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    background: #f5f5f5;
+    border: none;
+    border-radius: 8px;
+    color: #333;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.load-more-btn:hover {
+    background: #e0e0e0;
+}
+
+.load-more-btn i {
+    margin-right: 8px;
+}
+
+.news-image {
+    width: 200px;
+    height: 200px;
+    overflow: hidden;
+    border-radius: 5px;
+}
+
+.news-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+/* Стиль заголовка (как в предыдущей версии) */
+.news-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.news-title:hover {
+    color: #b02323;
+    text-decoration: none;
+}
+/* Мобильная версия с двухстрочным заголовком и датой */
+@media (max-width: 576px) {
+    .container {
+        padding: 10px !important;
+        background: white;
     }
-}
 
-function setupCategoryTabs() {
-    document.querySelectorAll('.category-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            const category = this.dataset.category;
-
-            // Обновляем активную вкладку
-            document.querySelectorAll('.category-tab').forEach(t =>
-                t.classList.toggle('active', t === this));
-
-            // Показываем соответствующий контент
-            document.querySelectorAll('.news-content').forEach(content => {
-                content.style.display = content.dataset.category === category ? 'block' : 'none';
-            });
-        });
-    });
-}
-
-function showError(container, title, message) {
-    container.innerHTML = `
-        <div class="error-message">
-            <h2>${title}</h2>
-            <p>${message}</p>
-            <button onclick="history.back()">Вернуться назад</button>
-        </div>
-    `;
-}
-
-async function loadSourcePage(container, sourceType, offset = 0, limit = 10) {
-    try {
-        // Показываем загрузчик
-        document.getElementById('loader').style.display = 'block';
-        if (offset === 0) container.innerHTML = '';
-
-        // Соответствие между типами и русскоязычными категориями
-        const categoryMapping = {
-            "news": "Новости",
-            "social": "Соц. сети",
-            "stat": "Google search"
-        };
-
-        const russianCategory = categoryMapping[sourceType];
-        if (!russianCategory) {
-            throw new Error("Неизвестный тип источника");
-        }
-
-        // Получаем данные с пагинацией
-        const response = await fetch(
-            `${API_BASE_URL}/api/sources-by-category/${encodeURIComponent(russianCategory)}?offset=${offset}&limit=${limit}`
-        );
-        if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
-        const { articles, total } = await response.json();
-
-        // Формируем HTML
-        if (offset === 0) {
-            container.innerHTML = `
-                <div class="news-section full-width">
-                    <h2 class="category-title">${getSourceTitle(russianCategory)}</h2>
-                    <div class="news-grid-container"></div>
-                </div>
-            `;
-        }
-
-        const newsGrid = container.querySelector('.news-grid-container');
-
-        // Добавляем новости
-        articles.forEach(item => {
-            const date = item.publication_date ?
-                new Date(item.publication_date.$date).toLocaleDateString('ru-RU') :
-                'Дата неизвестна';
-
-            const newsItem = document.createElement('div');
-            newsItem.className = 'news-item-full';
-            newsItem.innerHTML = `
-                <div class="news-image-container">
-                    <img src="${item.image_url || 'foto.jpg'}" alt="${item.title}" class="news-image-fixed">
-                </div>
-                <div class="news-content-expanded">
-                    <h3>
-                        <a href="#" data-article="${item._id.$oid}", class="news-title">${item.title}</a>
-                    </h3>
-                    <p class="news-summary-expanded">${item.summary || 'Нет описания'}</p>
-                    <div class="news-meta-expanded">
-                        <span><i class="far fa-calendar-alt"></i> ${date}</span>
-                        ${item.categories ? `
-                            <span><i class="fas fa-tag"></i> ${formatCategories(item.categories)}</span>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-            newsGrid.appendChild(newsItem);
-        });
-
-        // Добавляем кнопку "Показать еще" если есть еще новости
-        if (offset + limit < total && !container.querySelector('.load-more-btn')) {
-            const loadMoreBtn = document.createElement('button');
-            loadMoreBtn.className = 'load-more-btn';
-            loadMoreBtn.innerHTML = '<i class="fas fa-plus"></i> Показать еще';
-            loadMoreBtn.addEventListener('click', () => {
-                loadSourcePage(container, sourceType, offset + limit, limit);
-            });
-            container.querySelector('.news-section').appendChild(loadMoreBtn);
-        }
-
-        // Добавляем обработчики событий
-        container.querySelectorAll('[data-article]').forEach(link => {
-            link.addEventListener('click', async (e) => {
-                e.preventDefault();
-                const articleId = e.currentTarget.getAttribute('data-article');
-                await loadArticle(articleId);
-            });
-        });
-
-    } catch (error) {
-        console.error("Ошибка загрузки:", error);
-        container.innerHTML = `
-            <div class="error-message">
-                <h2>Ошибка при загрузке</h2>
-                <p>${error.message}</p>
-                <div class="error-actions">
-                    <button class="btn-back" onclick="history.back()"><i class="fas fa-arrow-left"></i> Назад</button>
-                    <button class="btn-retry" onclick="loadSourcePage(container, '${sourceType}')"><i class="fas fa-sync-alt"></i> Повторить</button>
-                </div>
-            </div>
-        `;
-    } finally {
-        // Скрываем загрузчик
-        document.getElementById('loader').style.display = 'none';
+    .header-content {
+        display: grid;
+        grid-template-areas: 
+            "logo title-part1 date"
+            "logo title-part2 date";
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 5px 10px;
+        margin-bottom: 15px;
+        margin-top: 0;
     }
-}
 
-// Вспомогательные функции
-function getSourceTitle(category) {
-    const titles = {
-        "Новости": "Новостные сайты",
-        "Соц. сети": "Социальные сети",
-        "Google search": "Google Новости"
-    };
-    return titles[category] || category;
-}
+    h1 {
+        grid-area: title-part1;
+        font-size: 28px !important;
+        text-align: left;
+        margin: 0 !important;
+        padding: 0;
+        white-space: nowrap;
+        flex-grow: 1;
 
-function formatCategories(categories) {
-    if (Array.isArray(categories)) {
-        return categories.join(', ');
+        order: unset;
     }
-    return categories;
-}
 
-async function loadArticle(articleId) {
-    try {
-        const contentContainer = document.getElementById('dynamic-content');
-        contentContainer.innerHTML = '<div class="loading-spinner">Загрузка статьи...</div>';
+    .header-content::after {
+        content: "";
+        grid-area: title-part2;
+        font-size: 22px;
+        font-family: 'COMMERCIALSCRIPT BT', serif;
+        text-align: left;
+    }
 
-        const response = await fetch(`${API_BASE_URL}/api/article/${articleId}`);
+    .logo-box {
+        grid-area: logo;
+        width: 60px !important;
+        height: 60px !important;
+        margin: 0 !important;
+        order: unset;
+    }
 
-        if (!response.ok) {
-            throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
-        }
+    .date {
+        grid-area: date;
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        font-size: 14px;
+        white-space: nowrap;
+        padding-left: 10px;
 
-        const article = await response.json();
+    }
 
-        const pubDate = article.publication_date ?
-            new Date(article.publication_date.$date).toLocaleDateString('ru-RU', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                weekday: 'long'
-            }) :
-            'Дата неизвестна';
+    .date-weekday {
+        font-weight: bold;
+    }
 
-        history.pushState({ page: 'article', type: articleId }, '', `?page=article&id=${articleId}`);
+    .date-day {
+        font-size: 16px;
+        font-weight: bold;
+    }
 
-        contentContainer.innerHTML = `
-            <div class="news-article">
-                <div class="article-text">
-                    <h2 class="headline">${article.title}</h2>
-                    <div class="article-meta">
-                        <span class="article-date">${pubDate}</span>
-                    </div>
-                    <div class="article-content">${article.text || 'Содержание отсутствует'}</div>
-                        ${article.url ? `
-                            <div class="article-source-url">
-                                <p><strong>Источник:</strong> <a href="${article.url}" target="_blank">${article.url}</a></p>
-                            </div>
-                        ` : ''}
-                </div>
-                <div class="article-image">
-                    <img src="foto.jpg" alt="Фотография новости">
-                </div>
-            </div>
-        `;
+    /* Стили для главного новостного блока */
+    .news-item {
+        flex-direction: column;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+    }
+    
+    .news-item img {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 250px;
+        margin-bottom: 10px;
+    }
+    
+    .news-text {
+        width: 100%;
+    }
+    
+    .news-title {
+        font-size: 20px !important;
+        color: #b02323;
+        margin-bottom: 8px;
+    }
+    
+    .news-text p {
+        font-size: 16px !important;
+        line-height: 1.4;
+        color: #333;
+    }
+    
+    /* Адаптация дайджеста для мобильной версии */
+    .digest {
+        display: block !important;
+      
+        width: calc(100% - 20px) !important; /* Учитываем padding контейнера */
+        max-height: none !important;
+        min-height: auto !important;
+        margin-bottom: 20px !important;
+        padding: 10px !important;
+    }
 
-    } catch (error) {
-        console.error("Ошибка при загрузке статьи:", error);
-        const contentContainer = document.getElementById('dynamic-content');
-        contentContainer.innerHTML = `
-            <div class="error-message">
-                <h2>Ошибка при загрузке статьи</h2>
-                <p>${error.message}</p>
-                <button onclick="history.back()">Вернуться назад</button>
-            </div>
-        `;
+    .digest h2 {
+        font-size: 20px !important;
+        padding: 8px 15px !important;
+    }
+
+    .digest ul {
+        margin: 10px 0 !important;
+    }
+
+    .digest li {
+        padding: 8px !important;
+        margin-bottom: 10px !important;
+    }
+
+    .digest a {
+        font-size: 15px !important;
+    }
+
+    /* Скрываем лишние элементы */
+    .filter-container,
+    .nav-container,
+    .content-wrapper {
+        display: none;
+    }
+    
+    /* Стили для заголовка "Новости Петрозаводска" */
+    .news-header {
+        display: block;
+        margin-bottom: 15px;
+    }
+    
+    .news-header h2 {
+        font-size: 24px;
+        color: #333;
+        border-bottom: 2px solid #b02323;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
+    }
+    
+    /* Стили для даты новости */
+    .news-date {
+        font-size: 14px;
+        color: #777;
+        margin-bottom: 5px;
+    }
+    
+    /* Упрощенная структура контента */
+    .content {
+        flex-direction: column;
+        margin-top: 0;
+    }
+    
+    .latest-news {
+        width: 100%;
+        padding: 0;
+    }
+    
+    /* Стили для блока "Новости дня" */
+    .news-section-title {
+        font-size: 20px;
+        background: #b02323;
+        color: white;
+        padding: 8px 15px;
+        margin: 15px 0;
     }
 }
 
-async function loadArticlePage(container, articleId) {
-    await loadArticle(articleId);
-}
+/* Дополнительные стили для очень маленьких экранов */
+@media (max-width: 400px) {
+    h1 {
+        font-size: 20px !important;
+    }
+    
+    .header-content::after {
+        font-size: 20px;
+    }
+    
+    .logo-box {
+        width: 50px !important;
+        height: 50px !important;
+    }
 
-// Модифицируем функцию performSearch для работы с loader
-async function performSearch(query) {
-    const loader = document.getElementById('page-loader');
-    try {
-        loader.style.display = 'flex';
-        
-        const contentContainer = document.getElementById('dynamic-content');
-        contentContainer.innerHTML = `
-            <div class="search-loading">
-                <div class="spinner"></div>
-                <p>Ищем новости по запросу: "${query}"</p>
-            </div>
-        `;
+    .date {
+        font-size: 12px !important;
+        padding-left: 5px !important;
+    }
 
-        const response = await fetch(`${API_BASE_URL}/api/search?query=${encodeURIComponent(query)}`);
+    .date-day {
+        font-size: 14px !important;
+    }
 
-        if (!response.ok) {
-            throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
-        }
+    .news-title {
+        font-size: 18px !important;
+    }
+    
+    .news-text p {
+        font-size: 15px !important;
+    }
 
-        const data = await response.json();
+    .digest h2 {
+        font-size: 18px !important;
+    }
 
-        const results = data.map(item => ({
-            id: item._id?.$oid || item._id || Math.random().toString(36).substr(2, 9),
-            title: item.title,
-            description: item.summary || item.source || '',
-            img: "foto.jpg",
-            url: item.url,
-            date: item.publication_date ?
-                new Date(item.publication_date.$date || item.publication_date).toLocaleDateString('ru-RU') :
-                'Дата неизвестна',
-            source: item.source || 'неизвестен'
-        }));
-
-        sessionStorage.setItem('searchResults', JSON.stringify({
-            query: query,
-            results: results
-        }));
-
-        history.pushState({ page: 'search', query: query }, '', `?page=search&query=${encodeURIComponent(query)}`);
-        await loadSearchResultsPage(contentContainer, query);
-
-    } catch (error) {
-        console.error("Search error:", error);
-        const contentContainer = document.getElementById('dynamic-content');
-        contentContainer.innerHTML = `
-            <div class="search-error">
-                <h2>Ошибка при поиске</h2>
-                <p>Произошла ошибка при выполнении поиска. Пожалуйста, попробуйте позже.</p>
-                <p class="error-details">${error.message}</p>
-                <button onclick="history.back()">Вернуться назад</button>
-            </div>
-        `;
-    } finally {
-        loader.style.display = 'none';
+    .digest a {
+        font-size: 14px !important;
     }
 }
 
-async function loadSearchResultsPage(container, query) {
-    let searchData = { query: query || '', results: [] };
-
-    try {
-        const savedData = sessionStorage.getItem('searchResults');
-        if (savedData) {
-            searchData = JSON.parse(savedData);
-        }
-    } catch (e) {
-        console.error('Error parsing search results:', e);
-    }
-
-    let html = `
-        <div class="search-results-container">
-            <h2 class="search-title">Результаты поиска: "${searchData.query}"</h2>
-            <div class="results-count">Найдено статей: ${searchData.results.length}</div>
-    `;
-
-    if (searchData.results.length > 0) {
-        html += '<div class="results-list">';
-        searchData.results.forEach(item => {
-        html += `
-            <div class="search-item">
-                <div class="search-item-header">
-                    <a href="#" class="search-item-title" data-article="${item.id}">${item.title}</a>
-                    <span class="search-item-date">${item.date}</span>
-                </div>
-                <p class="search-item-desc">${item.description}</p>
-                ${item.source && item.source !== 'неизвестен' ? `
-                    <div class="search-item-footer">
-                        <span class="search-item-source">${item.source}</span>
-                    </div>
-                ` : ''}
-
-            </div>
-        `;
-    });
-
-        html += '</div>';
-    } else {
-        html += `
-            <div class="no-results">
-                <p>По запросу "${searchData.query}" ничего не найдено.</p>
-                <p>Попробуйте изменить формулировку запроса.</p>
-                <button onclick="history.back()">Вернуться назад</button>
-            </div>
-        `;
-    }
-
-    html += '</div>';
-    container.innerHTML = html;
-    // Назначаем обработчики для перехода к статье
-    container.querySelectorAll('[data-article]').forEach(link => {
-        link.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const articleId = link.getAttribute('data-article');
-            await loadArticle(articleId);
-        });
-    });
-
+.article-url {
+    margin-top: 20px;
+    font-size: 14px;
 }
-
-/**
- * Настраивает выпадающее меню категорий
- */
-function setupCategoryDropdown() {
-    const dropdownBtn = document.querySelector('.dropdown-btn');
-    const dropdownContent = document.querySelector('.dropdown-content');
-
-    if (!dropdownBtn || !dropdownContent) return;
-
-    // Обработчик клика по кнопке
-    dropdownBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        dropdownContent.classList.toggle('show');
-    });
-
-    // Обработчики для пунктов меню
-    dropdownContent.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-
-            // Закрываем меню после выбора
-            dropdownContent.classList.remove('show');
-
-            // Удаляем активный класс у всех пунктов
-            dropdownContent.querySelectorAll('a').forEach(item => {
-                item.classList.remove('active');
-            });
-
-            // Добавляем активный класс текущему пункту
-            this.classList.add('active');
-
-            // Обновляем текст кнопки на выбранную категорию
-            dropdownBtn.textContent = this.textContent;
-
-            // Получаем параметры из data-атрибутов
-            const page = this.getAttribute('data-page');
-            const type = this.getAttribute('data-type');
-
-            // Обновляем URL и загружаем страницу
-            const url = `?page=${page}&type=${type}`;
-            history.pushState({ page, type }, '', url);
-            loadPage({ page, type });
-        });
-    });
-
-    // Закрытие меню при клике вне его
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.dropdown')) {
-            dropdownContent.classList.remove('show');
-        }
-    });
-
-    // Инициализация активного состояния при загрузке
-    const currentPage = getCurrentPage();
-    if (currentPage.page === 'category') {
-        const activeLink = dropdownContent.querySelector(`a[data-type="${currentPage.type}"]`);
-        if (activeLink) {
-            activeLink.classList.add('active');
-            dropdownBtn.textContent = activeLink.textContent;
-        }
-    }
+.article-url a {
+    color: #0066cc;
+    text-decoration: underline;
 }
