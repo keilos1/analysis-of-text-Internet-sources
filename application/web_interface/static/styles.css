@@ -70,12 +70,14 @@ h1 {
 }
 .navigation input {
     padding: 5px;
+    z-index: 1000;
 }
 
 /* Новый блок подразделов и категорий */
 
 .sections, .categories {
      width: 48%;
+      z-index: 1000;
 }
 .sections h3, .categories h3 {
     font-size: 18px;
@@ -119,7 +121,7 @@ h1 {
     width: 300px;
     max-height: 500px;
     min-height: 400px;
-    background-color: #ddd; /* Серый фон под основным контентом */
+    background-color: #ddd;
     padding: 15px;
     border-radius: 10px;
     overflow: hidden;
@@ -127,9 +129,10 @@ h1 {
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
+    z-index: 1; /* Явно низкий приоритет */
 }
 
-/* Серый фон (основа) */
+/* Серый фон */
 .digest::before {
     content: "";
     position: absolute;
@@ -139,28 +142,30 @@ h1 {
     transition: opacity 0.8s ease-in-out;
     border-radius: 10px;
     opacity: 1;
+    pointer-events: none; /* Не мешает кликам */
 }
 
-/* Картинка с затемнением поверх серого */
+/* Картинка с затемнением */
 .digest::after {
     content: "";
     position: absolute;
     inset: 0;
     background: url('daba.jpg') no-repeat center center / cover;
-    background-color: rgba(0, 0, 0, 0.5); /* затемнение */
-    z-index: 1;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 0; /* Ниже контента */
     transition: opacity 0.8s ease-in-out;
     border-radius: 10px;
     opacity: 0;
+    pointer-events: none; /* Не мешает кликам */
 }
 
-/* Контент — всегда сверху */
+/* Контент — поверх фона, но ниже всплывающих окон */
 .digest > * {
     position: relative;
-    z-index: 2;
+    z-index: 1;
 }
 
-/* Контейнер для списка новостей в дайджесте */
+/* Контейнер для списка */
 .digest-content {
     flex-grow: 1;
     display: flex;
@@ -203,7 +208,7 @@ h1 {
     transition: color 0.3s ease;
 }
 
-/* При наведении — показать фон-картинку */
+/* При наведении — показать картинку */
 .digest:hover::after {
     opacity: 1;
 }
@@ -220,16 +225,8 @@ h1 {
     background-color: rgba(176, 35, 35, 0.8);
 }
 
-.digest:hover a {
-    z-index: 3;
-}
+/* Удалено: z-index: 3 у контента */
 
-.digest:hover ul,
-.digest:hover h2,
-.digest:hover .digest-content {
-    z-index: 3;
-    position: relative;
-}
 
 
 /* Правая колонка - Последние новости */
@@ -319,6 +316,7 @@ footer {
 .dropdown {
     position: relative;
     display: inline-block;
+    z-index: 1000;
 }
 
 .dropdown-btn {
@@ -328,6 +326,7 @@ footer {
     font-size: 16px;
     cursor: pointer;
     font-family: 'consolas';
+    z-index: 1000;
 }
 
 .dropdown-content {
@@ -346,6 +345,7 @@ footer {
     transform: translateY(-10px);
     visibility: hidden;
     transition: all 0.3s ease;
+    z-index: 1000;
 }
 
 .dropdown-content a {
