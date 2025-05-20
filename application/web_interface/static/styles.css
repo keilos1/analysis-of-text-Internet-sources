@@ -116,26 +116,56 @@ h1 {
 
 /* Левая колонка - Дайджест */
 .digest {
-    width: 300px; /* Фиксированная ширина */
-    max-height: 500px; /
-    min-height: 400px; /* Убираем фиксированную высоту */
-    background-color: #ddd;
+    width: 300px;
+    max-height: 500px;
+    min-height: 400px;
+    background-color: #ddd; /* Серый фон под основным контентом */
     padding: 15px;
     border-radius: 10px;
-    transition: all 0.5s ease-in-out;
     overflow: hidden;
     position: relative;
-    flex-shrink: 0; /* Запрещаем сжатие */
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
 }
 
+/* Серый фон (основа) */
+.digest::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: #ddd;
+    z-index: 0;
+    transition: opacity 0.8s ease-in-out;
+    border-radius: 10px;
+    opacity: 1;
+}
+
+/* Картинка с затемнением поверх серого */
+.digest::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url('daba.jpg') no-repeat center center / cover;
+    background-color: rgba(0, 0, 0, 0.5); /* затемнение */
+    z-index: 1;
+    transition: opacity 0.8s ease-in-out;
+    border-radius: 10px;
+    opacity: 0;
+}
+
+/* Контент — всегда сверху */
+.digest > * {
+    position: relative;
+    z-index: 2;
+}
+
 /* Контейнер для списка новостей в дайджесте */
 .digest-content {
-    flex-grow: 1; /* Занимает все доступное пространство */
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Равномерно распределяет пространство */
+    justify-content: space-between;
 }
 
 /* Список */
@@ -143,31 +173,26 @@ h1 {
     list-style: none;
     padding: 0;
     margin: 15px 0;
-    flex-grow: 1; /* Занимает доступное пространство */
+    flex-grow: 1;
 }
 
 .digest li {
     margin-bottom: 15px;
     padding: 10px;
-    background: rgba(255,255,255,0.9);
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 5px;
     transition: all 0.3s ease;
-        transform: translateX(5px);
 }
 
 /* Заголовок */
 .digest h2 {
-    font-size: 20px;
-    margin-bottom: 10px;
-    font-family: 'COMMERCIALSCRIPT BT';
-    background-color: #b02323; /* Красный фон */
-    color: white; /* Белый текст */
-    padding: 10px 20px; /* Отступы внутри прямоугольника */
     font-size: 24px;
-    margin: 0;
+    margin: 0 0 10px 0;
+    font-family: 'COMMERCIALSCRIPT BT';
+    background-color: #b02323;
+    color: white;
+    padding: 10px 20px;
 }
-
-
 
 /* Ссылки */
 .digest a {
@@ -178,52 +203,35 @@ h1 {
     transition: color 0.3s ease;
 }
 
-
-
-/* Затемняющий слой (изначально скрыт) */
-.digest::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background: rgba(0, 0, 0, 0.9); /* Полупрозрачное затемнение */
-    opacity: 0;
-    transition: opacity 0.5s ease-in-out;
-    border-radius: 10px;
+/* При наведении — показать фон-картинку */
+.digest:hover::after {
+    opacity: 1;
 }
 
-/* Эффект увеличения и смены фона */
-.digest:hover {
-    width: 50%; /* Увеличивается до половины контейнера */
-    background: url('daba.jpg') no-repeat center center/cover;
-   color: #007bff;
-}
-
-/* Показываем затемняющий слой при наведении */
-.digest:hover::before {
-    opacity: 5;
-}
-
-/* Меняем цвет ссылок на белый при наведении */
-.digest:hover a {
-    color: black;
-    position: relative;
-    z-index: 2; /* Поднимаем текст выше затемняющего слоя */
-}
-
-/* Указываем, что текст внутри остается поверх затемнения */
-.digest:hover ul, .digest:hover h2 {
-    position: relative;
-    z-index: 2;
-}
-
+/* При наведении — стили контента */
 .digest:hover li {
-    background: rgba(255, 255, 255, 0.9); /* Почти непрозрачный белый */
-    padding: 12px; /* Увеличим отступы для лучшей читаемости */
-    border-radius: 6px; /* Скруглим углы */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Легкая тень для объема */
+    background: rgba(255, 255, 255, 0.9);
+    padding: 12px;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
+
+.digest:hover h2 {
+    background-color: rgba(176, 35, 35, 0.8);
+}
+
+.digest:hover a {
+    z-index: 3;
+}
+
+.digest:hover ul,
+.digest:hover h2,
+.digest:hover .digest-content {
+    z-index: 3;
+    position: relative;
+}
+
+
 /* Правая колонка - Последние новости */
 .latest-news {
     flex: 1; /* Занимает оставшееся пространство */
