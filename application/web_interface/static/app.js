@@ -1,9 +1,21 @@
 let API_BASE_URL = 'http://localhost:8000'; // Значение по умолчанию
+// Добавляем элемент для спиннера загрузки
 
+const loaderHTML = `
+    <div id="page-loader">
+        <div class="spinner"></div>
+    </div>
+`;
 // Инициализация приложения
 document.addEventListener("DOMContentLoaded", async function() {
-    // Загружаем конфигурацию
+    // Добавляем loader в DOM
+    document.body.insertAdjacentHTML('afterbegin', loaderHTML);
+    const loader = document.getElementById('page-loader');
+    
     try {
+        loader.style.display = 'flex';
+        
+        // Загружаем конфигурацию
         const response = await fetch('/api/config');
         if (response.ok) {
             const config = await response.json();
@@ -12,23 +24,40 @@ document.addEventListener("DOMContentLoaded", async function() {
         }
     } catch (error) {
         console.error('Error loading config:', error);
+    } finally {
+        // Скрываем loader после загрузки конфигурации
+        loader.style.display = 'none';
     }
 
     // Инициализация приложения
     initApp();
 });
-
 function initApp() {
     setCurrentDate();
     setupNavigation();
     setupCategoryDropdown();
-    loadPage(getCurrentPage());
+    
+    // Показываем loader перед загрузкой страницы
+    const loader = document.getElementById('page-loader');
+    loader.style.display = 'flex';
+    
+    // Загружаем страницу и скрываем loader после загрузки
+    loadPage(getCurrentPage()).finally(() => {
+        loader.style.display = 'none';
+    });
 
     document.addEventListener('click', function(e) {
         if (e.target.matches('[data-article]')) {
             e.preventDefault();
             const articleId = e.target.getAttribute('data-article');
-            loadArticle(articleId);
+            
+            // Показываем loader перед загрузкой статьи
+            const loader = document.getElementById('page-loader');
+            loader.style.display = 'flex';
+            
+            loadArticle(articleId).finally(() => {
+                loader.style.display = 'none';
+            });
         }
 
         if (e.target.matches('.search-item-title') && e.target.href) {
@@ -38,7 +67,6 @@ function initApp() {
 
     initSearch();
 }
-
 function initSearch() {
     const searchInput = document.querySelector('.search-input');
     const searchButton = document.querySelector('.search-button');
@@ -117,31 +145,40 @@ function getCurrentPage() {
 }
 
 
+// Модифицируем функцию loadPage для работы с loader
 async function loadPage(params) {
-    const { page, type, query } = params;
-    const contentContainer = document.getElementById('dynamic-content');
+    const loader = document.getElementById('page-loader');
+    try {
+        loader.style.display = 'flex';
+        
+        const { page, type, query } = params;
+        const contentContainer = document.getElementById('dynamic-content');
 
-    switch(page) {
-        case 'main':
-            await loadMainPage(contentContainer);
-            break;
-        case 'category':
-            await loadCategoryPage(contentContainer, type);
-            break;
-        case 'source':
-            await loadSourcePage(contentContainer, type);
-            break;
-        case 'article':
-            await loadArticlePage(contentContainer, params.id || type);
-            break;
-        case 'search':
-            await loadSearchResultsPage(contentContainer, query);
-            break;
-        default:
-            await loadMainPage(contentContainer);
+        switch(page) {
+            case 'main':
+                await loadMainPage(contentContainer);
+                break;
+            case 'category':
+                await loadCategoryPage(contentContainer, type);
+                break;
+            case 'source':
+                await loadSourcePage(contentContainer, type);
+                break;
+            case 'article':
+                await loadArticlePage(contentContainer, params.id || type);
+                break;
+            case 'search':
+                await loadSearchResultsPage(contentContainer, query);
+                break;
+            default:
+                await loadMainPage(contentContainer);
+        }
+    } catch (error) {
+        console.error('Error loading page:', error);
+    } finally {
+        loader.style.display = 'none';
     }
 }
-
 // Глобальные переменные для пагинации
 let currentNewsPage = 1;
 const newsPerPage = 5;
@@ -642,8 +679,12 @@ async function loadArticlePage(container, articleId) {
     await loadArticle(articleId);
 }
 
+// Модифицируем функцию performSearch для работы с loader
 async function performSearch(query) {
+    const loader = document.getElementById('page-loader');
     try {
+        loader.style.display = 'flex';
+        
         const contentContainer = document.getElementById('dynamic-content');
         contentContainer.innerHTML = `
             <div class="search-loading">
@@ -691,6 +732,8 @@ async function performSearch(query) {
                 <button onclick="history.back()">Вернуться назад</button>
             </div>
         `;
+    } finally {
+        loader.style.display = 'none';
     }
 }
 
