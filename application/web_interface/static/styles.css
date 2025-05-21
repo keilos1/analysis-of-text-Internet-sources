@@ -961,6 +961,35 @@ footer {
 }
 /* Мобильная версия с двухстрочным заголовком и датой */
 @media (max-width: 576px) {
+        /* Гарантированное применение стилей для динамического контента */
+    #dynamic-content .news-item,
+    #dynamic-content .news-item-full {
+        flex-direction: column !important;
+        width: 100% !important;
+    }
+    
+    #dynamic-content img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    
+    #dynamic-content .news-text,
+    #dynamic-content .article-text {
+        width: 100% !important;
+        padding: 0 5px !important;
+    }
+    
+    /* Исправление для категорий */
+    .sections, .categories {
+        width: 100% !important;
+        margin: 10px 0 !important;
+    }
+    
+    .sections ul, .categories ul {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 5px !important;
+    }
     .container {
         padding: 10px !important;
         background: white;
