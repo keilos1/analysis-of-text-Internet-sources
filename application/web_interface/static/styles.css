@@ -1,15 +1,13 @@
 body {
     font-family: 'COMMERCIALSCRIPT BT', serif;
-    background-image: url('fullfon2.jpg'); /* Путь к фото */
-    background-size: cover; /* Заполнение всего экрана */
-    background-position: center; /* Центрирование */
-    background-attachment: fixed; /* Фиксированный фон при прокрутке */
-    background-repeat: no-repeat; /* Отключение повторов */
+    background-image: url('fullfon2.jpg'); 
+    background-size: cover;
+    background-position: center; 
+    background-attachment: fixed; 
+    background-repeat: no-repeat; 
     margin: 0;
     padding: 20px;
 }
-
-
 
 .container {
     max-width: 900px;
@@ -25,14 +23,10 @@ header {
 }
 .header-content {
     display: flex;
-    margin: -55px auto 0px; /* Поднимаем контейнер на 30px вверх */
+    margin: -55px auto 0px; 
     justify-content: space-between;
     align-items: center;
-    position: relative;
-
-
-
-    
+    position: relative;  
 }
 h1 {
     font-size: 55px !important; 
@@ -42,7 +36,7 @@ h1 {
      left: 0;
     right: 0;
     margin: 0 auto;
-    pointer-events: none; /* Чтобы можно было кликать элементы под ним */
+    pointer-events: none; 
     flex-grow: 1;
 
 }
@@ -52,7 +46,7 @@ h1 {
 .logo-box {
     width: 120px;
     height: 120px;
-    background-image: url('logo6.png'); /* Путь к логотипу */
+    background-image: url('logo6.png'); 
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
@@ -73,8 +67,7 @@ h1 {
     z-index: 1000;
 }
 
-/* Новый блок подразделов и категорий */
-
+/* блок подразделов и категорий */
 .sections, .categories {
      width: 48%;
       z-index: 1000;
@@ -107,7 +100,7 @@ h1 {
     width: 100%;
 }
 
-/* Новый контейнер для обертки контента */
+/* контейнер для обертки контента */
 .content-wrapper {
     display: flex;
     flex-wrap: wrap;
@@ -129,7 +122,7 @@ h1 {
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    z-index: 1; /* Явно низкий приоритет */
+    z-index: 1; 
 }
 
 /* Серый фон */
@@ -142,7 +135,7 @@ h1 {
     transition: opacity 0.8s ease-in-out;
     border-radius: 10px;
     opacity: 1;
-    pointer-events: none; /* Не мешает кликам */
+    pointer-events: none; 
 }
 
 /* Картинка с затемнением */
@@ -156,7 +149,7 @@ h1 {
     transition: opacity 0.8s ease-in-out;
     border-radius: 10px;
     opacity: 0;
-    pointer-events: none; /* Не мешает кликам */
+    pointer-events: none;
 }
 
 /* Контент — поверх фона, но ниже всплывающих окон */
@@ -225,14 +218,10 @@ h1 {
     background-color: rgba(176, 35, 35, 0.8);
 }
 
-/* Удалено: z-index: 3 у контента */
-
-
-
 /* Правая колонка - Последние новости */
 .latest-news {
-    flex: 1; /* Занимает оставшееся пространство */
-    min-width: 300px; /* Минимальная ширина */
+    flex: 1; 
+    min-width: 300px; 
     padding: 15px;
 }
 
@@ -244,21 +233,20 @@ h1 {
 }
 
 .latest-news .news-item {
-    border-bottom: 1px solid #ccc; /* Серый разделитель */
-    padding-bottom: 15px; /* Отступ перед линией */
-    margin-bottom: 15px; /* Отступ после линии */
+    border-bottom: 1px solid #ccc; 
+    padding-bottom: 15px; 
+    margin-bottom: 15px; 
 }
 
 .latest-news .news-item:last-child {
-    border-bottom: none; /* Убираем линию у последней новости */
+    border-bottom: none; 
 }
 
 .news-item {
-    display: flex; /* Включаем flex-контейнер */
-    
-    gap: 15px; /* Расстояние между картинкой и текстом */
-    margin-bottom: 20px; /* Отступы между новостями */
-    font-family: 'Consolas', monospace; /* Исправлена ошибка: пропущена ";" */
+    display: flex; 
+    gap: 15px; 
+    margin-bottom: 20px; 
+    font-family: 'Consolas', monospace; 
 }
 
 .news-item img {
@@ -266,31 +254,31 @@ h1 {
     height: 200px;
     object-fit: cover;
     border: 1px solid #ccc;
-    border-radius: 5px; /* Скругление углов */
+    border-radius: 5px; 
 }
 
 .news-text {
-    flex-grow: 1; /* Позволяет тексту занимать оставшееся пространство */
+    flex-grow: 1; 
 }
 
 .news-title {
     display: block;
-    font-size: 18px; /* Размер шрифта заголовка */
-    font-weight: bold; /* Полужирный шрифт */
-    color: #333; /* Темный цвет текста */
-    text-decoration: none; /* Убираем подчеркивание */
-    margin-bottom: 5px; /* Отступ снизу */
+    font-size: 18px; 
+    font-weight: bold; 
+    color: #333; 
+    text-decoration: none; 
+    margin-bottom: 5px; 
 }
 
 .news-title:hover {
-    color: #b02323; /* Цвет при наведении */
+    color: #b02323; 
     text-decoration: none;
     
 }
 
 .news-text p {
     font-size: 14px;
-    color: #555; /* Цвет для описания */
+    color: #555; 
     margin-top: 5px;
 }
 
@@ -318,7 +306,6 @@ footer {
     display: inline-block;
     z-index: 1000;
 }
-
 .dropdown-btn {
     background-color: #ddd;
     border: none;
@@ -331,8 +318,8 @@ footer {
 
 .dropdown-content {
     left: 0;
-    top: 100%; /* Располагаем прямо под кнопкой */
-    margin-top: 5px; /* Небольшой отступ от кнопки */
+    top: 100%; 
+    margin-top: 5px; 
     display: block;
     position: absolute;
     background-color: white;
@@ -368,7 +355,6 @@ footer {
 
 
 /* Контейнер для всей верхней навигации */
-
 .nav-container {
     display: flex;
     justify-content: space-between;
@@ -378,22 +364,22 @@ footer {
     margin: 10px auto;
     padding: 10px;
     background: #ddd;
-    flex-wrap: wrap; /* Добавлено: чтобы элементы переносились на новую строку */
+    flex-wrap: wrap; 
 }
 
 .nav-container nav {
     display: flex;
     align-items: center;
     gap: 15px;
-    flex-wrap: wrap; /* Добавлено: перенос элементов при нехватке места */
+    flex-wrap: wrap; 
 }
 
 .nav-container input {
     padding: 5px;
     font-size: 14px;
-    flex-grow: 1; /* Добавлено: чтобы поле поиска сжималось при уменьшении экрана */
-    max-width: 200px; /* Ограничение ширины */
-    min-width: 120px; /* Минимальная ширина */
+    flex-grow: 1; 
+    max-width: 200px;
+    min-width: 120px; 
 }
 .nav-link{
     text-decoration: none;
@@ -428,9 +414,8 @@ footer {
     display: flex;
     align-items: center;
     position: relative;
-    /* Новые свойства для правильного позиционирования */
-    flex-direction: row-reverse; /* Меняем порядок элементов */
-    justify-content: flex-end; /* Выравниваем по правому краю */
+    flex-direction: row-reverse; 
+    justify-content: flex-end; 
     ackground-size: contain;
     background-repeat: no-repeat;
 }
@@ -444,13 +429,12 @@ footer {
     opacity: 0;
     overflow: hidden;
     white-space: nowrap;
-    margin-left: 5px; /* Отступ теперь слева, между полем и иконкой */
+    margin-left: 5px; 
 }
 
 .search-icon {
     width: 30px;
     cursor: pointer;
-    /* Убираем margin-left, так как порядок элементов изменился */
 }
 
 /* При наведении на контейнер поле поиска появляется слева от иконки */
@@ -985,8 +969,8 @@ footer {
     .news-image-fixed,
     .news-img,
     .article-image img,
-    .sections .news-item img,  /* Для подразделов */
-    .categories .news-item img { /* Для категорий */
+    .sections .news-item img,  
+    .categories .news-item img { 
         width: 100% !important;
         height: auto !important;
         max-height: 200px;
@@ -1000,8 +984,8 @@ footer {
     .article-text,
     .news-content,
     .news-content-expanded,
-    .sections .news-text,  /* Для подразделов */
-    .categories .news-text { /* Для категорий */
+    .sections .news-text,  
+    .categories .news-text { 
         padding: 15px;
         width: 100% !important;
     }
@@ -1038,8 +1022,8 @@ footer {
     .news-meta,
     .news-meta-expanded,
     .result-meta,
-    .sections .news-meta,  /* Для подразделов */
-    .categories .news-meta { /* Для категорий */
+    .sections .news-meta, 
+    .categories .news-meta { 
         font-size: 13px;
         color: #777;
         display: flex;
@@ -1051,8 +1035,8 @@ footer {
     .news-item a,
     .news-title-expanded,
     .search-item-title,
-    .sections .news-item a,  /* Для подразделов */
-    .categories .news-item a { /* Для категорий */
+    .sections .news-item a,  
+    .categories .news-item a { 
         color: #333;
         text-decoration: none;
     }
@@ -1060,8 +1044,8 @@ footer {
     .news-item a:hover,
     .news-title-expanded:hover,
     .search-item-title:hover,
-    .sections .news-item a:hover,  /* Для подразделов */
-    .categories .news-item a:hover { /* Для категорий */
+    .sections .news-item a:hover,  
+    .categories .news-item a:hover { 
         color: #b02323;
         text-decoration: none;
     }
