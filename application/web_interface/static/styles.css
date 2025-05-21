@@ -492,51 +492,51 @@ footer {
 }
 
 /* Блок фильтрации */
-        .filter-container {
-            display: flex;
-            align-items: center;
-            background-color: #f5f5f5;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            box-sizing: border-box;
-        }
+.filter-container {
+    display: flex;
+    align-items: center;
+    background-color: #f5f5f5;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    box-sizing: border-box;
+}
 
-        /* Иконка фильтра */
-        .filter-icon {
-            width: 24px;
-            height: 24px;
-            margin-right: 10px;
-        }
+/* Иконка фильтра */
+.filter-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+}
 
-        /* Стили для надписи "Фильтрация по районам" */
-        .filter-container label {
-            font-size: 16px;
-            font-weight: bold;
-            margin-right: 10px;
-            white-space: nowrap;
-        }
+/* Стили для надписи "Фильтрация по районам" */
+.filter-container label {
+    font-size: 16px;
+    font-weight: bold;
+    margin-right: 10px;
+    white-space: nowrap;
+}
 
-        /* Стили для выпадающего списка */
-        #district-filter {
-            padding: 5px 10px;
-            font-size: 14px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            cursor: pointer;
-            background-color: white;
-            flex-grow: 1;
-            max-width: 200px;
-        }
+/* Стили для выпадающего списка */
+#district-filter {
+    padding: 5px 10px;
+    font-size: 14px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    background-color: white;
+    flex-grow: 1;
+    max-width: 200px;
+}
 
-        /* Контейнер для новостей и фильтра */
-        .news-section {
-            width: 70%;
-            display: flex;
-            flex-direction: column;
-        }
+/* Контейнер для новостей и фильтра */
+    .news-section {
+    width: 70%;
+    display: flex;
+    flex-direction: column;
+}
 
 /* Основной контейнер статьи */
 .news-article {
@@ -631,16 +631,16 @@ footer {
     font-family: 'Consolas', monospace;
     font-size: 20px;
     font-weight: bold;
-    color: #000; /* Черный цвет по умолчанию */
-    text-decoration: none; /* Убираем подчеркивание */
+    color: #000; 
+    text-decoration: none; 
     display: block;
     margin-bottom: 10px;
     transition: color 0.3s ease;
 }
 
 .search-item-title:hover {
-    color: #b02323; /* Красный цвет при наведении */
-    text-decoration: none; /* Гарантируем отсутствие подчеркивания */
+    color: #b02323; 
+    text-decoration: none; 
 }
 
 .search-item-desc {
@@ -685,7 +685,6 @@ footer {
     font-weight: bold;
     color: #b02323;
 }
-
 
 
 .pagination {
@@ -946,7 +945,7 @@ footer {
     transition: transform 0.3s ease;
 }
 
-/* Стиль заголовка (как в предыдущей версии) */
+/* Стиль заголовка  */
 .news-title {
     font-size: 18px;
     font-weight: bold;
@@ -965,6 +964,9 @@ footer {
     .container {
         padding: 10px !important;
         background: white;
+        overflow-x: hidden; 
+        width: 100%; 
+        box-sizing: border-box; 
     }
 
     .header-content {
@@ -977,19 +979,26 @@ footer {
         gap: 5px 10px;
         margin-bottom: 15px;
         margin-top: 0;
+        max-width: 100%;
+        text-align: center; 
+        width: 100%; 
     }
 
     h1 {
         grid-area: title-part1;
-        font-size: 28px !important;
+        font-size: 34px !important;
         text-align: left;
         margin: 0 !important;
         padding: 0;
-        white-space: nowrap;
+        white-space: normal; 
         flex-grow: 1;
-
         order: unset;
+        max-width: 100%; 
+        overflow: visible; 
+        text-overflow: clip; 
+        word-break: break-word; 
     }
+
 
     .header-content::after {
         content: "";
@@ -997,6 +1006,7 @@ footer {
         font-size: 22px;
         font-family: 'COMMERCIALSCRIPT BT', serif;
         text-align: left;
+        max-width: 100%; 
     }
 
     .logo-box {
@@ -1015,9 +1025,37 @@ footer {
         font-size: 14px;
         white-space: nowrap;
         padding-left: 10px;
-
     }
 
+    /* Стили для навигационного контейнера */
+    .nav-container {
+        display: flex !important;
+        flex-direction: column;
+        padding: 10px !important;
+        margin: 10px 0 !important;
+        background: #f5f5f5;
+        width: 100%; 
+        box-sizing: border-box; 
+        max-width: 100%; 
+    }
+
+    .nav-container nav {
+        width: 100%;
+        flex-direction: column;
+        gap: 10px;
+        display: flex;
+    }
+
+    .nav-container nav a,
+    .nav-container nav .dropdown {
+        width: 100%;
+        padding: 8px 0;
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+        box-sizing: border-box; 
+    }
+
+    /* Остальные стили остаются без изменений */
     .date-weekday {
         font-weight: bold;
     }
@@ -1061,8 +1099,7 @@ footer {
     /* Адаптация дайджеста для мобильной версии */
     .digest {
         display: block !important;
-      
-        width: calc(100% - 20px) !important; /* Учитываем padding контейнера */
+        width: calc(100% - 20px) !important;
         max-height: none !important;
         min-height: auto !important;
         margin-bottom: 20px !important;
@@ -1087,13 +1124,46 @@ footer {
         font-size: 15px !important;
     }
 
-    /* Скрываем лишние элементы */
-    .filter-container,
-    .nav-container,
-    .content-wrapper {
+    .nav-container nav a::after,
+    .nav-container nav .dropdown::after {
         display: none;
     }
-    
+
+    .search-container {
+        width: 100%;
+        margin-top: 10px;
+        justify-content: center;
+    }
+
+    .search-input {
+        width: 100% !important;
+        opacity: 1 !important;
+        margin-left: 0;
+    }
+
+    .search-icon {
+        display: none;
+    }
+
+    .dropdown-content {
+        position: static;
+        opacity: 1;
+        visibility: visible;
+        box-shadow: none;
+        display: none;
+        width: 100%;
+    }
+
+    .dropdown:hover .dropdown-content,
+    .dropdown:focus-within .dropdown-content {
+        display: block;
+    }
+
+    .dropdown-btn {
+        width: 100%;
+        text-align: left;
+    }
+
     /* Стили для заголовка "Новости Петрозаводска" */
     .news-header {
         display: block;
@@ -1133,6 +1203,18 @@ footer {
         color: white;
         padding: 8px 15px;
         margin: 15px 0;
+    }
+
+    /* Фильтры для мобильной версии */
+    .filter-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #district-filter {
+        max-width: 100%;
+        width: 100%;
+        margin-top: 8px;
     }
 }
 
@@ -1175,6 +1257,12 @@ footer {
     .digest a {
         font-size: 14px !important;
     }
+
+    .nav-container nav a,
+    .nav-container nav .dropdown {
+        font-size: 14px;
+        padding: 6px 0;
+    }
 }
 
 .article-url {
@@ -1185,8 +1273,8 @@ footer {
     color: #0066cc;
     text-decoration: underline;
 }
-/* Стили для лоадера */
 
+/* Стили для лоадера */
 #page-loader {
     position: fixed;
     top: 0;
@@ -1212,8 +1300,8 @@ footer {
     100% { transform: rotate(360deg); }
 }
 #dynamic-content {
-    min-height: 60vh; /* Занимает минимум 60% высоты экрана */
-    position: relative; /* Для правильного позиционирования лоадера */
+    min-height: 60vh;
+    position: relative; 
 }
 .content-placeholder {
     transition: min-height 0.3s ease;
