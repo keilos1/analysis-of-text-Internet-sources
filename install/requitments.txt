@@ -1,0 +1,37 @@
+# Основные Python пакеты
+httpx>=0.23.0
+requests>=2.28.1
+newspaper3k>=0.2.8
+feedparser>=6.0.8
+beautifulsoup4>=4.11.1
+lxml>=4.9.1
+
+# Работа с данными
+numpy>=1.23.5
+pandas>=1.5.2
+pymongo>=4.3.3
+bson>=0.5.10
+python-dotenv>=0.21.0
+
+# Обработка естественного языка
+nltk>=3.8.1
+spacy>=3.5.0
+scikit-learn>=1.2.0
+setfit>=0.7.0
+gensim>=4.3.0
+
+# Веб-фреймворки
+fastapi>=0.95.0
+uvicorn>=0.21.1
+jinja2>=3.1.2
+
+# SSH и сетевое взаимодействие
+sshtunnel>=0.4.0
+
+# Планировщик задач
+apscheduler>=3.10.0
+
+# Дополнительные утилиты
+tqdm>=4.65.0
+python-dateutil>=2.8.2
+typing-extensions>=4.5.0
