@@ -959,6 +959,130 @@ footer {
     color: #b02323;
     text-decoration: none;
 }
+/* Мобильная версия - унифицированный стиль новостей */
+@media (max-width: 576px) {
+    /* Общий стиль для всех новостных блоков */
+    .news-item, 
+    .news-item-full,
+    .search-result-item,
+    .news-list .news-item,
+    .sections .news-item,  
+    .categories .news-item { 
+        display: flex;
+        flex-direction: column;
+        width: 100% !important;
+        margin-bottom: 20px;
+        padding: 0;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    /* Изображения новостей */
+    .news-item img,
+    .news-image img,
+    .news-image-fixed,
+    .news-img,
+    .article-image img,
+    .sections .news-item img,  /* Для подразделов */
+    .categories .news-item img { /* Для категорий */
+        width: 100% !important;
+        height: auto !important;
+        max-height: 200px;
+        object-fit: cover;
+        margin-bottom: 10px;
+        border-radius: 8px 8px 0 0;
+    }
+
+    /* Текстовый контент */
+    .news-text,
+    .article-text,
+    .news-content,
+    .news-content-expanded,
+    .sections .news-text,  /* Для подразделов */
+    .categories .news-text { /* Для категорий */
+        padding: 15px;
+        width: 100% !important;
+    }
+
+    /* Заголовки */
+    .news-title,
+    .news-title-expanded,
+    .search-item-title,
+    .headline,
+    .sections .news-title,  /* Для подразделов */
+    .categories .news-title { /* Для категорий */
+        font-size: 18px !important;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 8px;
+        line-height: 1.3;
+    }
+
+    /* Текст новостей */
+    .news-text p,
+    .article-text p,
+    .news-summary-expanded,
+    .news-excerpt,
+    .search-item-desc,
+    .sections .news-text p,  /* Для подразделов */
+    .categories .news-text p { /* Для категорий */
+        font-size: 15px !important;
+        color: #555;
+        line-height: 1.5;
+        margin-bottom: 10px;
+    }
+
+    /* Мета-информация (дата, автор и т.д.) */
+    .news-meta,
+    .news-meta-expanded,
+    .result-meta,
+    .sections .news-meta,  /* Для подразделов */
+    .categories .news-meta { /* Для категорий */
+        font-size: 13px;
+        color: #777;
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    /* Ссылки в новостях */
+    .news-item a,
+    .news-title-expanded,
+    .search-item-title,
+    .sections .news-item a,  /* Для подразделов */
+    .categories .news-item a { /* Для категорий */
+        color: #333;
+        text-decoration: none;
+    }
+
+    .news-item a:hover,
+    .news-title-expanded:hover,
+    .search-item-title:hover,
+    .sections .news-item a:hover,  /* Для подразделов */
+    .categories .news-item a:hover { /* Для категорий */
+        color: #b02323;
+        text-decoration: none;
+    }
+
+    /* Специальные стили для списков в подразделах и категориях */
+    .sections ul, 
+    .categories ul {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 0;
+        margin: 0;
+    }
+
+    .sections li, 
+    .categories li {
+        margin-bottom: 0;
+        padding: 0;
+        background: none;
+    }
+}
 /* Мобильная версия с двухстрочным заголовком и датой */
 @media (max-width: 576px) {
     .container {
@@ -1026,98 +1150,7 @@ footer {
         white-space: nowrap;
         padding-left: 10px;
     }
-    /* Общие стили для всех новостных блоков */
-    .news-item, 
-    .news-item-full,
-    .search-result-item,
-    .news-list .news-item {
-        width: 100% !important;
-        box-sizing: border-box;
-        flex-direction: column;
-        margin-bottom: 15px;
-    }
 
-    /* Адаптация изображений в новостях */
-    .news-item img,
-    .news-image img,
-    .news-image-fixed,
-    .news-img,
-    .article-image img {
-        width: 100% !important;
-        height: auto !important;
-        max-height: 250px;
-        margin-bottom: 10px;
-    }
-
-    /* Текстовые блоки новостей */
-    .news-text,
-    .article-text,
-    .news-content,
-    .news-content-expanded {
-        width: 100% !important;
-        padding: 0 5px;
-    }
-
-    /* Заголовки новостей */
-    .news-title,
-    .news-title-expanded,
-    .search-item-title,
-    .headline {
-        font-size: 18px !important;
-        line-height: 1.3;
-        word-break: break-word;
-    }
-
-    /* Текст новостей */
-    .news-text p,
-    .article-text p,
-    .news-summary-expanded,
-    .news-excerpt,
-    .search-item-desc {
-        font-size: 15px !important;
-        line-height: 1.5;
-        word-break: break-word;
-    }
-
-    /* Специфичные стили для категорий и подразделов */
-    .sections, 
-    .categories {
-        width: 100% !important;
-        margin-bottom: 15px;
-    }
-
-    .sections ul, 
-    .categories ul {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 10px;
-    }
-
-    .sections li, 
-    .categories li {
-        margin-bottom: 5px;
-        background: #f5f5f5;
-        padding: 8px;
-        border-radius: 5px;
-    }
-
-    .sections a, 
-    .categories a {
-        font-size: 14px !important;
-        display: block;
-    }
-
-    /* Адаптация двухколоночного макета статей */
-    .news-article,
-    .news-item-full {
-        flex-direction: column;
-    }
-
-    .article-image {
-        width: 100% !important;
-        margin-top: 15px;
-        order: 2; /* Изображение после текста */
-    }
     /* Стили для навигационного контейнера */
     .nav-container {
         display: flex !important;
