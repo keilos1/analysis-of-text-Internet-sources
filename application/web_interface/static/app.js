@@ -181,7 +181,8 @@ async function loadPage(params) {
             default:
                 await loadMainPage(contentContainer);
         }
-        
+        await new Promise(resolve => setTimeout(resolve, 50)); // Микро-пауза
+        applyMobileStyles();
         // Восстанавливаем позицию скролла
         window.scrollTo(0, currentScroll);
     } catch (error) {
@@ -197,7 +198,25 @@ async function loadPage(params) {
         loader.style.display = 'none';
     }
 }
-
+function applyMobileStyles() {
+    if (window.innerWidth <= 576px) {
+        // Принудительно применяем мобильные стили
+        document.querySelectorAll('.news-item, .news-item-full').forEach(item => {
+            item.style.flexDirection = 'column';
+            item.style.width = '100%';
+        });
+        
+        document.querySelectorAll('img').forEach(img => {
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+        });
+        
+        document.querySelectorAll('.news-text, .article-text').forEach(text => {
+            text.style.width = '100%';
+            text.style.padding = '0 5px';
+        });
+    }
+}
 // Глобальные переменные для пагинации
 let currentNewsPage = 1;
 const newsPerPage = 5;
