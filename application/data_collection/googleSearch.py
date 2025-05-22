@@ -46,7 +46,6 @@ class GoogleNewsCollector:
             print(f"Не удалось извлечь текст и дату по ссылке {url}: {e}")
             return "", datetime.now()
 
-    # Внутри класса GoogleNewsCollector
     def search_news(self, query, source_id="Google search", category="Новости", num=10):
         params = {
             'key': self.api_key,
