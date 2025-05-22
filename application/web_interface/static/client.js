@@ -11,7 +11,7 @@ async function initApp() {
     await loadMainContent();
 }
 
-// Установка текущей даты (исправленная версия)
+// Установка текущей даты
 function setCurrentDate() {
     const dateElement = document.getElementById("current-date");
     if (!dateElement) return;
