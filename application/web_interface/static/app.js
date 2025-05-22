@@ -698,7 +698,7 @@ async function loadArticlePage(container, articleId) {
     await loadArticle(articleId);
 }
 
-// Модифицируем функцию performSearch для работы с loader
+// Функция performSearch для работы с loader
 async function performSearch(query) {
     const loader = document.getElementById('page-loader');
     try {
@@ -819,7 +819,7 @@ async function loadSearchResultsPage(container, query) {
 }
 
 /**
- * Настраивает выпадающее меню категорий
+ * Настраиваем выпадающее меню категорий
  */
 function setupCategoryDropdown() {
     const dropdownBtn = document.querySelector('.dropdown-btn');
