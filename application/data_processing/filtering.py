@@ -1,6 +1,7 @@
 import re
 import sys
 import asyncio
+from pathlib import Path
 from typing import List, Dict
 from enum import Enum
 from setfit import SetFitModel
@@ -34,8 +35,21 @@ class NewsProcessor:
             re.IGNORECASE
         )
 
+        # Получаем абсолютный путь к модели
+        model_path = (Path(__file__).parent.parent / "data_processing" / "saved_models" / "setfit_news_classifier").resolve()
+
+        # Проверяем существование пути
+        if not model_path.exists():
+            raise FileNotFoundError(f"Model directory not found: {model_path}")
+
+        # Преобразуем путь в строку в формате POSIX
+        model_path_str = model_path.as_posix()
+
         # Загрузка обученной модели
-        self.model = SetFitModel.from_pretrained("saved_models/setfit_news_classifier")
+        try:
+            self.model = SetFitModel.from_pretrained(model_path_str)
+        except Exception as e:
+            raise RuntimeError(f"Failed to load model: {str(e)}")
 
     async def process_news(self) -> List[Dict]:
         raw_news = await self.data_updater.fetch_news()

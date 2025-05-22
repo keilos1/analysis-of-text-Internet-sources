@@ -11,6 +11,7 @@ from fastapi import FastAPI
 import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
 import logging
 
 sys.path.append("../")
@@ -38,6 +39,15 @@ async def run_duplicate_detection():
         logger.error(f"Ошибка при проверке дубликатов: {str(e)}")
 
 
+async def digest_generator():
+    try:
+        logger.info("Генерация ежедневного дайджеста...")
+        # Ваша логика генерации дайджеста здесь
+        logger.info("Ежедневный дайджест сгенерирован")
+    except Exception as e:
+        logger.error(f"Ошибка при генерации дайджеста: {str(e)}", exc_info=True)
+
+
 def start_scheduler():
     """Запускает планировщик для периодических задач"""
     scheduler = BackgroundScheduler()
@@ -46,6 +56,12 @@ def start_scheduler():
         trigger=IntervalTrigger(seconds=CHECK_INTERVAL),
         max_instances=1,
         name="duplicate_detection"
+    )
+    # Новая задача - генерация дайджеста в 12:00 по Москве
+    scheduler.add_job(
+        lambda: asyncio.run(digest_generator()),
+        trigger=CronTrigger(hour=12, minute=0, timezone='Europe/Moscow'),
+        name="daily_digest"
     )
     scheduler.start()
     logger.info(f"Планировщик запущен с интервалом {CHECK_INTERVAL} секунд")
