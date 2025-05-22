@@ -42,7 +42,7 @@ async def run_duplicate_detection():
 async def digest_generator():
     try:
         logger.info("Генерация ежедневного дайджеста...")
-        # Ваша логика генерации дайджеста здесь
+        # Логика генерации дайджеста здесь
         logger.info("Ежедневный дайджест сгенерирован")
     except Exception as e:
         logger.error(f"Ошибка при генерации дайджеста: {str(e)}", exc_info=True)
@@ -57,7 +57,7 @@ def start_scheduler():
         max_instances=1,
         name="duplicate_detection"
     )
-    # Новая задача - генерация дайджеста в 12:00 по Москве
+    # Генерация дайджеста в 12:00 по Москве
     scheduler.add_job(
         lambda: asyncio.run(digest_generator()),
         trigger=CronTrigger(hour=12, minute=0, timezone='Europe/Moscow'),
@@ -86,8 +86,8 @@ def get_db_connection():
         ssh_port=PORT,
         ssh_user=SSH_USER,
         ssh_password=SSH_PASSWORD,
-        mongo_host=MONGO_HOST,  # новый параметр вместо remote_host
-        mongo_port=MONGO_PORT,   # новый параметр вместо remote_port
+        mongo_host=MONGO_HOST,  
+        mongo_port=MONGO_PORT,   
         db_name=DB_NAME
     )
 
@@ -148,7 +148,7 @@ async def get_sources_by_category(
     limit: int = 10
 ):
     if limit > 50:
-        limit = 50  # Защита от слишком больших значений
+        limit = 50 
 
     db, tunnel = get_db_connection()
     try:
@@ -240,13 +240,11 @@ async def get_articles_by_category(
 async def get_article(article_id: str):
     db, tunnel = get_db_connection()
     try:
-        # Пробуем найти по ObjectId
         try:
             article = db.articles.find_one({"_id": ObjectId(article_id)})
         except:
             article = None
 
-        # Если не нашли, пробуем найти по article_id
         if not article:
             article = db.articles.find_one({"article_id": article_id})
 
