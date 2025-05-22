@@ -36,7 +36,7 @@ class DataUpdater:
         self.sources = self._get_sources_from_db()
 
         # API ключи
-        self.google_api_key = API_KEY  # ← Укажи свой ключ
+        self.google_api_key = API_KEY
         self.google_cx = GOOGLE_CX
 
     def _get_sources_from_db(self):
