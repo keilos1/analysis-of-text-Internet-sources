@@ -86,6 +86,8 @@ class GoogleNewsCollector:
             fallback_title = item.get('title', '')
 
             title, full_text, publication_date = self.fetch_full_text_and_date(url)
+            if "© «Петрозаводск говорит»" in full_text:
+                full_text.replace("© «Петрозаводск говорит»", "")
 
             if not title:
                 title = fallback_title

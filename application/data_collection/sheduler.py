@@ -166,6 +166,7 @@ class DataUpdater:
                 "Петрозаводск политика"
             ]
 
+
             google_results = collect_news(google_queries, self.google_api_key, self.google_cx, results_per_query=10)
 
             for article in google_results:
@@ -211,7 +212,7 @@ async def main():
 
     if news_items:
         print("\n=== Последние 3 новости (RSS и другие сайты) ===")
-        for article in news_items[-3:]:
+        for article in news_items[-1:]:
             print(f"\n[{article['source_id']}] {article['title']}")
             print(f"Дата: {article.get('publication_date')}")
             print(f"URL: {article.get('url')}")
@@ -227,7 +228,7 @@ async def main():
 
     if social_items:
         print("\n=== Последние 3 поста из соцсетей ===")
-        for post in social_items[-3:]:
+        for post in social_items[-1:]:
             print(f"\n[{post['source_id']}] {post['title']}")
             print(f"Дата: {post.get('publication_date')}")
             print(f"URL: {post.get('url')}")
